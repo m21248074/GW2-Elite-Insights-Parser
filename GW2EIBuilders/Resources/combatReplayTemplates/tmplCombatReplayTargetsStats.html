@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <ul class="nav nav-pills d-flex flex-row justify-content-center mb-1 scale65">
             <li v-for="(buffType, index) in possibleBuffs" class="ml-1 mr-1">
@@ -22,7 +22,7 @@
         template: `${template}`,
         data: function () {
             return {
-                buffsToShow: ["Others", "Boons", "Fight Specifics", "Conditions"]
+                buffsToShow: ["其他", "恩賜", "戰鬥特定", "症狀"]
             }
         },
         methods: {
@@ -32,7 +32,7 @@
         },
         computed: {
             possibleBuffs: function() {
-                return [ "Boons", "Conditions", "Fight Specifics","Shared", "Others"];
+                return ["恩賜", "症狀", "戰鬥特定", "共享", "其他"];
             },
             targets: function () {
                 var res = [];

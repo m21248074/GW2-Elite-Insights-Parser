@@ -1,19 +1,19 @@
-<template>
+﻿<template>
     <div>
         <div style="position:absolute; margin-top: 60px;  margin-left: 145px; z-index: 1;">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Filter Skills" style="font-size: 1.1em;">
-                Skills <span class="caret"></span>
+                技能 <span class="caret"></span>
             </a>
             <ul class="dropdown-menu p-2 font-weight-normal" style="min-width: 165px; max-width: 165px;">
                 <div class="d-flex flex-column justify-content-center align-items-center mb-1"
                     style="border-bottom: 2px solid #bbb;">
                     <li>
                         <button style="width:130px; padding: 0.4rem 0.4rem;" type="button" class="btn btn-primary btn-sm"
-                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = true;}" @click.stop="stopClickEvent">Select all</button>
+                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = true;}" @click.stop="stopClickEvent">選擇全部</button>
                     </li>
                     <li class="mb-1">
                         <button style="width:130px; padding: 0.4rem 0.4rem;" type="button" class="btn btn-primary btn-sm"
-                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = false;}" @click.stop="stopClickEvent">Deselect all</button>
+                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = false;}" @click.stop="stopClickEvent">取消選擇全部</button>
                     </li>
                 </div>
                 <li v-for="(skill, index) in skillList" :key="index">
@@ -48,7 +48,7 @@
                 color: color
             },
             xaxis: {
-                title: 'Time(sec)',
+                title: '時間(秒)',
                 color: color,
                 gridcolor: color,
                 rangemode: 'nonnegative',

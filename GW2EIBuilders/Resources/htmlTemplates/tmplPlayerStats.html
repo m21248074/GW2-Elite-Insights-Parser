@@ -1,47 +1,44 @@
-<template>
+﻿<template>
     <div>
         <h3 v-for="player in players" :key="player.id" v-show="player.id === activeplayer"
             class="text-center mt-2"><img :alt="player.profession" class="icon" :src="player.icon">{{player.name}}</h3>
         <ul class="nav nav-tabs" v-show="activeplayer > -1">
             <li>
                 <a class="nav-link" :class="{active: tabmode === 0}" @click="tabmode = 0">
-                    Outgoing Damage
+                    輸出傷害
                 </a>
             </li>
             <li>
                 <a class="nav-link" :class="{active: tabmode === 1}" @click="tabmode = 1">
-                    Incoming Damage
+                    承受傷害
                 </a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: tabmode === 2}" @click="tabmode = 2">Graph</a>
+                <a class="nav-link" :class="{active: tabmode === 2}" @click="tabmode = 2">圖表</a>
             </li>
             <li>
                 <a class="nav-link" :class="{active: tabmode === 7}" @click="tabmode = 7">
-                    Boon Status
+                    恩賜狀態
                 </a>
             </li>
             <li>
                 <a class="nav-link" :class="{active: tabmode === 3}" @click="tabmode = 3">
-                    Simple
-                    Rotation
+                    簡易循環
                 </a>
             </li>        
             <li>
                 <a class="nav-link" :class="{active: tabmode === 4}" @click="tabmode = 4">
-                    Advanced
-                    Rotation
+                    進階循環
                 </a>
             </li>
             <li>
                 <a class="nav-link" :class="{active: tabmode === 5}" @click="tabmode = 5">
-                    Consumables
+                    消耗品
                 </a>
             </li>
             <li>
                 <a class="nav-link" v-show="hasDeaths" :class="{active: tabmode === 6}" @click="tabmode = 6">
-                    Death
-                    Recap
+                    死亡回顧
                 </a>
             </li>
         </ul>

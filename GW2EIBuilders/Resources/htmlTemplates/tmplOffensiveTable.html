@@ -1,12 +1,12 @@
-<template>
+﻿<template>
     <div>
         <div v-if="!targetless" class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="mode = 1" :class="{active: mode}">Target</a>
+                    <a class="nav-link" @click="mode = 1" :class="{active: mode}">目標</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="mode = 0" :class="{active: !mode }">All</a>
+                    <a class="nav-link" @click="mode = 0" :class="{active: !mode }">全部</a>
                 </li>
             </ul>
         </div>
@@ -14,70 +14,70 @@
             <thead>
                 <tr>
                     <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">
-                        Sub
+                        小隊
                     </th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')">
 
                     </th>
                     <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">
-                        Name
+                        角色名
                     </th>
                     <th class="text-left" :class="getHeaderClass('Account')" @click="sortBy('Account')">
-                        Account
+                        帳號
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 2)" @click="sortBy('Data', 2, 1)"
-                        data-original-title="Percent time hits critical">
+                        data-original-title="暴擊時間百分比">
                         <img src="https://wiki.guildwars2.com/images/9/95/Critical_Chance.png" alt="Crits"
                              class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4, 11)"
-                        data-original-title="Percent time hits while flanking">
+                        data-original-title="側擊時間百分比">
                         <img src="https://wiki.guildwars2.com/images/b/bb/Hunter%27s_Tactics.png" alt="Flank"
                              class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 21)" @click="sortBy('Data', 21, 20)"
-                        data-original-title="Percent time power hits while self above 90% hp">
+                        data-original-title="當自身生命值超過90%時，直傷攻擊時間百分比">
                         <img src="https://wiki.guildwars2.com/images/2/23/Power.png" alt="Power"
                              class="icon"> > 90%
                     </th>    
                     <th class="stat-cell" :class="getHeaderClass('Data', 23)" @click="sortBy('Data', 23, 22)"
-                        data-original-title="Percent time condition ticks while self above 90% hp">
+                        data-original-title="當自身生命值超過90%時，症狀持續傷害時間百分比">
                         <img src="https://wiki.guildwars2.com/images/5/54/Condition_Damage.png" alt="Condition"
                              class="icon"> > 90%
                     </th>    
                     <th class="stat-cell" :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5, 11)"
-                        data-original-title="Percent time hits while glancing">
+                        data-original-title="虛弱時攻擊時間百分比">
                         <img src="https://wiki.guildwars2.com/images/f/f9/Weakness.png" alt="Glance"
                              class="icon icon-hover">
                     </th>    
                     <th class="stat-cell" :class="getHeaderClass('Data', 14)" @click="sortBy('Data', 14, 15)"
-                        data-original-title="Times the target got hit while moving">
+                        data-original-title="移動時目標被擊中的次數">
                         <img src="https://i.imgur.com/11uAbd4.png" alt="Against Moving"
                              class="icon icon-hover">
                     </th>  
                     <th class="stat-cell" :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6)"
-                        data-original-title="Number of hits while blinded">
+                        data-original-title="致盲時的攻擊次數">
                         <img src="https://wiki.guildwars2.com/images/3/33/Blinded.png" alt="Miss"
                              class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7)"
-                        data-original-title="Number of hits used to interupt">
+                        data-original-title="用於打斷的攻擊次數">
                         <img src="https://wiki.guildwars2.com/images/7/79/Daze.png" alt="Interupts"
                             
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 8)" @click="sortBy('Data', 8)"
-                        data-original-title="Times the enemy was invulnerable to attacks">
+                        data-original-title="敵人無敵時的攻擊次數">
                         <img src="https://wiki.guildwars2.com/images/e/eb/Determined.png" alt="Ivuln"
                              class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 9)" @click="sortBy('Data', 9)"
-                        data-original-title="Times the enemy evaded an attack">
+                        data-original-title="敵人躲避攻擊的次數">
                         <img src="https://wiki.guildwars2.com/images/e/e2/Evade.png" alt="Evaded"
                              class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 10)" @click="sortBy('Data', 10)"
-                        data-original-title="Times the enemy blocked an attack">
+                        data-original-title="敵人格檔攻擊的次數">
                         <img src="https://wiki.guildwars2.com/images/e/e5/Aegis.png" alt="Blocked"
                              class="icon icon-hover">
                     </th>   
@@ -130,49 +130,49 @@
                         {{row.player.acc}}
                     </td>
                     <td :class="getBodyClass('Data', 2)"
-                        :data-original-title="row.data[2] + ' out of ' + row.data[1] + ' critable hit(s)' +
-                                    '<br>Total Critical Damage: ' + row.data[3] +
-                                    '<br>' + round2(100*row.data[3]/ row.data[18]) +'% of total damage' +
-                                    '<br>' + round2(100*row.data[3]/ row.data[19]) +'% of total direct damage'">
+                        :data-original-title="row.data[1] + '次中的' + row.data[2] + '次產生暴擊' +
+                                    '<br>總暴擊傷害: ' + row.data[3] +
+                                    '<br>佔總傷' + round2(100*row.data[3]/ row.data[18]) +'%' +
+                                    '<br>佔總直傷' + round2(100*row.data[3]/ row.data[19]) +'%'">
                         {{round2(100*row.data[2] / row.data[1])}}%
                     </td>
                     <td :class="getBodyClass('Data', 4)"
-                        :data-original-title="row.data[4] + ' out of ' + row.data[11] + ' connected direct hit(s)'">
+                        :data-original-title="row.data[11] + '次中的' + row.data[4] + '次相關直接命中'">
                         {{round2(100*row.data[4]/ row.data[11])}}%
                     </td>
                     <td :class="getBodyClass('Data', 21)"
-                        :data-original-title="row.data[21] + ' out of ' + row.data[20] + ' connected power hit(s)'">
+                        :data-original-title="row.data[20] + '次中的' + row.data[21] + '次相關直傷命中'">
                         {{round2(100*row.data[21]/ row.data[20])}}%
                     </td>
                     <td :class="getBodyClass('Data', 23)"
-                        :data-original-title="row.data[23] + ' out of ' + row.data[22] + ' connected condition tick(s)'">
+                        :data-original-title="row.data[22] + '次中的' + row.data[23] + '次相關症狀持續命中'">
                         {{round2(100*row.data[23]/ row.data[22])}}%
                     </td>
                     <td :class="getBodyClass('Data', 5)"
-                        :data-original-title="row.data[5] + ' out of ' + row.data[11] + ' connected direct hit(s)'">
+                        :data-original-title="row.data[11] + '次中的' + row.data[5] + '次相關直接命中'">
                         {{round2(100*row.data[5]/ row.data[11])}}%
                     </td>
                     <td :class="getBodyClass('Data', 14)"
-                        :data-original-title="row.data[14] + ' out of ' + row.data[15] + ' connected hit(s)'">
+                        :data-original-title="row.data[15] + '次中的' + row.data[14] + '次相關命中'">
                         {{round2(100*row.data[14]/ row.data[15]) + '%' }}
                     </td>
                     <td :class="getBodyClass('Data', 6)"
-                        :data-original-title="round2(100*row.data[6]/ row.data[0]) + '% of '+ row.data[0] + ' direct hit(s)'">
+                        :data-original-title="row.data[0] + '次中的' + round2(100*row.data[6]/ row.data[0]) + '%直接命中'">
                         {{row.data[6]}}
                     </td>
                     <td :class="getBodyClass('Data', 7)">
                         {{row.data[7]}}
                     </td>
                     <td :class="getBodyClass('Data', 8)"
-                        :data-original-title="round2(100*row.data[8]/ row.data[0]) + '% of '+ row.data[16] + ' hit(s)'">
+                        :data-original-title="row.data[16] + '次中的' + round2(100*row.data[8]/ row.data[0]) + '%命中'">
                         {{row.data[8]}}
                     </td>
                     <td :class="getBodyClass('Data', 9)"
-                        :data-original-title="round2(100*row.data[9]/ row.data[0]) + '% of '+ row.data[0] + ' direct hit(s)'">
+                        :data-original-title="row.data[0] + '次中的' + round2(100*row.data[9]/ row.data[0]) + '%直接命中'">
                         {{row.data[9]}}
                     </td>
                     <td :class="getBodyClass('Data', 10)"
-                        :data-original-title="round2(100*row.data[10]/ row.data[0]) + '% of '+ row.data[0] + ' direct hit(s)'">
+                        :data-original-title="row.data[0] + '次中的' + round2(100*row.data[10]/ row.data[0]) + '%直接命中'">
                         {{row.data[10]}}
                     </td>
                     <td v-if="wvw" :class="getBodyClass('Data', 17)"
@@ -198,40 +198,40 @@
                     <td class="text-left">{{row.name}}</td>
                     <td></td>
                     <td
-                        :data-original-title="row.data[2] + ' out of ' + row.data[1] + ' critable hit(s)' +
-                                    '<br>Total Critical Damage: ' + row.data[3] +
-                                    '<br>' + round2(100*row.data[3]/ row.data[18]) +'% of total damage' +
-                                    '<br>' + round2(100*row.data[3]/ row.data[19]) +'% of total direct damage'">
+                        :data-original-title="row.data[1] + '次中的' + row.data[2] + '次產生暴擊' +
+                                    '<br>總暴擊傷害: ' + row.data[3] +
+                                    '<br>佔總傷' + round2(100*row.data[3]/ row.data[18]) +'%' +
+                                    '<br>佔總直傷' + round2(100*row.data[3]/ row.data[19]) +'%'">
                         {{round2(100*row.data[2] / row.data[1])}}%
                     </td>
-                    <td :data-original-title="row.data[4] + ' out of ' + row.data[11] + ' connected direct hit(s)'">
+                    <td :data-original-title="row.data[11] + '次中的' + row.data[4] + '次相關直接命中'">
                         {{round2(100*row.data[4]/ row.data[11])}}%
                     </td>
-                    <td :data-original-title="row.data[21] + ' out of ' + row.data[20] + ' connected power hit(s)'">
+                    <td :data-original-title="row.data[20] + '次中的' + row.data[21] + '次相關直傷命中'">
                         {{round2(100*row.data[21]/ row.data[20])}}%
                     </td>
-                    <td :data-original-title="row.data[23] + ' out of ' + row.data[22] + ' connected condition tick(s)'">
+                    <td :data-original-title="row.data[22] + '次中的' + row.data[23] + '次相關症狀持續命中'">
                         {{round2(100*row.data[23]/ row.data[22])}}%
                     </td>
-                    <td :data-original-title="row.data[5] + ' out of ' + row.data[11] + ' connected direct hit(s)'">
+                    <td :data-original-title="row.data[5] + '次中的' + row.data[11] + ' 相關直接命中'">
                         {{round2(100*row.data[5]/ row.data[11])}}%
                     </td>
-                    <td :data-original-title="row.data[14] + ' out of ' + row.data[15] + ' connected hit(s)'">
+                    <td :data-original-title="row.data[14] + '次中的' + row.data[15] + ' 相關命中'">
                         {{round2(100*row.data[14]/ row.data[15]) + '%' }}
                     </td>
-                    <td :data-original-title="round2(100*row.data[6]/ row.data[0])+ '% of '+ row.data[0] + ' direct hit(s)'">
+                    <td :data-original-title="row.data[0] + '次中的' + round2(100*row.data[6]/ row.data[0])+ '%直接命中'">
                         {{row.data[6]}}
                     </td>
                     <td>
                         {{row.data[7]}}
                     </td>
-                    <td :data-original-title="round2(100*row.data[8]/ row.data[0])+ '% of '+ row.data[16] + ' hit(s)'">
+                    <td :data-original-title="row.data[16] + '次中的' + round2(100*row.data[8]/ row.data[0]) + '%命中'">
                         {{row.data[8]}}
                     </td>
-                    <td :data-original-title="round2(100*row.data[9]/ row.data[0])+ '% of '+ row.data[0] + ' direct hit(s)'">
+                    <td :data-original-title="row.data[0] + '次中的' + round2(100*row.data[9]/ row.data[0])+ '%直接命中'">
                         {{row.data[9]}}
                     </td>
-                    <td :data-original-title="round2(100*row.data[10]/ row.data[0]) + '% of '+ row.data[0] + ' direct hit(s)'">
+                    <td :data-original-title="row.data[0] + '次中的' + round2(100*row.data[10]/ row.data[0]) + '%直接命中'">
                         {{row.data[10]}}
                     </td>
                     <td v-if="wvw" :data-original-title="round2(100*row.data[17]/ row.data[26]) +'% of total damage'">
@@ -330,7 +330,7 @@
                 var sums = [];
                 var groups = [];
                 var total = {
-                    name: "Total",
+                    name: "全團",
                     data: [],
                     count: 0
                 };
@@ -342,7 +342,7 @@
                     }
                     if (!groups[player.group]) {
                         groups[player.group] = {
-                            name: "Group " + player.group,
+                            name: "小隊 " + player.group,
                             data: [],
                             count: 0
                         };
@@ -383,7 +383,7 @@
                 var sums = [];
                 var groups = [];
                 var total = {
-                    name: "Total",
+                    name: "全團",
                     data: [],
                     count: 0
                 };
@@ -395,7 +395,7 @@
                     }
                     if (!groups[player.group]) {
                         groups[player.group] = {
-                            name: "Group " + player.group,
+                            name: "小隊 " + player.group,
                             data: [],
                             count: 0
                         };

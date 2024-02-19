@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <ul v-if="phaseTargets.length > 1" class=" nav nav-tabs">
             <li v-for="target in phaseTargets">
@@ -20,25 +20,25 @@
         <ul class="nav nav-tabs" v-show="phaseTargets.length > 0">
             <li>
                 <a class="nav-link" :class="{active: mode === 0}" @click="mode = 0">
-                    Outgoing Damage
+                    輸出傷害
                 </a>
             </li>
             <li>
                 <a class="nav-link" :class="{active: mode === 1}" @click="mode = 1">
-                    Incoming Damage
+                    承受傷害
                 </a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: mode === 2}" @click="mode = 2">Graph</a>
+                <a class="nav-link" :class="{active: mode === 2}" @click="mode = 2">圖表</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: mode === 5}" @click="mode = 5">Graph Per Player</a>
+                <a class="nav-link" :class="{active: mode === 5}" @click="mode = 5">每位玩家的圖表</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: mode === 3}" @click="mode = 3">Simple Rotation</a>
+                <a class="nav-link" :class="{active: mode === 3}" @click="mode = 3">簡易循環</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: mode === 4}" @click="mode = 4">Buff Status</a>
+                <a class="nav-link" :class="{active: mode === 4}" @click="mode = 4">增益狀態</a>
             </li>
         </ul>
         <keep-alive>

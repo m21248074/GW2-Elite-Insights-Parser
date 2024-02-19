@@ -1,62 +1,60 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills mr-1 scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="autoattack = !autoattack" :class="{active: autoattack}">Show auto
-                        attacks</a>
+                    <a class="nav-link" @click="autoattack = !autoattack" :class="{active: autoattack}">顯示自動攻擊</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideInterruptedAA = !hideInterruptedAA"
-                        :class="{active: hideInterruptedAA}">Hide interrupted auto attacks</a>
+                       :class="{active: hideInterruptedAA}">隱藏被打斷的自動攻擊</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideSmallTime = !hideSmallTime"
-                        :class="{active: hideSmallTime}">Hide < 10ms</a>
+                        :class="{active: hideSmallTime}">隱藏小於10毫秒</a>
                 </li>
             </ul>      
             <ul class="nav nav-pills ml-1 mr-1 scale85">
                 <li class="nav-item">
                     <a class="nav-link" @click="hideInstantCast = !hideInstantCast"
-                        :class="{active: hideInstantCast}">Hide all instant cast</a>
+                        :class="{active: hideInstantCast}">隱藏所有即時施法</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideInstantCastSkill = !hideInstantCastSkill"
-                        :class="{active: hideInstantCastSkill, disabled: hideInstantCast}">Hide instant cast skills</a>
+                        :class="{active: hideInstantCastSkill, disabled: hideInstantCast}">隱藏即時施法技能</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideGearProc = !hideGearProc"
-                        :class="{active: hideGearProc, disabled: hideInstantCast}">Hide gear procs</a>
+                        :class="{active: hideGearProc, disabled: hideInstantCast}">隱藏裝備施法</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideTraitProc = !hideTraitProc"
-                        :class="{active: hideTraitProc, disabled: hideInstantCast}">Hide trait procs</a>
+                        :class="{active: hideTraitProc, disabled: hideInstantCast}">隱藏特性施法</a>
                 </li>
             </ul>
             <ul class="nav nav-pills ml-1 scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="small = !small" :class="{active: small}">Small icons</a>
+                    <a class="nav-link" @click="small = !small" :class="{active: small}">小圖示</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="smallAA = !smallAA" :class="{active: smallAA}">Small auto attack
-                        icons</a>
+                    <a class="nav-link" @click="smallAA = !smallAA" :class="{active: smallAA}">自動攻擊小圖示</a>
                 </li>
             </ul>
         </div>
         <div style="z-index: 1;" class="mb-4 mt-2">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Filter Skills" style="font-size: 1.1em;">
-                Skills <span class="caret"></span>
+                技能 <span class="caret"></span>
             </a>
             <ul class="dropdown-menu p-2 font-weight-normal" style="min-width: 165px; max-width: 165px;">
                 <div class="d-flex flex-column justify-content-center align-items-center mb-1"
                     style="border-bottom: 2px solid #bbb;">
                     <li>
                         <button style="width:130px; padding: 0.4rem 0.4rem;" type="button" class="btn btn-primary btn-sm"
-                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = true;}" @click.stop="stopClickEvent">Select all</button>
+                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = true;}" @click.stop="stopClickEvent">選擇全部</button>
                     </li>
                     <li class="mb-1">
                         <button style="width:130px; padding: 0.4rem 0.4rem;" type="button" class="btn btn-primary btn-sm"
-                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = false;}" @click.stop="stopClickEvent">Deselect all</button>
+                            @click="for (var i = 0; i < skillList.length; i++) {selectedSkills['s' + skillList[i].id] = false;}" @click.stop="stopClickEvent">取消選擇全部</button>
                     </li>
                 </div>
                 <li v-for="(skill, index) in skillList" :key="index">
@@ -76,22 +74,22 @@
         </span>
         <div class="card mt-2">
             <div class="card-body container">
-                <p><u>Outline</u></p>
+                <p><u>外框</u></p>
                 <span class="mr-1"
                     style="padding: 2px; background-color:#999999; border-style:solid; border-width: 3px; border-color:#00FF00; color:#000000">
-                    Full After Cast
+                    完整施法後延遲
                 </span>
                 <span class="mr-1"
                     style="padding: 2px; background-color:#999999; border-style:solid; border-width: 3px; border-color:#FF0000; color:#000000">
-                    Interrupted
+                    被打斷
                 </span>
                 <span class="mr-1" 
                     style="padding: 2px; background-color:#999999; border-style:solid; border-width: 3px; border-color:#00FFFF; color:#000000">
-                    Instant
+                    即時
                 </span>
                 <span class="mr-1"
                     style="padding: 2px; background-color:#999999; border-style:solid; border-width: 3px; border-color:#FFFF00; color:#000000">
-                    Unknown
+                    未知
                 </span>
             </div>
         </div>

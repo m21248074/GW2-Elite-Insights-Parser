@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <div v-if="player.minions.length > 0">
             <ul class="nav nav-tabs">
@@ -14,10 +14,10 @@
         <div v-if="!targetless" class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="targetmode = 1" :class="{active: targetmode}">Target</a>
+                    <a class="nav-link" @click="targetmode = 1" :class="{active: targetmode}">目標</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="targetmode = 0" :class="{active: !targetmode }">All</a>
+                    <a class="nav-link" @click="targetmode = 0" :class="{active: !targetmode }">全部</a>
                 </li>
             </ul>
         </div>

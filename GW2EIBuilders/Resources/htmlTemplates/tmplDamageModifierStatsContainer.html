@@ -1,13 +1,11 @@
-<template>
+﻿<template>
     <div>
         <ul class="nav nav-tabs" v-if="hasIncDamageMods && hasOutDamageMods">
             <li>
-                <a class="nav-link" :class="{active: mode === 0}" @click="mode = 0"> Outgoing Damage
-                    Modifiers </a>
+                <a class="nav-link" :class="{active: mode === 0}" @click="mode = 0"> 輸出傷害修正 </a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: mode === 1}" @click="mode = 1"> Incoming Damage
-                    Modifiers </a>
+                <a class="nav-link" :class="{active: mode === 1}" @click="mode = 1"> 承受傷害修正 </a>
             </li>
         </ul>
         <keep-alive>

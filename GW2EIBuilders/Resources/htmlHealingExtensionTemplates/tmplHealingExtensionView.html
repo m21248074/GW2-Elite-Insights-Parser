@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center mt-1" id="healing-phase-nav">
             <phase-component :phases="reactiveLogdata.phases"></phase-component>
@@ -12,25 +12,25 @@
             </div>
         </div>     
         <h2 class="text-center">{{ name }}</h2>
-        <h6 class="text-center" v-if="!everybodyRunning">Data may be incomplete due to not everybody running the <a href="https://github.com/Krappa322/arcdps_healing_stats/releases">healing stats addon</a>. Make sure to enable its logging features.</h6>
+        <h6 class="text-center" v-if="!everybodyRunning">由於並非每個人都使用<a href="https://github.com/Krappa322/arcdps_healing_stats/releases">治療統計插件</a>，故資料可能不完整。 確保啟用其日誌記錄功能。</h6>
         <ul class="nav nav-tabs">
             <li>
-                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">Healing Stats</a>
+                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">治療統計</a>
             </li>    
             <li>
-                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">Buffs</a>
+                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">增益</a>
             </li>         
             <li v-if="hasMechanics">
-                <a class="nav-link" :class="{active: tab === 2}" @click="tab = 2">Mechanics</a>
+                <a class="nav-link" :class="{active: tab === 2}" @click="tab = 2">機制</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: tab === 3}" @click="tab = 3">Healing Graph</a>
+                <a class="nav-link" :class="{active: tab === 3}" @click="tab = 3">治療圖表</a>
             </li>    
             <li v-if="players.length > 1">
-                <a class="nav-link" :class="{active: tab === 4}" @click="tab = 4">Rotations</a>
+                <a class="nav-link" :class="{active: tab === 4}" @click="tab = 4">循環</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: tab === 5}" @click="tab = 5">Player Healing Summary</a>
+                <a class="nav-link" :class="{active: tab === 5}" @click="tab = 5">玩家治療總結</a>
             </li>
         </ul>
 
@@ -85,7 +85,7 @@
                 return -1;
             },
             name: function () {
-                return this.phase.name + " Healing Summary";
+                return this.phase.name + " 治療總結";
             },
             activePlayerTargets: function () {
                 var res = [];

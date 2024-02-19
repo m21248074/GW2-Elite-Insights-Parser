@@ -1,14 +1,13 @@
-<template>
+﻿<template>
     <div>    
         <div :key="'activedurationplayer'" class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 0" :class="{active: activeduration === 0}">Phase
-                        duration</a>
+                    <a class="nav-link" @click="activeduration = 0" :class="{active: activeduration === 0}">階段持續時間</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 1" data-original-title="Removed dead time and dc time"
-                        :class="{active: activeduration === 1 }">Phase active duration</a>
+                    <a class="nav-link" @click="activeduration = 1" data-original-title="去除死亡和斷線時間"
+                        :class="{active: activeduration === 1 }">階段存活持續時間</a>
                 </li>
             </ul>
         </div>

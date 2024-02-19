@@ -2,7 +2,7 @@
 {
     public class SkipException : EINonFatalException
     {
-        internal SkipException() : base("Option enabled - Failed logs are skipped")
+        internal SkipException() : base("選項已啟用 - 跳過敗戰日誌")
         {
         }
 

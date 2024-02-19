@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="d-flex flex-column justify-content-center align-items-center">
         <div v-if="showNormalPhases" class="mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center" style="max-width: 700px;">
@@ -21,14 +21,14 @@
             <div class="animation-control">
                 <div class="d-flex justify-content-center mb-1">
                     <div @click="toggleAnimate();" class="btn btn-small"
-                        :class="{'btn-dark': !light, 'btn-light': light}" style="width: 50px;">{{animated ? "Pause" :
-                        "Play"}}</div>
+                        :class="{'btn-dark': !light, 'btn-light': light}" style="width: 50px;">{{animated ? "暫停" :
+                        "播放"}}</div>
                     <div @click="restartAnimate();" class="btn btn-small"
                         :class="{'btn-dark': !light, 'btn-light': light}">
-                        Restart
+                        重新開始
                     </div>
                     <div @click="toggleBackwards();" class="btn btn-small"
-                        :class="{'active': backwards, 'btn-dark': !light, 'btn-light': light}">Backwards</div>
+                        :class="{'active': backwards, 'btn-dark': !light, 'btn-light': light}">倒放</div>
                 </div>
                 <div class="d-flex justify-content-center slidercontainer mt-1">
                     <input style="min-width: 400px;" @input="updateTime($event.target.value)" type="range" min="0"
@@ -46,7 +46,7 @@
                         {{speed}}x
                     </label>
                 </div>
-                <p class="text-justify text-center">Double click on canvas to restore viewpoint</p>
+                <p class="text-justify text-center">雙擊回放畫面恢復視角</p>
             </div>
         </div>
     </div>

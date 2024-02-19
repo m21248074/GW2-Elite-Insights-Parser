@@ -77,7 +77,7 @@ namespace GW2EIParser
             this.LblHeader.Name = "LblHeader";
             this.LblHeader.Size = new System.Drawing.Size(279, 20);
             this.LblHeader.TabIndex = 4;
-            this.LblHeader.Text = "Drag and Drop EVTC file(s) below";
+            this.LblHeader.Text = "拖放 EVTC 檔案至下面";
             this.LblHeader.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // BtnParse
@@ -87,7 +87,7 @@ namespace GW2EIParser
             this.BtnParse.Name = "BtnParse";
             this.BtnParse.Size = new System.Drawing.Size(235, 23);
             this.BtnParse.TabIndex = 10;
-            this.BtnParse.Text = "Parse All";
+            this.BtnParse.Text = "解析全部";
             this.BtnParse.UseVisualStyleBackColor = true;
             this.BtnParse.Click += new System.EventHandler(this.BtnParseClick);
             // 
@@ -98,7 +98,7 @@ namespace GW2EIParser
             this.BtnPopulate.Name = "BtnPopulate";
             this.BtnPopulate.Size = new System.Drawing.Size(154, 23);
             this.BtnPopulate.TabIndex = 10;
-            this.BtnPopulate.Text = "Populate from directory";
+            this.BtnPopulate.Text = "從資料夾導入";
             this.BtnPopulate.UseVisualStyleBackColor = true;
             this.BtnPopulate.Click += new System.EventHandler(this.BtnPopulateFromDirectory);
             // 
@@ -125,9 +125,8 @@ namespace GW2EIParser
             this.LblCustomPopulateLimit.Name = "LblCustomPopulateLimit";
             this.LblCustomPopulateLimit.Size = new System.Drawing.Size(65, 13);
             this.LblCustomPopulateLimit.TabIndex = 12;
-            this.LblCustomPopulateLimit.Text = "Time (hours)";
-            this.TlpMainWindow.SetToolTip(this.LblCustomPopulateLimit, "Files which were created before given hours ago will be ignored. Set to 0 for inf" +
-        "inite.");
+            this.LblCustomPopulateLimit.Text = "時間 (小時)";
+            this.TlpMainWindow.SetToolTip(this.LblCustomPopulateLimit, "在給定時間之前創建的檔案將被忽略。設定為0表示無限。");
             // 
             // BtnCancelAll
             // 
@@ -136,7 +135,7 @@ namespace GW2EIParser
             this.BtnCancelAll.Name = "BtnCancelAll";
             this.BtnCancelAll.Size = new System.Drawing.Size(75, 23);
             this.BtnCancelAll.TabIndex = 11;
-            this.BtnCancelAll.Text = "Cancel All";
+            this.BtnCancelAll.Text = "取消全部";
             this.BtnCancelAll.UseVisualStyleBackColor = true;
             this.BtnCancelAll.Click += new System.EventHandler(this.BtnCancelAllClick);
             // 
@@ -147,7 +146,7 @@ namespace GW2EIParser
             this.BtnSettings.Name = "BtnSettings";
             this.BtnSettings.Size = new System.Drawing.Size(75, 23);
             this.BtnSettings.TabIndex = 15;
-            this.BtnSettings.Text = "Settings";
+            this.BtnSettings.Text = "設定";
             this.BtnSettings.UseVisualStyleBackColor = true;
             this.BtnSettings.Click += new System.EventHandler(this.BtnSettingsClick);
             // 
@@ -158,7 +157,7 @@ namespace GW2EIParser
             this.BtnClearAll.Name = "BtnClearAll";
             this.BtnClearAll.Size = new System.Drawing.Size(75, 23);
             this.BtnClearAll.TabIndex = 16;
-            this.BtnClearAll.Text = "Clear All";
+            this.BtnClearAll.Text = "清除全部";
             this.BtnClearAll.UseVisualStyleBackColor = true;
             this.BtnClearAll.Click += new System.EventHandler(this.BtnClearAllClick);
             // 
@@ -195,17 +194,17 @@ namespace GW2EIParser
             this.LocationDataGridViewTextBoxColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.LocationDataGridViewTextBoxColumn.DataPropertyName = "InputFile";
             this.LocationDataGridViewTextBoxColumn.FillWeight = 60F;
-            this.LocationDataGridViewTextBoxColumn.HeaderText = "Input File";
+            this.LocationDataGridViewTextBoxColumn.HeaderText = "輸入檔案";
             this.LocationDataGridViewTextBoxColumn.Name = "LocationDataGridViewTextBoxColumn";
             this.LocationDataGridViewTextBoxColumn.ReadOnly = true;
-            this.LocationDataGridViewTextBoxColumn.ToolTipText = "Double left click to open input location";
+            this.LocationDataGridViewTextBoxColumn.ToolTipText = "雙擊左鍵開啟輸入位置";
             // 
             // StatusDataGridViewTextBoxColumn
             // 
             this.StatusDataGridViewTextBoxColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.StatusDataGridViewTextBoxColumn.DataPropertyName = "Status";
             this.StatusDataGridViewTextBoxColumn.FillWeight = 30F;
-            this.StatusDataGridViewTextBoxColumn.HeaderText = "Status";
+            this.StatusDataGridViewTextBoxColumn.HeaderText = "狀態";
             this.StatusDataGridViewTextBoxColumn.Name = "StatusDataGridViewTextBoxColumn";
             this.StatusDataGridViewTextBoxColumn.ReadOnly = true;
             // 
@@ -214,18 +213,17 @@ namespace GW2EIParser
             this.ParseButtonState.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.ParseButtonState.DataPropertyName = "ButtonText";
             this.ParseButtonState.FillWeight = 10F;
-            this.ParseButtonState.HeaderText = "Action";
+            this.ParseButtonState.HeaderText = "操作";
             this.ParseButtonState.Name = "ParseButtonState";
             this.ParseButtonState.ReadOnly = true;
-            this.ParseButtonState.ToolTipText = "Left click open files and output location\r\nRight click to copy dps.report link to" +
-    " clipboard, if applicable\r\nMiddle click to only open output location";
+            this.ParseButtonState.ToolTipText = "左鍵開啟檔案和輸出檔案位置\r\n如果可用，右鍵複製 dps.report 連結至剪貼簿\r\n中鍵僅開啟輸出檔案位置";
             // 
             // ReParseButtonState
             // 
             this.ReParseButtonState.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.ReParseButtonState.DataPropertyName = "ReParseText";
-            this.ReParseButtonState.FillWeight = 10F;
-            this.ReParseButtonState.HeaderText = "Re-Parse";
+            this.ReParseButtonState.FillWeight = 11F;
+            this.ReParseButtonState.HeaderText = "重新解析";
             this.ReParseButtonState.Name = "ReParseButtonState";
             this.ReParseButtonState.ReadOnly = true;
             this.ReParseButtonState.ToolTipText = "Only useable if the file was already successfully parsed";
@@ -241,8 +239,8 @@ namespace GW2EIParser
             this.BtnClearFailed.Name = "BtnClearFailed";
             this.BtnClearFailed.Size = new System.Drawing.Size(75, 23);
             this.BtnClearFailed.TabIndex = 19;
-            this.BtnClearFailed.Text = "Clear Failed";
-            this.TlpMainWindow.SetToolTip(this.BtnClearFailed, "Removes from the list logs that could not be parsed");
+            this.BtnClearFailed.Text = "清除壞檔";
+            this.TlpMainWindow.SetToolTip(this.BtnClearFailed, "從清單中刪除無法解析的日誌");
             this.BtnClearFailed.UseVisualStyleBackColor = true;
             this.BtnClearFailed.Click += new System.EventHandler(this.BtnClearFailedClick);
             // 
@@ -253,8 +251,8 @@ namespace GW2EIParser
             this.BtnDiscordBatch.Name = "BtnDiscordBatch";
             this.BtnDiscordBatch.Size = new System.Drawing.Size(154, 23);
             this.BtnDiscordBatch.TabIndex = 20;
-            this.BtnDiscordBatch.Text = "Send all to Discord";
-            this.TlpMainWindow.SetToolTip(this.BtnDiscordBatch, "Send currently parsed logs with dps.report links to discord webhook in a batch");
+            this.BtnDiscordBatch.Text = "全部送至 Discord";
+            this.TlpMainWindow.SetToolTip(this.BtnDiscordBatch, "將目前解析的日誌與 dps.report 連結批次傳送到 Discord Webhook");
             this.BtnDiscordBatch.UseVisualStyleBackColor = true;
             this.BtnDiscordBatch.Click += new System.EventHandler(this.BtnDiscordBatchClick);
             // 
@@ -297,7 +295,7 @@ namespace GW2EIParser
             this.ChkApplicationTraces.Name = "ChkApplicationTraces";
             this.ChkApplicationTraces.Size = new System.Drawing.Size(59, 17);
             this.ChkApplicationTraces.TabIndex = 0;
-            this.ChkApplicationTraces.Text = "Traces";
+            this.ChkApplicationTraces.Text = "操作痕跡";
             this.ChkApplicationTraces.CheckedChanged += new System.EventHandler(this.ChkApplicationTracesCheckedChanged);
             // 
             // ChkAutoDiscordBatch
@@ -309,7 +307,7 @@ namespace GW2EIParser
             this.ChkAutoDiscordBatch.Name = "ChkAutoDiscordBatch";
             this.ChkAutoDiscordBatch.Size = new System.Drawing.Size(118, 17);
             this.ChkAutoDiscordBatch.TabIndex = 0;
-            this.ChkAutoDiscordBatch.Text = "Auto Discord Batch";
+            this.ChkAutoDiscordBatch.Text = "自動 Discord 批次上傳";
             this.ChkAutoDiscordBatch.CheckedChanged += new System.EventHandler(this.ChkAutoDiscordBatchCheckedChanged);
             // 
             // MainForm
@@ -336,7 +334,7 @@ namespace GW2EIParser
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(720, 300);
             this.Name = "MainForm";
-            this.Text = "GW2 Elite Insights Parser";
+            this.Text = "激戰2 Elite Insights 解析器";
             this.TransparencyKey = System.Drawing.Color.OrangeRed;
             ((System.ComponentModel.ISupportInitialize)(this.NumericCustomPopulateLimit)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.DgvFiles)).EndInit();

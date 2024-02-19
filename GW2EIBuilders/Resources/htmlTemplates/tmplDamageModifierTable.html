@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <div v-if="colPageCount > 0">
             <table-scroll-component :min="0" :max="colPageCount" :width="'600px'" :height="'10px'" :transform="'translate(500px)'" :pagestructure="colStructure"></table-scroll-component>
@@ -6,9 +6,9 @@
         <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%" :id="tableid">
             <thead>
                 <tr>
-                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">Sub</th>
+                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">小隊</th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')"></th>
-                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">Name</th>
+                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">角色名</th>
                     <th class="stat-cell" v-for="(modifier, index) in modifiers" :class="getHeaderClass('Data', index)" 
                         v-show="isInColPage(index)"
                         @click="sortBy('Data', index)":data-original-title="modifier.name + '<br>' + modifier.tooltip">
@@ -95,7 +95,7 @@
                 var sums = [];
                 var groups = [];
                 var total = {
-                    name: "Total",
+                    name: "全團",
                     data: []
                 };
                 var j;
@@ -107,7 +107,7 @@
                     }
                     if (!player.notInSquad && !groups[player.group]) {
                         groups[player.group] = {
-                            name: "Group" + player.group,
+                            name: "小隊" + player.group,
                             data: []
                         };
                     }
@@ -157,7 +157,7 @@
                 var sums = [];
                 var groups = [];
                 var total = {
-                    name: "Total",
+                    name: "全團",
                     data: []
                 };
                 var j;
@@ -169,7 +169,7 @@
                     }
                     if (!player.notInSquad && !groups[player.group]) {
                         groups[player.group] = {
-                            name: "Group" + player.group,
+                            name: "小隊" + player.group,
                             data: []
                         };
                     }
@@ -268,12 +268,12 @@
                 if (item[0] === 0) {
                     return null;
                 }
-                var hits = item[0] + " out of " + item[1] + " hits";
+                var hits = item[1] + "次中的" + item[0] + "次命中";
                 var percent;
                 if (mod.skillBased) {
-                    percent = this.round3(1000.0 * item[1] / this.phase.duration) + " hits/s";
+                    percent = "每秒命中" + this.round3(1000.0 * item[1] / this.phase.duration) + "次";
                 } else {
-                    percent = this.round3(100.0 * item[0] / item[1]) + " hit %";
+                    percent = this.round3(100.0 * item[0] / item[1]) + "% 命中率";
                 }
                 var res = hits + "<br>" + percent;
                 if (item[2] === 0) {
@@ -281,13 +281,13 @@
                 }
                 var gain;
                 if (mod.nonMultiplier) {
-                    gain = "Damage Done: ";
+                    gain = "造成傷害: ";
                 } else {
-                    gain = "Pure Damage: ";
+                    gain = "純傷: ";
                 }
                 gain += this.round(item[2]);
                 if (mod.nonMultiplier) {
-                    gain += "<br>Total Damage: " + this.round3(100.0 * item[2] / item[3]) + "%";
+                    gain += "<br>總傷: " + this.round3(100.0 * item[2] / item[3]) + "%";
                 }
                 return res + "<br>" + gain;
             },

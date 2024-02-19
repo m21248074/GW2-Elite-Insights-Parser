@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 var numberComponent = {
     methods: {
@@ -378,13 +378,13 @@ var targetTabGraphComponent = {
             var name = getDamageGraphName(this.graphdata.damagemode, this.graphdata.graphmode);
             switch (this.graphdata.dpsmode) {
                 case 0:
-                    name = "Full " + name;
+                    name = "全程 " + name;
                     break;
                 case -1:
-                    name = "Phase " + name;
+                    name = "階段 " + name;
                     break;
                 default:
-                    name = this.graphdata.dpsmode + "s " + name;
+                    name = this.graphdata.dpsmode + "秒 " + name;
                     break;
             }
             return name;

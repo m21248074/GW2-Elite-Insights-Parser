@@ -1,77 +1,77 @@
-<template>
+﻿<template>
     <div>
         <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%" :id="tableid">
             <thead>
                 <tr>
                     <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">
-                        Sub
+                        小隊
                     </th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')">
 
                     </th>
                     <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">
-                        Name
+                        角色名
                     </th>
                     <th class="text-left" :class="getHeaderClass('Account')" @click="sortBy('Account')">
-                        Account
+                        帳號
                     </th>
                     <th class="damage-cell" :class="getHeaderClass('Data', 0)" @click="sortBy('Data', 0)"
-                        data-original-title="Damage taken">
+                        data-original-title="承受傷害">
                         <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png"
                             alt="Damage Taken" class="icon icon-hover">
                     </th>
                     <th class="damage-cell" :class="getHeaderClass('Data', 1)" @click="sortBy('Data', 1)"
-                        data-original-title="Damage absorbed by barrier">
+                        data-original-title="屏障吸收傷害">
                         <img src="https://wiki.guildwars2.com/images/thumb/c/cc/Barrier.png/30px-Barrier.png"
                             alt="Damage Barrier" class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 2)" @click="sortBy('Data', 2)"
-                        data-original-title="Number of hits missed against">
+                        data-original-title="未擊中次數">
                         <img src="https://wiki.guildwars2.com/images/3/33/Blinded.png" alt="Missed"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 3)" @click="sortBy('Data', 3)"
-                        data-original-title="Number of times interrupted">
+                        data-original-title="被打斷次數">
                         <img src="https://wiki.guildwars2.com/images/7/79/Daze.png" alt="Interrupted"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4)"
-                        data-original-title="Number of times was invulnerable to damage">
+                        data-original-title="不受傷害的次數">
                         <img src="https://wiki.guildwars2.com/images/e/eb/Determined.png" alt="Ivuln"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5)"
-                        data-original-title="Number of evades">
+                        data-original-title="迴避次數">
                         <img src="https://wiki.guildwars2.com/images/e/e2/Evade.png" alt="Evaded"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6)"
-                        data-original-title="Number of times blocked an attack">
+                        data-original-title="格擋攻擊次數">
                         <img src="https://wiki.guildwars2.com/images/e/e5/Aegis.png" alt="Blocked"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7)"
-                        data-original-title="Number of dodge + mirage cloak">
+                        data-original-title="閃避數+幻象斗篷(Mirage Cloak)">
                         <img src="https://wiki.guildwars2.com/images/b/b2/Dodge.png" alt="Dodge"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 8)" @click="sortBy('Data', 8)"
-                        data-original-title="Condition Cleanse">
+                        data-original-title="清症">
                         <img src="https://wiki.guildwars2.com/images/1/12/Healing_Spring.png" alt="Condition Cleanse"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 10)" @click="sortBy('Data', 10)"
-                        data-original-title="Boon Strips">
+                        data-original-title="剝奪增益">
                         <img src="https://wiki.guildwars2.com/images/e/ec/Banish_Enchantment.png" alt="Boon Strips"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 12)" @click="sortBy('Data', 12)"
-                        data-original-title="Times downed">
+                        data-original-title="倒地次數">
                         <img src="https://wiki.guildwars2.com/images/c/c6/Downed_enemy.png" alt="Downs"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 16)" @click="sortBy('Data', 16)"
-                        data-original-title="Damage taken while downed">
+                        data-original-title="倒地時承受傷害">
                         <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
                             class="icon">
                             &#8658
@@ -80,7 +80,7 @@
                             class="icon">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 14)" @click="sortBy('Data', 14)"
-                        data-original-title="Times died">
+                        data-original-title="死亡次數">
                         <img src="https://wiki.guildwars2.com/images/4/4a/Ally_death_%28interface%29.png" alt="Dead"
                             class="icon icon-hover">
                     </th>
@@ -125,10 +125,10 @@
                     <td :class="getBodyClass('Data', 7)">
                         {{row.def[7]}}
                     </td>
-                    <td :class="getBodyClass('Data', 8)" :data-original-title="row.def[9] + ' seconds'">
+                    <td :class="getBodyClass('Data', 8)" :data-original-title="row.def[9] + ' 秒'">
                         {{row.def[8]}}
                     </td>
-                    <td :class="getBodyClass('Data', 10)" :data-original-title="row.def[11] + ' seconds'">
+                    <td :class="getBodyClass('Data', 10)" :data-original-title="row.def[11] + ' 秒'">
                         {{row.def[10]}}
                     </td>
                     <td :class="getBodyClass('Data', 12)" :data-original-title="row.def[13]">
@@ -261,13 +261,13 @@
                 for (i = 0; i < groups.length; i++) {
                     if (groups[i]) {
                         sums.push({
-                            name: "Group " + i,
+                            name: "小隊 " + i,
                             def: groups[i]
                         });
                     }
                 }
                 sums.push({
-                    name: "Total",
+                    name: "全團",
                     def: total
                 });
                 var res = {

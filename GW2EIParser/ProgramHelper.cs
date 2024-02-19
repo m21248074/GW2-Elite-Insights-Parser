@@ -471,7 +471,7 @@ namespace GW2EIParser
                     operation.UpdateProgressWithCancellationCheck("Program: XML created");
                 }
             }
-            operation.UpdateProgressWithCancellationCheck($"Completed for {result}ed {log.FightData.Logic.Extension}");
+            operation.UpdateProgressWithCancellationCheck($"已完成{result} {log.FightData.Logic.Extension}");
         }
 
     }

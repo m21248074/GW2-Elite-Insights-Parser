@@ -1,21 +1,21 @@
-<template>
+﻿<template>
     <div class="d-flex flex-column justify-content-end" :style="{'height': height}">
-        <div v-if="isPresent('Fight Specifics')">
+        <div v-if="isPresent('戰鬥特定')">
             <combat-replay-buff-display :buffarray="data.fightSpecifics"></combat-replay-buff-display>
         </div>
-        <div v-if="isPresent('Others')">
+        <div v-if="isPresent('其他')">
             <combat-replay-buff-display :buffarray="data.others"></combat-replay-buff-display>
         </div>
-        <div v-if="isPresent('Conditions')">
+        <div v-if="isPresent('症狀')">
             <combat-replay-buff-display :buffarray="data.conditions"></combat-replay-buff-display>
         </div>      
-        <div v-if="isPresent('Shared')">
+        <div v-if="isPresent('共享')">
             <combat-replay-buff-display :buffarray="data.shared"></combat-replay-buff-display>
         </div>  
-        <div v-if="isPresent('Boons')">
+        <div v-if="isPresent('恩賜')">
             <combat-replay-buff-display :buffarray="data.boons"></combat-replay-buff-display>
         </div>
-        <div v-if="isPresent('Consumables')" >
+        <div v-if="isPresent('消耗品')" >
             <combat-replay-buff-display :buffarray="data.consumables"></combat-replay-buff-display>
         </div>
     </div>
@@ -66,21 +66,21 @@
                     var id = data.id;
                     var buff = findSkill(true, id);
                     if (buff.consumable) {
-                        res.add("Consumables");
+                        res.add("消耗品");
                     } else if (buff.fightSpecific) {
-                        res.add("Fight Specifics");
+                        res.add("戰鬥特定");
                     } else if (this.boons.has(id)) {
-                        res.add("Boons");
+                        res.add("恩賜");
                     } else if (this.offs.has(id)) {
-                        res.add("Shared");
+                        res.add("共享");
                     } else if (this.defs.has(id)) {
-                        res.add("Shared");
+                        res.add("共享");
                     } else if (this.sups.has(id)) {
-                        res.add("Shared");
+                        res.add("共享");
                     } else if (this.conditions.has(id)) {
-                        res.add("Conditions");
+                        res.add("症狀");
                     } else {
-                        res.add("Others");
+                        res.add("其他");
                     }
                 }
                 return res;
@@ -142,42 +142,42 @@
                     var buff = findSkill(true, id);
                     if (buff.consumable) {
                         arrayToFill = res.consumables;
-                        if (!this.buffsToShowSet.has("Consumables")) {
+                        if (!this.buffsToShowSet.has("消耗品")) {
                             continue;
                         }
                     } else if (buff.fightSpecific) {
                         arrayToFill = res.fightSpecifics;
-                        if (!this.buffsToShowSet.has("Fight Specifics")) {
+                        if (!this.buffsToShowSet.has("戰鬥特定")) {
                             continue;
                         }
                     } else if (this.boons.has(id)) {
                         arrayToFill = res.boons;
-                        if (!this.buffsToShowSet.has("Boons")) {
+                        if (!this.buffsToShowSet.has("恩賜")) {
                             continue;
                         }
                     } else if (this.offs.has(id)) {
                         arrayToFill = res.shared;
-                        if (!this.buffsToShowSet.has("Shared")) {
+                        if (!this.buffsToShowSet.has("共享")) {
                             continue;
                         }
                     } else if (this.defs.has(id)) {
                         arrayToFill = res.shared;
-                        if (!this.buffsToShowSet.has("Shared")) {
+                        if (!this.buffsToShowSet.has("共享")) {
                             continue;
                         }
                     } else if (this.sups.has(id)) {
                         arrayToFill = res.shared;
-                        if (!this.buffsToShowSet.has("Shared")) {
+                        if (!this.buffsToShowSet.has("共享")) {
                             continue;
                         }
                     } else if (this.conditions.has(id)) {
                         arrayToFill = res.conditions;
-                        if (!this.buffsToShowSet.has("Conditions")) {
+                        if (!this.buffsToShowSet.has("症狀")) {
                             continue;
                         }
                     } else {
                         arrayToFill = res.others;
-                        if (!this.buffsToShowSet.has("Others")) {
+                        if (!this.buffsToShowSet.has("其他")) {
                             continue;
                         }
                     }

@@ -1,43 +1,43 @@
-<template>
+﻿<template>
     <div>
         <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%" :id="tableid">
             <thead>
                 <tr>
-                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">Sub</th>
+                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">小隊</th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')"></th>
-                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">Name</th>
-                    <th :class="getHeaderClass('Account')" @click="sortBy('Account')">Account</th>
-                    <th v-if="!targetless" :class="getHeaderClass('Data', 0)" @click="sortBy('Data', 0)" data-original-title="Power + Condition" class="damage-cell">
-                        Target <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="All"
+                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">角色名</th>
+                    <th :class="getHeaderClass('Account')" @click="sortBy('Account')">帳號</th>
+                    <th v-if="!targetless" :class="getHeaderClass('Data', 0)" @click="sortBy('Data', 0)" data-original-title="直傷 + 症狀" class="damage-cell">
+                        目標 <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="All"
                             class="icon">
                     </th>
-                    <th v-if="!targetless" :class="getHeaderClass('Data', 1)" @click="sortBy('Data', 1)" data-original-title="Power" class="damage-cell">
-                        Target <img src="https://wiki.guildwars2.com/images/2/23/Power.png" alt="Power"
+                    <th v-if="!targetless" :class="getHeaderClass('Data', 1)" @click="sortBy('Data', 1)" data-original-title="直傷" class="damage-cell">
+                        目標 <img src="https://wiki.guildwars2.com/images/2/23/Power.png" alt="Power"
                              class="icon">
                     </th>
-                    <th v-if="!targetless" :class="getHeaderClass('Data', 2)" @click="sortBy('Data', 2)" data-original-title="Condition" class="damage-cell">
-                        Target <img src="https://wiki.guildwars2.com/images/5/54/Condition_Damage.png" alt="Condition"
+                    <th v-if="!targetless" :class="getHeaderClass('Data', 2)" @click="sortBy('Data', 2)" data-original-title="症狀" class="damage-cell">
+                        目標 <img src="https://wiki.guildwars2.com/images/5/54/Condition_Damage.png" alt="Condition"
+                                class="icon">
+                    </th>
+                    <th :class="getHeaderClass('Data', 3)" @click="sortBy('Data', 3)" v-if="!targetless && hasBreakbarDamage" data-original-title="蔑視條" class="damage-cell">
+                        目標 <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png" alt="Breakbar"
+                                class="icon">
+                    </th>
+                    <th :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4)" data-original-title="直傷 + 症狀" class="damage-cell">
+                        全部 <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="All"
                         class="icon">
                     </th>
-                    <th :class="getHeaderClass('Data', 3)" @click="sortBy('Data', 3)" v-if="!targetless && hasBreakbarDamage" data-original-title="Breakbar" class="damage-cell">
-                        Target <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png" alt="Breakbar"
-                        class="icon">
+                    <th :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5)" data-original-title="直傷" class="damage-cell">
+                        全部 <img src="https://wiki.guildwars2.com/images/2/23/Power.png" alt="Power"
+                                class="icon">
                     </th>
-                    <th :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4)" data-original-title="Power + Condition" class="damage-cell">
-                        All <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="All"
-                        class="icon">
+                    <th :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6)" data-original-title="症狀" class="damage-cell">
+                        全部 <img src="https://wiki.guildwars2.com/images/5/54/Condition_Damage.png" alt="Condition"
+                                class="icon">
                     </th>
-                    <th :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5)" data-original-title="Power" class="damage-cell">
-                        All <img src="https://wiki.guildwars2.com/images/2/23/Power.png" alt="Power"
-                        class="icon">
-                    </th>
-                    <th :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6)" data-original-title="Condition" class="damage-cell">
-                        All <img src="https://wiki.guildwars2.com/images/5/54/Condition_Damage.png" alt="Condition"
-                        class="icon">
-                    </th>
-                    <th :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7)" v-if="hasBreakbarDamage" data-original-title="Breakbar" class="damage-cell">
-                        All <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png" alt="Breakbar"
-                        class="icon">
+                    <th :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7)" v-if="hasBreakbarDamage" data-original-title="蔑視條" class="damage-cell">
+                        全部 <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png" alt="Breakbar"
+                                class="icon">
                     </th>
                 </tr>
             </thead>
@@ -164,7 +164,7 @@
                 return rows;
             },
             computeTotalContribution: function (index, row, sums) {
-                return this.round2(row[index] * 100 / sums[sums.length - 1].dps[index]) + '% of total';
+                return '佔全團的' + this.round2(row[index] * 100 / sums[sums.length - 1].dps[index]) + '%';
             },
             computeGroupContribution: function (groupIndex, index, row, sums) {
                 var sumId = 0;
@@ -173,10 +173,10 @@
                         break;
                     }
                 }
-                return this.round2(row[index] * 100 / sums[sumId].dps[index]) + '% of group';
+                return '佔小隊的' + this.round2(row[index] * 100 / sums[sumId].dps[index]) + '%';
             },
             getPlayerTooltip: function(index, row, sums) {
-                return (!this.showDamage ? row.dps[index] : this.round(row.dps[index]/this.phase.durationS)) + ' damage'+
+                return (!this.showDamage ? row.dps[index] : this.round(row.dps[index]/this.phase.durationS)) + '點傷害'+
                  '<br>' + this.computeTotalContribution(index, row.dps, sums) +
                  '<br>'+ this.computeGroupContribution(row.player.group, index, row.dps, sums);
             },
@@ -184,7 +184,7 @@
                 return this.showDamage ? row.dps[index] : this.round(row.dps[index]/this.phase.durationS)
             },
             getSumTooltip: function(index, row) {
-                return (!this.showDamage ? row.dps[index] : this.round(row.dps[index]/this.phase.durationS)) + ' damage';
+                return (!this.showDamage ? row.dps[index] : this.round(row.dps[index]/this.phase.durationS)) + '點傷害';
             },
             getSumCell: function(index, row) {
                 return this.showDamage ? row.dps[index] : this.round(row.dps[index]/this.phase.durationS)
@@ -237,13 +237,13 @@
                 for (i = 0; i < groups.length; i++) {
                     if (groups[i]) {
                         sums.push({
-                            name: "Group " + i,
+                            name: "小隊 " + i,
                             dps: groups[i]
                         });
                     }
                 }
                 sums.push({
-                    name: "Total",
+                    name: "全團",
                     dps: total
                 });
                 var res = {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="d-flex flex-row">
         <img class="icon mr-1" src="https://i.imgur.com/nSYuby8.png" :data-original-title="scoreExpl" />
         <div class="d-flex flex-column" style="max-width: 900px;">
@@ -65,9 +65,9 @@
                 this.players[id].active = true;
             },
             computeExtensionTooltip: function(data) {
-                var str = "Player is running: <br>";
+                var str = "此玩家正在使用: <br>";
                 for (var i = 0; i < data.length; i++) {
-                    str += "- " + data[i] + " Extension";
+                    str += "- " + data[i] + " 擴充插件";
                     if (i !== data.length - 1) {
                         str += "<br>";
                     }

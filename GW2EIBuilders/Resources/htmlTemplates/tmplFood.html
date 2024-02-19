@@ -1,31 +1,30 @@
-<template>
+﻿<template>
     <div class="mt-2">
         <div v-if="data.start.length">
-            Started with:
+            使用下列消耗品開始:
             <ul>
                 <li v-for="initial in data.start">
                     {{initial.name}} <img class="icon" :alt="initial.name" :data-original-title="initial.description"
                         :src="initial.icon">
-                    {{initial.stack > 1 ? "("+initial.stack+")" : ""}} ({{initial.duration}}
-                    seconds remaining)
+                    {{initial.stack > 1 ? "("+initial.stack+")" : ""}} (還剩 {{initial.duration}} 秒)
                 </li>
             </ul>
         </div>
         <div v-if="data.refreshed.length">
-            In phase consumable updates:
+            在階段時消耗品更新:
             <ul>
                 <li v-for="refresh in data.refreshed">
                     {{refresh.dimished ? 'suffered' : 'consumed'}} {{refresh.name}}
                     <img class="icon" :alt="refresh.name" :data-original-title="refresh.description"
                         :src="refresh.icon">
                     {{refresh.stack > 1 ? "("+refresh.stack+")" : ""}}
-                    at {{round3(refresh.time - phase.start)}}s ({{refresh.duration}}
-                    seconds)
+                    在 {{round3(refresh.time - phase.start)}} 秒時 ({{refresh.duration}}
+                    秒)
                 </li>
             </ul>
         </div>
         <div v-if="!data.refreshed.length && !data.start.length" class="text-center">
-            <h3>No consumable activity</h3>
+            <h3>無使用消耗品</h3>
         </div>
     </div>
 </template>

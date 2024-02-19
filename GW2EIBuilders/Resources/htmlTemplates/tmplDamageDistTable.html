@@ -1,24 +1,20 @@
-<template>
+﻿<template>
     <div>
         <div v-if="actor !== null" class="mb-1 mt-1">
             <div v-if="isminion">
                 <p style="display: table-row;">
-                    {{actor.name}} did {{round3(100*dmgdist.contributedDamage/dmgdist.totalDamage)}}% of its master's total
-                    {{istarget ? 'Target' :''}} damage ({{dmgdist.contributedDamage}})
+                    {{actor.name}} 造成了其主人總{{istarget ? '目標' :''}}傷害的 {{round3(100*dmgdist.contributedDamage/dmgdist.totalDamage)}}% ({{dmgdist.contributedDamage}})
                 </p>
                 <p v-if="hasBreakbarDamage && dmgdist.contributedBreakbarDamage > 0" style="display: table-row;">
-                    {{actor.name}} did {{round3(100*dmgdist.contributedBreakbarDamage/dmgdist.totalBreakbarDamage)}}% of its master's total
-                    {{istarget ? 'Target' :''}} breakbar damage ({{round1(dmgdist.contributedBreakbarDamage)}})
+                    {{actor.name}}  造成了其主人總{{istarget ? '目標' :''}}蔑視條傷害的 {{round3(100*dmgdist.contributedBreakbarDamage/dmgdist.totalBreakbarDamage)}}% ({{round1(dmgdist.contributedBreakbarDamage)}})
                 </p>
             </div>
             <div v-else>
                 <p style="display: table-row;">
-                    {{actor.name}} did {{round3(100*dmgdist.contributedDamage/dmgdist.totalDamage)}}% of their total {{istarget ?
-                        'Target' :''}} damage ({{dmgdist.contributedDamage}})
+                    {{actor.name}} 造成了總{{istarget ? '目標' :''}}傷害的 {{round3(100*dmgdist.contributedDamage/dmgdist.totalDamage)}}% ({{dmgdist.contributedDamage}})
                 </p>              
                 <p v-if="hasBreakbarDamage && dmgdist.contributedBreakbarDamage > 0" style="display: table-row;">
-                    {{actor.name}} did {{round3(100*dmgdist.contributedBreakbarDamage/dmgdist.totalBreakbarDamage)}}% of their total
-                    {{istarget ? 'Target' :''}} breakbar damage ({{round1(dmgdist.contributedBreakbarDamage)}})
+                    {{actor.name}} 造成了總{{istarget ? '目標' :''}}蔑視條傷害的 {{round3(100*dmgdist.contributedBreakbarDamage/dmgdist.totalBreakbarDamage)}}% ({{round1(dmgdist.contributedBreakbarDamage)}})
                 </p>
             </div>
         </div>
@@ -26,74 +22,74 @@
             <thead>
                 <tr>
                     <th class="text-left" :class="getHeaderClass('Skill')" @click="sortBy('Skill')">
-                        Skill
+                        技能
                     </th>
                     <th class="damage-dist-cell"  
                         :class="getHeaderClass('Data', 0)" @click="sortBy('Data', 0, x => getDamage(x))"
-                        data-original-title="% Damage">
+                        data-original-title="% 傷害">
                         % <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 1)" @click="sortBy('Data', 1, x => getDamage(x))"
-                        data-original-title="Damage">
+                        data-original-title="傷害">
                         <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
                             class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 2)" @click="sortBy('Data', 2, x => getBarrierDamage(x))"
-                        data-original-title="Damage against barrier. Not necessarily included in total damage">
+                        data-original-title="對屏障的傷害。 不一定包含在總傷害中">
                         <img src="https://wiki.guildwars2.com/images/thumb/c/cc/Barrier.png/30px-Barrier.png"
                             alt="Barrier Damage" class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 3)" @click="sortBy('Data', 3, x => getMinDamage(x))"    
-                        data-original-title="Minimum Damage">
-                        Min <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
+                        data-original-title="最小傷害">
+                        最小 <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4, x => round(getDamage(x)/getConnectedHits(x)))" 
-                        data-original-title="Average Damage">
-                        Avg <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
+                        data-original-title="平均傷害">
+                        平均 <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5, x => getMaxDamage(x))"    
-                        data-original-title="Maximum Damage">
-                        Max <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
+                        data-original-title="最大傷害">
+                        最大 <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
                         class="icon">
                     </th>
                     <th v-if="hasBreakbarDamage" class="damage-dist-cell"  
                         :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6, x => getBreakbarDamage(x))"    
-                        data-original-title="% Breakbar Damage">
+                        data-original-title="% 蔑視條傷害">
                         % <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png" alt="Breakbar"
                         class="icon">
                     </th>
                     <th v-if="hasBreakbarDamage" class="damage-dist-cell"  
                         :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7, x => getBreakbarDamage(x))" 
-                        data-original-title="Breakbar Damage">
+                        data-original-title="蔑視條傷害">
                         <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png" alt="Breakbar"
                         class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 8)" @click="sortBy('Data', 8, x => getCast(x))"
                         v-if="actor !== null">
-                        Cast
+                        施法數
                     </th>
                     <th class="damage-dist-cell"
                         :class="getHeaderClass('Data', 9)" @click="sortBy('Data', 9, x => getConnectedHits(x))">
-                        Hits
+                        命中數
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 10)" @click="sortBy('Data', 10, x => round2(getConnectedHits(x)/getCast(x)))"
-                        data-original-title="Hits per Cast">
+                        data-original-title="每次施法平均命中數">
                         <img src="https://wiki.guildwars2.com/images/thumb/5/53/Number_of_targets.png/20px-Number_of_targets.png"
                             alt="Hits per Cast" class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 11)" @click="sortBy('Data', 11, x => round2(getDamage(x)/(0.001 * getCastDuration(x))))"
-                        data-original-title="Damage divided by time spent in animation">
+                        data-original-title="傷害除以動畫所花費的時間">
                         <img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="Damage"
                             class="icon">
                         /
@@ -102,55 +98,55 @@
                     </th>                 
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 18)" @click="sortBy('Data', 18, x => getMinCastingTimeNoInterrupt(x))"    
-                        data-original-title="Minimum Casting Time (No interrupted skills)">
-                        Min <img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Activation Time"
+                        data-original-title="最快施法時間 (沒有被打斷的技能)">
+                        最小 <img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Activation Time"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 19)" @click="sortBy('Data', 19, x => round3(0.001 * getCastDurationNoInterrupt(x) / getCastNoInterrupt(x) ))" 
-                        data-original-title="Average Casting Time (No interrupted skills)">
-                        Avg <img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Activation Time"
+                        data-original-title="平均施法時間 (沒有被打斷的技能)">
+                        平均 <img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Activation Time"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 20)" @click="sortBy('Data', 20, x => getMaxCastingTimeNoInterrupt(x))"    
-                        data-original-title="Maximum Casting Time (No interrupted skills)">
-                        Max <img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Activation Time"
+                        data-original-title="最慢施法時間 (沒有被打斷的技能)">
+                        最大 <img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Activation Time"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 12)" @click="sortBy('Data', 12, x => round2(getCriticalHits(x)*100/getConnectedHits(x)))"
-                        data-original-title="Percent time hits critical">
+                        data-original-title="暴擊時間百分比">
                         <img src="https://wiki.guildwars2.com/images/9/95/Critical_Chance.png" alt="Crits"
                             class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 13)" @click="sortBy('Data', 13, x => round2(getFlankingHits(x)*100/getConnectedHits(x)))"
-                        data-original-title="Percent time hits while flanking">
+                        data-original-title="側擊時間百分比">
                         <img src="https://wiki.guildwars2.com/images/b/bb/Hunter%27s_Tactics.png" alt="Flank"
                             class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 14)" @click="sortBy('Data', 14, x => round2(getGlancingHits(x)*100/getConnectedHits(x)))"
-                        data-original-title="Percent time hits while glancing">
+                        data-original-title="虛弱時攻擊時間百分比">
                         <img src="https://wiki.guildwars2.com/images/f/f9/Weakness.png" alt="Glance"
                             class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 15)" @click="sortBy('Data', 15, x => round2(100 * getAgainstMovingHits(x)/getConnectedHits(x)))"
-                        data-original-title="Damage against moving">
+                        data-original-title="角色不能移動的傷害">
                         <img src="https://i.imgur.com/11uAbd4.png"
                             alt="Against Moving" class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 16)" @click="sortBy('Data', 16, x => getCastTimeWasted(x))"
-                        data-original-title="Time wasted interupting skill casts">
+                        data-original-title="中斷技能施放所浪費的時間">
                         <img src="https://wiki.guildwars2.com/images/b/b3/Out_Of_Health_Potions.png" alt="Wasted"
                             class="icon icon-hover">
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 17)" @click="sortBy('Data', 17, x => getCastTimeSaved(x))"
-                        data-original-title="Time saved(in seconds) interupting skill casts">
+                        data-original-title="中斷技能施放所節省的時間(以秒為單位)">
                         <img src="https://wiki.guildwars2.com/images/e/eb/Ready.png" alt="Saved"
                             class="icon icon-hover">
                     </th>
@@ -167,11 +163,11 @@
                         {{ round3(100*getDamage(row)/dmgdist.contributedDamage) }}%
                     </td>
                     <td :class="getBodyClass('Data', 1)"
-                        :data-original-title="round2(getDamage(row)/phase.durationS) +' dps'">
+                        :data-original-title="'每秒' + round2(getDamage(row)/phase.durationS) +'傷害'">
                         {{ getDamage(row) }}
                     </td>
                     <td :class="getBodyClass('Data', 2)"
-                        :data-original-title="round2(getBarrierDamage(row)/phase.durationS) +' dps'">
+                        :data-original-title="'每秒' + round2(getBarrierDamage(row)/phase.durationS) +'傷害'">
                         {{ getBarrierDamage(row) }}
                     </td>
                     <td :class="getBodyClass('Data', 3)">
@@ -187,54 +183,54 @@
                         {{ round3(100*getBreakbarDamage(row)/dmgdist.contributedBreakbarDamage) }}%
                     </td>
                     <td :class="getBodyClass('Data', 7)" v-if="hasBreakbarDamage" 
-                        :data-original-title="round2(getBreakbarDamage(row)/phase.durationS) +' bps'">
+                        :data-original-title="'每秒' + round2(getBreakbarDamage(row)/phase.durationS) +'蔑視條傷害'">
                         {{ getBreakbarDamage(row) }}
                     </td>
                     <td :class="getCastBodyClass('Data', 8, row)" v-if="actor !== null">
                         {{ (!getSkill(row).condi && getCast(row)) ? getCast(row) : ''}}
                     </td>
                     <td :class="getBodyClass('Data', 9)" 
-                        :data-original-title="(getAllHits(row) - getConnectedHits(row)) + ' hit(s) not connected'">
+                        :data-original-title="(getAllHits(row) - getConnectedHits(row)) + ' 次未命中'">
                         {{ getConnectedHits(row) }}
                     </td>
                     <td :class="getHitsPerCastBodyClass('Data', 10, row)" v-if="actor !== null" 
-                        :data-original-title=" (!getSkill(row).condi && getAllHits(row) && getCast(row)) ? (showInequality(row) ? '<= ' : '') + round2(getAllHits(row)/getCast(row)) + ' with missed hits' : false" >
+                        :data-original-title="'每次施法平均未命中' + (!getSkill(row).condi && getAllHits(row) && getCast(row)) ? (showInequality(row) ? '<= ' : '') + round2(getAllHits(row)/getCast(row)) + '次' : false" >
                         {{(!getSkill(row).condi && getConnectedHits(row) && getCast(row)) ? round2(getConnectedHits(row)/getCast(row)) : ''}}
                     </td>
                     <td :class="getBodyClass('Data', 11)" v-if="actor !== null">
                         {{(!getSkill(row).condi && getConnectedHits(row) && getCastDuration(row)) ? round2(getDamage(row)/(0.001 * getCastDuration(row))) : ''}}
                     </td>              
                     <td :class="getBodyClass('Data', 18)" v-if="actor !== null" >
-                        {{ getCastDurationNoInterrupt(row) ? round3(0.001 * getMinCastingTimeNoInterrupt(row)) + 's': ' '}}
+                        {{ getCastDurationNoInterrupt(row) ? round3(0.001 * getMinCastingTimeNoInterrupt(row)) + '秒': ' '}}
                     </td>
-                    <td :class="getBodyClass('Data', 19)" v-if="actor !== null" >
-                        {{ getCastDurationNoInterrupt(row) ? round3(0.001 * getCastDurationNoInterrupt(row) / getCastNoInterrupt(row) ) + 's'  : ' '}}
+                    <td :class="getBodyClass('Data', 19)" v-if="actor !== null">
+                        {{ getCastDurationNoInterrupt(row) ? round3(0.001 * getCastDurationNoInterrupt(row) / getCastNoInterrupt(row) ) + '秒'  : ' '}}
                     </td>
-                    <td :class="getBodyClass('Data', 20)" v-if="actor !== null" >
-                        {{ getCastDurationNoInterrupt(row) ? round3(0.001 * getMaxCastingTimeNoInterrupt(row)) + 's'  : ' '}}
+                    <td :class="getBodyClass('Data', 20)" v-if="actor !== null">
+                        {{ getCastDurationNoInterrupt(row) ? round3(0.001 * getMaxCastingTimeNoInterrupt(row)) + '秒'  : ' '}}
                     </td>
                     <td :class="getBodyClass('Data', 12)" 
-                        :data-original-title="(!getSkill(row).condi && getConnectedHits(row)) ? getCriticalHits(row) +' out of ' + getConnectedHits(row) + ' connected hit(s) <br> Damage: ' + getCriticalDamage(row) + '<br>' + round2(getCriticalDamage(row)*100/getDamage(row)) + '% of skill damage' : false">
+                        :data-original-title="getConnectedHits(row) + '次中的' + (!getSkill(row).condi && getConnectedHits(row)) ? getCriticalHits(row) +'次相關命中 <br> 傷害: ' + getCriticalDamage(row) + '<br>佔技能傷害' + round2(getCriticalDamage(row)*100/getDamage(row)) + '%' : false">
                         {{(!getSkill(row).condi && getConnectedHits(row)) ? round2(getCriticalHits(row)*100/getConnectedHits(row)) + '%' : ''}}
                     </td>
                     <td :class="getBodyClass('Data', 13)" 
-                        :data-original-title="(!getSkill(row).condi && getConnectedHits(row)) ? getFlankingHits(row) +' out of ' + getConnectedHits(row) + ' connected hit(s)': false">
+                        :data-original-title="getConnectedHits(row) + '次中的' + (!getSkill(row).condi && getConnectedHits(row)) ? getFlankingHits(row) +'次相關命中': false">
                         {{(!getSkill(row).condi && getConnectedHits(row)) ? round2(getFlankingHits(row)*100/getConnectedHits(row)) + '%' : ''}}
                     </td>
                     <td :class="getBodyClass('Data', 14)" 
-                        :data-original-title="(!getSkill(row).condi && getConnectedHits(row)) ? getGlancingHits(row) +' out of ' + getConnectedHits(row) + ' connected hit(s)': false">
+                        :data-original-title="getConnectedHits(row) + '次中的' + (!getSkill(row).condi && getConnectedHits(row)) ? getGlancingHits(row) +'次相關命中': false">
                         {{(!getSkill(row).condi && getConnectedHits(row)) ? round2(getGlancingHits(row)*100/getConnectedHits(row)) + '%' : ''}}
                     </td>
                     <td :class="getBodyClass('Data', 15)" 
-                        :data-original-title="getAgainstMovingHits(row) +' out of ' + getConnectedHits(row) + ' connected hit(s)'">
+                        :data-original-title="getConnectedHits(row) + '次中的' + getAgainstMovingHits(row) +'次相關命中'">
                         {{getConnectedHits(row) ? (round2(100 * getAgainstMovingHits(row)/getConnectedHits(row)) + '%') : ''}}
                     </td>
                     <td :class="getBodyClass('Data', 16)"  v-if="actor !== null"
-                        :data-original-title="getCastTimeWasted(row) ? round2(100.0 * getCastTimeWasted(row)/phase.durationS) + '% of the phase' : false">
+                        :data-original-title="getCastTimeWasted(row) ? '佔階段的' + round2(100.0 * getCastTimeWasted(row)/phase.durationS) + '%' : false">
                         {{ getCastTimeWasted(row) ? getCastTimeWasted(row) + 's' : ''}}
                     </td>
                     <td :class="getBodyClass('Data', 17)" v-if="actor !== null"
-                        :data-original-title="getCastTimeSaved(row) ? round2(100.0 * getCastTimeSaved(row)/phase.durationS) + '% of the phase' : false">
+                        :data-original-title="getCastTimeSaved(row) ? '佔階段的' + round2(100.0 * getCastTimeSaved(row)/phase.durationS) + '%' : false">
                         {{ getCastTimeSaved(row) ? getCastTimeSaved(row) + 's' : ''}}
                     </td>
                 </tr>
@@ -242,20 +238,20 @@
             <tfoot class="text-dark">
                 <tr>
                     <td class="text-left">
-                        Total
+                        總計
                     </td>
                     <td></td>
-                    <td :data-original-title="Math.round(dmgdist.contributedDamage/phase.durationS) +' dps'">
+                    <td :data-original-title="'每秒' + Math.round(dmgdist.contributedDamage/phase.durationS) +'傷害'">
                         {{dmgdist.contributedDamage}}
                     </td>
-                    <td :data-original-title="Math.round(dmgdist.contributedShieldDamage/phase.durationS) +' dps'">
+                    <td :data-original-title="'每秒' + Math.round(dmgdist.contributedShieldDamage/phase.durationS) +'傷害'">
                         {{dmgdist.contributedShieldDamage}}
                     </td>
                     <td></td>
                     <td></td>
                     <td></td>   
                     <td v-if="hasBreakbarDamage"></td>
-                    <td v-if="hasBreakbarDamage" :data-original-title="Math.round(dmgdist.contributedBreakbarDamage/phase.durationS) +' bps'">
+                    <td v-if="hasBreakbarDamage" :data-original-title="'每秒' + Math.round(dmgdist.contributedBreakbarDamage/phase.durationS) +'蔑視條傷害'">
                         {{dmgdist.contributedBreakbarDamage}}
                     </td>
                     <td v-if="actor !== null"></td>           

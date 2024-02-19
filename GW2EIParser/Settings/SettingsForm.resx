@@ -124,9 +124,9 @@
     <value>17, 17</value>
   </metadata>
   <data name="LblHtmlExternalScriptsCdn.ToolTip" xml:space="preserve">
-    <value>Fill in a CDN Url to place the external scripts only once and reuse it for your reports.
-Remember to think about CORS if you place those files on a seperate cdn server. 
-If set this url will be used for includes and absolute path will be overwritten.</value>
+    <value>填寫 CDN 網址以僅放置一次外部腳本並將其重複用於您的報告。
+如果您將這些檔案放在不同的 CDN 伺服器上，請記住考慮 CORS。 
+如果設置CDN，此網址將用於包含，而絕對路徑將被覆蓋。</value>
   </data>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>59</value>

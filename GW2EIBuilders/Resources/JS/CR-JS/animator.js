@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+﻿/*jshint esversion: 6 */
 /* jshint node: true */
 /*jslint browser: true */
 /* global logData*/
@@ -627,7 +627,7 @@ class Animator {
             ctx.font = "bold " + fontSize + "px Comic Sans MS";
             ctx.fillStyle = "#CC2200";
             ctx.textAlign = "center";
-            ctx.fillText((50 / (this.inchToPixel * this.scale)).toFixed(1) + " units", resolutionMultiplier * 95, resolutionMultiplier * 60);
+            ctx.fillText((50 / (this.inchToPixel * this.scale)).toFixed(1) + " 單位", resolutionMultiplier * 95, resolutionMultiplier * 60);
             ctx.restore();
             //ctx.globalCompositeOperation = 'normal';
         }

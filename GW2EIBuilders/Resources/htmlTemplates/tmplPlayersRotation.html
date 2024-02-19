@@ -1,19 +1,19 @@
-<template>
+﻿<template>
     <div>
         <div style="position:absolute; margin-top: 60px; z-index: 1;">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Filter Players" style="font-size: 1.1em;">
-                Players <span class="caret"></span>
+                玩家 <span class="caret"></span>
             </a>
             <ul class="dropdown-menu p-2 font-weight-normal" style="min-width: 165px; max-width: 165px;">
                 <div class="d-flex flex-column justify-content-center align-items-center mb-1"
                     style="border-bottom: 2px solid #bbb;">
                     <li>
                         <button style="width:130px; padding: 0.4rem 0.4rem;" type="button" class="btn btn-primary btn-sm"
-                            @click="for (var i = 0; i < selectedPlayers.length; i++) {selectedPlayers[i].selected = true;}" @click.stop="stopClickEvent">Select all</button>
+                            @click="for (var i = 0; i < selectedPlayers.length; i++) {selectedPlayers[i].selected = true;}" @click.stop="stopClickEvent">全選</button>
                     </li>
                     <li class="mb-1">
                         <button style="width:130px; padding: 0.4rem 0.4rem;" type="button" class="btn btn-primary btn-sm"
-                            @click="for (var i = 0; i < selectedPlayers.length; i++) {selectedPlayers[i].selected = false;}" @click.stop="stopClickEvent">Deselect all</button>
+                            @click="for (var i = 0; i < selectedPlayers.length; i++) {selectedPlayers[i].selected = false;}" @click.stop="stopClickEvent">取消全選</button>
                     </li>
                 </div>
                 <li v-for="(player, index) in _players" :key="index">
@@ -47,7 +47,7 @@
                 color: color
             },
             xaxis: {
-                title: 'Time(sec)',
+                title: '時間(秒)',
                 color: color,
                 gridcolor: color,
                 rangemode: 'nonnegative',

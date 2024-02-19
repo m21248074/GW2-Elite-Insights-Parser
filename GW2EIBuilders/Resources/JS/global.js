@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+﻿/*jshint esversion: 6 */
 "use strict";
 
 let apiRenderServiceOkay = true;
@@ -178,13 +178,13 @@ const SpecToBase = {
 };
 
 const SkillDecorationCategory = {
-    "Show On Select" : 1 << 0,
-    "Important Buffs": 1 << 1,
-    "Projectile Management": 1 << 2,
-    "Heal": 1 << 3,
-    "Cleanse": 1 << 4,
-    "Strip": 1 << 5,
-    "Portal": 1 << 6,
+    "選擇時顯示" : 1 << 0,
+    "重要增益": 1 << 1,
+    "投射物管理": 1 << 2,
+    "治療": 1 << 3,
+    "清症": 1 << 4,
+    "剝奪增益": 1 << 5,
+    "傳送門": 1 << 6,
 };
 
 let AllSkillDecorations = 0;

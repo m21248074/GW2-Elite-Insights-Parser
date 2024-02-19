@@ -1,24 +1,24 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="mode = 0" :class="{active: mode === 0}">Uptime</a>
+                    <a class="nav-link" @click="mode = 0" :class="{active: mode === 0}">維持時間</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="mode = 1" :class="{active: mode === 1 }">Generation Self</a>
+                    <a class="nav-link" @click="mode = 1" :class="{active: mode === 1 }">為自己產生</a>
                 </li>
                 <li v-if="!singlePlayer" class="nav-item">
                     <a class="nav-link" @click="mode = 2" :class="{active: mode === 2 }"
-                        data-original-title="Self excluded">Generation Group</a>
+                        data-original-title="不包括自己">為小隊產生</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="mode = 3" :class="{active: mode === 3 }"
-                        data-original-title="Self excluded">Generation Off-Group</a>
+                        data-original-title="不包括自己">為小隊外產生</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="mode = 4" :class="{active: mode === 4 }"
-                        data-original-title="Self excluded">Generation Squad</a>
+                        data-original-title="不包括自己">為全團產生</a>
                 </li>
             </ul>
         </div>
@@ -167,7 +167,7 @@
                                 groupAvg[i][k] = Math.round(1000 * groupAvg[i][k] / groupCount[i]) / 1000;
                             }
                             avg.push({
-                                name: "Group " + i,
+                                name: "小隊 " + i,
                                 data: groupAvg[i],
                                 avg: Math.round(1000 * groupBoonAvg[i] / groupCount[i]) / 1000
                             });
@@ -177,7 +177,7 @@
                         totalAvg[k] = Math.round(1000 * totalAvg[k] / totalCount) / 1000;
                     }
                     avg.push({
-                        name: "Total",
+                        name: "全團",
                         data: totalAvg,
                         avg: Math.round(1000 * totalBoonAvg / totalCount) / 1000
                     });

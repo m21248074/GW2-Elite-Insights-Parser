@@ -69,11 +69,11 @@ namespace GW2EIEvtcParser
             {
                 if (!evtc.Exists)
                 {
-                    throw new EvtcFileException("File " + evtc.FullName + " does not exist");
+                    throw new EvtcFileException("檔案 " + evtc.FullName + " 不存在");
                 }
                 if (!SupportedFileFormats.IsSupportedFormat(evtc.Name))
                 {
-                    throw new EvtcFileException("Not EVTC");
+                    throw new EvtcFileException("不是EVTC檔案");
                 }
                 ParsedEvtcLog evtcLog;
                 using (var fs = new FileStream(evtc.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))

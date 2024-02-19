@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>      
         <hps-graph-mode-selector-component :data="graphhealingdata"
             :phaseduration="this.phase.end - this.phase.start" :phasehassubphases="!!this.phase.subPhases" :column="false">
@@ -18,7 +18,7 @@
             var textColor = this.light ? '#495057' : '#cccccc';
             this.layout = {
                 yaxis: {
-                    title: 'HPS',
+                    title: '每秒治療量',
                     fixedrange: false,
                     rangemode: 'tozero',
                     gridcolor: textColor,
@@ -26,7 +26,7 @@
                     color: textColor
                 },
                 xaxis: {
-                    title: 'Time(sec)',
+                    title: '時間(秒)',
                     color: textColor,
                     gridcolor: textColor,
                     rangemode: 'nonnegative',
@@ -136,16 +136,16 @@
                 var name = getHealingGraphName(this.graphhealingdata.healingmode, this.graphhealingdata.graphmode);
                 switch (this.graphhealingdata.hpsmode) {
                     case 0:
-                        name = "Full " + name;
+                        name = "全程 " + name;
                         break;
                     case -1:
-                        name = "Phase " + name;
+                        name = "階段 " + name;
                         break;
                     default:                       
-                        name = this.graphhealingdata.hpsmode + "s " + name;
+                        name = this.graphhealingdata.hpsmode + "秒 " + name;
                         break;
                 }
-                name = (this.mode === 0 ? "Total " : (this.mode === 1 ? "Target " : "Cleave ")) + name;
+                name = (this.mode === 0 ? "全部 " : (this.mode === 1 ? "目標 " : "斬擊 ")) + name;
                 return name;
             },
             computeData: function () {

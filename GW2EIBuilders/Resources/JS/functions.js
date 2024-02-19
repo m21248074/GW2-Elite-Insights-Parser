@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+﻿/*jshint esversion: 6 */
 "use strict";
 
 function computeGradient(left, percent, right) {
@@ -76,13 +76,13 @@ function graphTypeEnumToString(mode) {
     var name = "";
     switch (mode) {
         case GraphType.DPS:
-            name = "DPS";
+            name = "秒傷";
             break;
         case GraphType.CenteredDPS:
-            name = "Centered DPS";
+            name = "中位秒傷";
             break;
         case GraphType.Damage:
-            name = "Damage";
+            name = "累計";
             break;
         default:
             break;
@@ -202,16 +202,16 @@ function damageTypeEnumToString(mode) {
     var name = "";
     switch (mode) {
         case DamageType.All:
-            name = "All";
+            name = "綜合傷害";
             break;
         case DamageType.Power:
-            name = "Power";
+            name = "直傷";
             break;
         case DamageType.Condition:
-            name = "Condition";
+            name = "症狀傷害";
             break;
         case DamageType.Breakbar:
-            name = "Breakbar";
+            name = "蔑視條";
             break;
         default:
             break;
@@ -220,7 +220,7 @@ function damageTypeEnumToString(mode) {
 }
 
 function getDamageGraphName(damageMode, graphMode) {
-    return damageTypeEnumToString(damageMode) + " " + graphTypeEnumToString(graphMode) + " Graph";
+    return damageTypeEnumToString(damageMode) + " " + graphTypeEnumToString(graphMode) + " 圖";
 }
 
 function computeRotationData(rotationData, images, data, phase, actor, yAxis) {
@@ -513,7 +513,7 @@ function getActorGraphLayout(images, color, hasBuffs) {
     return {
         barmode: 'stack',
         yaxis2: {
-            title: 'Rotation',
+            title: '循環',
             domain: hasBuffs ? [0.45, 0.54] : [0.0, 0.09],
             fixedrange: true,
             showgrid: false,
@@ -527,7 +527,7 @@ function getActorGraphLayout(images, color, hasBuffs) {
         hovermode: 'x',
         hoverdistance: 150,
         yaxis: {
-            title: 'Duration Buffs',
+            title: '增益持續時間',
             domain: hasBuffs ? [0.0, 0.44] : [0.0, 0.0],
             color: color,
             gridcolor: color,
@@ -538,7 +538,7 @@ function getActorGraphLayout(images, color, hasBuffs) {
             nticks: 1
         },
         yaxis4: {
-            title: 'Intensity Buffs',
+            title: '增益強度',
             domain: hasBuffs ? [0.0, 0.44] : [0.0, 0.0],
             color: color,
             gridcolor: color,
@@ -559,7 +559,7 @@ function getActorGraphLayout(images, color, hasBuffs) {
             color: color
         },
         xaxis: {
-            title: 'Time(sec)',
+            title: '時間(秒)',
             color: color,
             rangemode: 'nonnegative',
             gridcolor: color,

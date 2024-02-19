@@ -1,69 +1,69 @@
-<template>
+﻿<template>
     <div>
         <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%" :index="tableid">
             <thead>
                 <tr>
                     <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">
-                        Sub
+                        小隊
                     </th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')">
 
                     </th>
                     <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">
-                        Name
+                        角色名
                     </th>
                     <th class="text-left" :class="getHeaderClass('Account')" @click="sortBy('Account')">
-                        Account
+                        帳號
                     </th>
-                    <th data-original-title="All" class="damage-cell"
+                    <th data-original-title="全部" class="damage-cell"
                         :class="getHeaderClass('Data', 0)" @click="sortBy('Data', 0)">
-                        Target <img src="https://wiki.guildwars2.com/images/thumb/f/f3/Healing.png/20px-Healing.png" alt="All"
+                        目標 <img src="https://wiki.guildwars2.com/images/thumb/f/f3/Healing.png/20px-Healing.png" alt="All"
                                     class="icon">
                     </th>
-                    <th data-original-title="Healing Power" class="damage-cell"
+                    <th data-original-title="治療效果" class="damage-cell"
                         :class="getHeaderClass('Data', 1)" @click="sortBy('Data', 1)">
-                        Target <img src="https://wiki.guildwars2.com/images/8/81/Healing_Power.png" alt="Healing Power"
+                        目標 <img src="https://wiki.guildwars2.com/images/8/81/Healing_Power.png" alt="Healing Power"
                                     class="icon">
                     </th>
-                    <th data-original-title="Conversion" class="damage-cell"
+                    <th data-original-title="轉換(傷害->治療)" class="damage-cell"
                         :class="getHeaderClass('Data', 2)" @click="sortBy('Data', 2)">
-                        Target <img src="https://wiki.guildwars2.com/images/4/4a/Litany_of_Wrath.png" alt="Conversion"
+                        目標 <img src="https://wiki.guildwars2.com/images/4/4a/Litany_of_Wrath.png" alt="Conversion"
                                     class="icon">
                     </th>
-                    <th data-original-title="Downed Healing" class="damage-cell"
+                    <th data-original-title="倒地治療" class="damage-cell"
                         :class="getHeaderClass('Data', 3)" @click="sortBy('Data', 3)">
-                        Target <img src="https://wiki.guildwars2.com/images/3/3d/Downed_ally.png" alt="Downed Healing"
-                            class="icon">
+                        目標 <img src="https://wiki.guildwars2.com/images/3/3d/Downed_ally.png" alt="Downed Healing"
+                                class="icon">
                     </th>
-                    <th v-if="hasBarrier" data-original-title="Barrier" class="damage-cell"
+                    <th v-if="hasBarrier" data-original-title="屏障" class="damage-cell"
                         :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4)">
-                        Target <img src="https://wiki.guildwars2.com/images/thumb/c/cc/Barrier.png/30px-Barrier.png" alt="Barrier"
-                                 class="icon">
+                        目標 <img src="https://wiki.guildwars2.com/images/thumb/c/cc/Barrier.png/30px-Barrier.png" alt="Barrier"
+                                class="icon">
                     </th>
-                    <th data-original-title="All" class="damage-cell"
+                    <th data-original-title="全部" class="damage-cell"
                         :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5)">
-                        All <img src="https://wiki.guildwars2.com/images/thumb/f/f3/Healing.png/20px-Healing.png" alt="All"
+                        全部 <img src="https://wiki.guildwars2.com/images/thumb/f/f3/Healing.png/20px-Healing.png" alt="All"
                                  class="icon">
                     </th>
-                    <th data-original-title="Healing Power" class="damage-cell"
+                    <th data-original-title="治療效果" class="damage-cell"
                         :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6)">
-                        All <img src="https://wiki.guildwars2.com/images/8/81/Healing_Power.png" alt="Healing Power"
-                                 class="icon">
+                        全部 <img src="https://wiki.guildwars2.com/images/8/81/Healing_Power.png" alt="Healing Power"
+                                class="icon">
                     </th>
-                    <th data-original-title="Conversion" class="damage-cell"
+                    <th data-original-title="轉換(傷害->治療)" class="damage-cell"
                         :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7)">
-                        All <img src="https://wiki.guildwars2.com/images/4/4a/Litany_of_Wrath.png" alt="Conversion"
-                                 class="icon">
+                        全部 <img src="https://wiki.guildwars2.com/images/4/4a/Litany_of_Wrath.png" alt="Conversion"
+                                class="icon">
                     </th>
-                    <th data-original-title="Downed Healing" class="damage-cell"
+                    <th data-original-title="倒地治療" class="damage-cell"
                         :class="getHeaderClass('Data', 8)" @click="sortBy('Data', 8)">
-                        All <img src="https://wiki.guildwars2.com/images/3/3d/Downed_ally.png" alt="Downed Healing"
-                            class="icon ">
+                        全部 <img src="https://wiki.guildwars2.com/images/3/3d/Downed_ally.png" alt="Downed Healing"
+                                class="icon ">
                     </th>
-                    <th v-if="hasBarrier" data-original-title="Barrier" class="damage-cell"
+                    <th v-if="hasBarrier" data-original-title="屏障" class="damage-cell"
                         :class="getHeaderClass('Data', 9)" @click="sortBy('Data', 9)">
-                        All <img src="https://wiki.guildwars2.com/images/thumb/c/cc/Barrier.png/30px-Barrier.png" alt="Barrier"
-                                 class="icon">
+                        全部 <img src="https://wiki.guildwars2.com/images/thumb/c/cc/Barrier.png/30px-Barrier.png" alt="Barrier"
+                                class="icon">
                     </th>
                 </tr>
             </thead>
@@ -85,11 +85,11 @@
                         {{row.player.acc}}
                     </td>
                     <td v-if="!showHealing" v-for="(value, index) in row.hps" :class="getBodyClass('Data', index)"
-                        :data-original-title="value + ' total' + '<br>' + computeTotalContribution(index, row.hps,tableData.sums)+ '<br>'+ computeGroupContribution(row.player.group, index, row.hps,tableData.sums)">
+                        :data-original-title="'總治療量 ' + value + '<br>' + computeTotalContribution(index, row.hps,tableData.sums)+ '<br>'+ computeGroupContribution(row.player.group, index, row.hps,tableData.sums)">
                         {{round(value/phase.durationS)}}                
                     </td>
                     <td v-if="showHealing" v-for="(value, index) in row.hps" :class="getBodyClass('Data', index)"
-                        :data-original-title="round(value/phase.durationS) + ' per second' + '<br>' + computeTotalContribution(index, row.hps,tableData.sums)+ '<br>'+ computeGroupContribution(row.player.group, index, row.hps,tableData.sums)">
+                        :data-original-title="'每秒' + round(value/phase.durationS) + '<br>' + computeTotalContribution(index, row.hps,tableData.sums)+ '<br>'+ computeGroupContribution(row.player.group, index, row.hps,tableData.sums)">
                         {{value}}               
                     </td>
                 </tr>
@@ -102,10 +102,10 @@
                         {{sum.name}}
                     </td>
                     <td></td>
-                    <td v-if="!showHealing" v-for="(value, index) in sum.hps" :data-original-title="value + ' healing'">
+                    <td v-if="!showHealing" v-for="(value, index) in sum.hps" :data-original-title="value + ' 治療'">
                         {{round(value/phase.durationS)}}                
                     </td>
-                    <td v-if="showHealing" v-for="(value, index) in sum.hps" :data-original-title="round(value/phase.durationS) + ' hps'">
+                    <td v-if="showHealing" v-for="(value, index) in sum.hps" :data-original-title="'每秒' + round(value/phase.durationS) + ' 治療'">
                         {{value}}               
                     </td>
                 </tr>
@@ -167,7 +167,7 @@
                 return rows;
             },
             computeTotalContribution: function (index, row, sums) {
-                return this.round2(row[index] * 100 / sums[sums.length - 1].hps[index]) + '% of total';
+                return '占全團的' + this.round2(row[index] * 100 / sums[sums.length - 1].hps[index]) + '%';
             },
             computeGroupContribution: function (groupIndex, index, row, sums) {
                 var sumId = 0;
@@ -176,7 +176,7 @@
                         break;
                     }
                 }
-                return this.round2(row[index] * 100 / sums[sumId].hps[index]) + '% of group';
+                return '佔小隊的' + this.round2(row[index] * 100 / sums[sumId].hps[index]) + '%';
             }
         },
         computed: {
@@ -249,13 +249,13 @@
                 for (var i = 0; i < groups.length; i++) {
                     if (groups[i]) {
                         sums.push({
-                            name: "Group " + i,
+                            name: "小隊 " + i,
                             hps: groups[i]
                         });
                     }
                 }
                 sums.push({
-                    name: "Total",
+                    name: "全團",
                     hps: total
                 });
                 var res = {

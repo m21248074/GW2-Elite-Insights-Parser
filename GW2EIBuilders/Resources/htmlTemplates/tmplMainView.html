@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center mt-1" id="phase-nav">
             <phase-component :phases="reactiveLogdata.phases"></phase-component>
@@ -15,28 +15,28 @@
         <h2 class="text-center">{{ name }}</h2>
         <ul class="nav nav-tabs">
             <li>
-                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">General Stats</a>
+                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">一般統計</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">Buffs</a>
+                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">增益</a>
             </li>
             <li v-if="hasDamageMods">
-                <a class="nav-link" :class="{active: tab === 2}" @click="tab = 2">Damage Modifiers</a>
+                <a class="nav-link" :class="{active: tab === 2}" @click="tab = 2">傷害修正</a>
             </li>
             <li v-if="hasMechanics">
-                <a class="nav-link" :class="{active: tab === 3}" @click="tab = 3">Mechanics</a>
+                <a class="nav-link" :class="{active: tab === 3}" @click="tab = 3">機制</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: tab === 4}" @click="tab = 4">Graph</a>
+                <a class="nav-link" :class="{active: tab === 4}" @click="tab = 4">圖表</a>
             </li>
             <li v-if="players.length > 1">
-                <a class="nav-link" :class="{active: tab === 7}" @click="tab = 7">Rotations</a>
+                <a class="nav-link" :class="{active: tab === 7}" @click="tab = 7">循環</a>
             </li>
             <li v-if="hasTargets">
-                <a class="nav-link" :class="{active: tab === 5}" @click="tab = 5">Targets Summary</a>
+                <a class="nav-link" :class="{active: tab === 5}" @click="tab = 5">目標總結</a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: tab === 6}" @click="tab = 6">Player Summary</a>
+                <a class="nav-link" :class="{active: tab === 6}" @click="tab = 6">玩家總結</a>
             </li>
         </ul>
 
@@ -99,7 +99,7 @@
                 return -1;
             },
             name: function () {
-                return this.phase.name + " Summary";
+                return this.phase.name + " 總結";
             },
             activePhaseTargets: function () {
                 var res = [];

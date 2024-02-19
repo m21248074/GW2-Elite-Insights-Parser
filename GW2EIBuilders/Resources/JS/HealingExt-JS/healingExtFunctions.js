@@ -1,17 +1,17 @@
-/*jshint esversion: 6 */
+﻿/*jshint esversion: 6 */
 "use strict";
 
 function healingGraphTypeEnumToString(mode, healingMode) {
     var name = "";
     switch (mode) {
         case GraphType.DPS:
-            name = healingMode === HealingType.Barrier ? "BPS" : "HPS";
+            name = healingMode === HealingType.Barrier ? "秒屏障" : "秒治療";
             break;
         case GraphType.CenteredDPS:
-            name = healingMode === HealingType.Barrier ? "Centered BPS" : "Centered HPS";
+            name = healingMode === HealingType.Barrier ? "中位秒屏障" : "中位秒治療";
             break;
         case GraphType.Damage:
-            name = healingMode === HealingType.Barrier ? "Barrier" : "Healing";
+            name = healingMode === HealingType.Barrier ? "屏障" : "治療";
             break;
         default:
             break;
@@ -23,22 +23,22 @@ function healingTypeEnumToString(mode) {
     var name = "";
     switch (mode) {
         case HealingType.All:
-            name = "All";
+            name = "全部";
             break;
         case HealingType.HealingPower:
-            name = "Healing Power";
+            name = "治療效果";
             break;
         case HealingType.Conversion:
-            name = "Conversion";
+            name = "轉換(傷害->治療)";
             break;
         case HealingType.Hybrid:
-            name = "Healing Power or Conversion";
+            name = "治療效果 或 轉換(傷害->治療)";
             break;
         case HealingType.Downed:
-            name = "Against Downed";
+            name = "倒地治療";
             break;
         case HealingType.Barrier:
-            name = "Healing Power";
+            name = "治療效果";
             break;
         default:
             break;
@@ -51,7 +51,7 @@ function getHPSGraphCacheID(hpsmode, healingmode, graphmode, activetargets, phas
 }
 
 function getHealingGraphName(healingMode, graphMode) {
-    return healingTypeEnumToString(healingMode) + " " + healingGraphTypeEnumToString(graphMode, healingMode) + " Graph";
+    return healingTypeEnumToString(healingMode) + " " + healingGraphTypeEnumToString(graphMode, healingMode) + " 圖";
 }
 
 function computePlayersHealingGraphData(graph, data, yaxis) {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <hps-graph-mode-selector-component :data="graphhealingdata"
             :phaseduration="this.phase.end - this.phase.start" :phasehassubphases="!!this.phase.subPhases" :column="false">
@@ -122,13 +122,13 @@
                 var name = getHealingGraphName(this.graphhealingdata.healingmode, this.graphhealingdata.graphmode);
                 switch (this.graphhealingdata.hpsmode) {
                     case 0:
-                        name = "Full " + name;
+                        name = "全程 " + name;
                         break;
                     case -1:
-                        name = "Phase " + name;
+                        name = "階段 " + name;
                         break;
                     default:                       
-                        name = this.graphhealingdata.hpsmode + "s " + name;
+                        name = this.graphhealingdata.hpsmode + "秒 " + name;
                         break;
                 }
                 return name;

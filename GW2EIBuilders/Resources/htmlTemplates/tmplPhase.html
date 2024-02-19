@@ -1,13 +1,13 @@
-<template>
+﻿<template>
     <div>
         <ul v-if="showNormalPhases" class="nav nav-pills d-flex flex-row justify-content-center">
             <li class="nav-item" v-for="(phase, id) in phases" v-show="!getPhaseData(id).breakbarPhase"
-                :data-original-title="getPhaseData(id).durationS + ' seconds'">
+                :data-original-title="getPhaseData(id).durationS + ' 秒'">
                 <a class="nav-link" @click="select(phase)" :class="{active: phase.active}">{{getPhaseData(id).name}}</a>
             </li>
         </ul>
         <div v-if="hasBreakbarPhases" class="d-flex flex-row justify-content-center align-items-center">
-            <span class="mr-1">Breakbar Phases: </span>
+            <span class="mr-1">蔑視條階段: </span>
             <div style="max-width: 1200px;" class="d-flex flex-row align-items-center scrollable-x">
                 <div v-for="data in breakbarPhasesPerTarget"
                 class="d-flex flex-row flex-nowrap  align-items-center mr-1 ml-1">
@@ -17,7 +17,7 @@
                 <ul class="nav nav-pills d-flex flex-row flex-nowrap">
                     <li class="nav-item" v-for="(phaseId, id) in data.phaseIds"
                         v-show="getPhaseData(phaseId).breakbarPhase"
-                        :data-original-title="getPhaseData(phaseId).durationS + ' seconds'">
+                        :data-original-title="getPhaseData(phaseId).durationS + ' 秒'">
                         <a class="nav-link" @click="select(getReactivePhaseData(phaseId))"
                             :class="{active: getReactivePhaseData(phaseId).active}">{{id + 1}}</a>
                     </li>

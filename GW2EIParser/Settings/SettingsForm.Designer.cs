@@ -130,7 +130,7 @@
             this.LblSettingsInfoMsg.Name = "LblSettingsInfoMsg";
             this.LblSettingsInfoMsg.Size = new System.Drawing.Size(251, 13);
             this.LblSettingsInfoMsg.TabIndex = 12;
-            this.LblSettingsInfoMsg.Text = "*Changes will not alter files that are currently parsing";
+            this.LblSettingsInfoMsg.Text = "*注意* 改變設定不會影響目前正在解析的檔案";
             // 
             // ChkDefaultOutputLoc
             // 
@@ -141,7 +141,8 @@
             this.ChkDefaultOutputLoc.Name = "ChkDefaultOutputLoc";
             this.ChkDefaultOutputLoc.Size = new System.Drawing.Size(192, 17);
             this.ChkDefaultOutputLoc.TabIndex = 14;
-            this.ChkDefaultOutputLoc.Text = "Save Output in same folder as evtc";
+            this.ChkDefaultOutputLoc.Text = "將輸出檔案保存在相同的資料夾中";
+            this.TlpSettings.SetToolTip(this.ChkDefaultOutputLoc, "將輸出檔案保存在與EVTC檔案相同的資料夾中");
             this.ChkDefaultOutputLoc.UseVisualStyleBackColor = true;
             this.ChkDefaultOutputLoc.CheckedChanged += new System.EventHandler(this.ChkDefaultOutputLocationCheckedChanged);
             // 
@@ -185,7 +186,7 @@
             this.LblCustomTooShort.Name = "LblCustomTooShort";
             this.LblCustomTooShort.Size = new System.Drawing.Size(151, 13);
             this.LblCustomTooShort.TabIndex = 17;
-            this.LblCustomTooShort.Text = "Skip fights shorter than (in ms):";
+            this.LblCustomTooShort.Text = "跳過短於(毫秒)的戰鬥:";
             // 
             // BtnCustomSaveLocSelect
             // 
@@ -193,7 +194,7 @@
             this.BtnCustomSaveLocSelect.Name = "BtnCustomSaveLocSelect";
             this.BtnCustomSaveLocSelect.Size = new System.Drawing.Size(45, 20);
             this.BtnCustomSaveLocSelect.TabIndex = 16;
-            this.BtnCustomSaveLocSelect.Text = "Select";
+            this.BtnCustomSaveLocSelect.Text = "選擇";
             this.BtnCustomSaveLocSelect.UseVisualStyleBackColor = true;
             this.BtnCustomSaveLocSelect.Click += new System.EventHandler(this.BtnCustomSaveLocationSelectClick);
             // 
@@ -204,7 +205,7 @@
             this.LblCustomSaveLoc.Name = "LblCustomSaveLoc";
             this.LblCustomSaveLoc.Size = new System.Drawing.Size(98, 13);
             this.LblCustomSaveLoc.TabIndex = 17;
-            this.LblCustomSaveLoc.Text = "Other output folder:";
+            this.LblCustomSaveLoc.Text = "其他輸出資料夾:";
             // 
             // BtnResetSkillList
             // 
@@ -212,7 +213,7 @@
             this.BtnResetSkillList.Name = "BtnResetSkillList";
             this.BtnResetSkillList.Size = new System.Drawing.Size(144, 23);
             this.BtnResetSkillList.TabIndex = 24;
-            this.BtnResetSkillList.Text = "Reset Skill List ";
+            this.BtnResetSkillList.Text = "重置技能清單 ";
             this.BtnResetSkillList.UseVisualStyleBackColor = true;
             this.BtnResetSkillList.Click += new System.EventHandler(this.BtnResetSkillListClick);
             // 
@@ -222,7 +223,7 @@
             this.BtnResetTraitList.Name = "BtnResetTraitList";
             this.BtnResetTraitList.Size = new System.Drawing.Size(144, 23);
             this.BtnResetTraitList.TabIndex = 24;
-            this.BtnResetTraitList.Text = "Reset Trait List ";
+            this.BtnResetTraitList.Text = "重置特性清單 ";
             this.BtnResetTraitList.UseVisualStyleBackColor = true;
             this.BtnResetTraitList.Click += new System.EventHandler(this.BtnResetTraitListClick);
             // 
@@ -232,7 +233,7 @@
             this.BtnResetSpecList.Name = "BtnResetSpecList";
             this.BtnResetSpecList.Size = new System.Drawing.Size(144, 23);
             this.BtnResetSpecList.TabIndex = 25;
-            this.BtnResetSpecList.Text = "Reset Spec List";
+            this.BtnResetSpecList.Text = "重置特化清單";
             this.BtnResetSpecList.UseVisualStyleBackColor = true;
             this.BtnResetSpecList.Click += new System.EventHandler(this.BtnResetSpecListClick);
             // 
@@ -245,7 +246,7 @@
             this.ChkOutputHtml.Name = "ChkOutputHtml";
             this.ChkOutputHtml.Size = new System.Drawing.Size(105, 17);
             this.ChkOutputHtml.TabIndex = 26;
-            this.ChkOutputHtml.Text = "Output as HTML";
+            this.ChkOutputHtml.Text = "輸出為 HTML";
             this.ChkOutputHtml.UseVisualStyleBackColor = true;
             this.ChkOutputHtml.CheckedChanged += new System.EventHandler(this.ChkOuputHTMLCheckedChanged);
             // 
@@ -256,7 +257,7 @@
             this.ChkOutputCsv.Name = "ChkOutputCsv";
             this.ChkOutputCsv.Size = new System.Drawing.Size(96, 17);
             this.ChkOutputCsv.TabIndex = 27;
-            this.ChkOutputCsv.Text = "Output as CSV";
+            this.ChkOutputCsv.Text = "輸出為 CSV";
             this.ChkOutputCsv.UseVisualStyleBackColor = true;
             this.ChkOutputCsv.CheckedChanged += new System.EventHandler(this.ChkOutputCsvCheckedChanged);
             // 
@@ -269,7 +270,7 @@
             this.ChkPhaseParsing.Name = "ChkPhaseParsing";
             this.ChkPhaseParsing.Size = new System.Drawing.Size(91, 17);
             this.ChkPhaseParsing.TabIndex = 30;
-            this.ChkPhaseParsing.Text = "Parse Phases";
+            this.ChkPhaseParsing.Text = "解析各階段";
             this.ChkPhaseParsing.UseVisualStyleBackColor = true;
             this.ChkPhaseParsing.CheckedChanged += new System.EventHandler(this.ChkPhaseParsingCheckedChanged);
             // 
@@ -280,8 +281,8 @@
             this.ChkSingleThreaded.Name = "ChkSingleThreaded";
             this.ChkSingleThreaded.Size = new System.Drawing.Size(202, 17);
             this.ChkSingleThreaded.TabIndex = 29;
-            this.ChkSingleThreaded.Text = "Use a single thread when log processing";
-            this.TlpSettings.SetToolTip(this.ChkSingleThreaded, "Keep default value if unsure (Unchecked).");
+            this.ChkSingleThreaded.Text = "計算日誌時使用單線程";
+            this.TlpSettings.SetToolTip(this.ChkSingleThreaded, "如果不確定，請保留預設值(不選取)。");
             this.ChkSingleThreaded.UseVisualStyleBackColor = true;
             this.ChkSingleThreaded.CheckedChanged += new System.EventHandler(this.ChkSingleThreadedCheckedChanged);
             // 
@@ -294,7 +295,7 @@
             this.ChkCombatReplay.Name = "ChkCombatReplay";
             this.ChkCombatReplay.Size = new System.Drawing.Size(143, 17);
             this.ChkCombatReplay.TabIndex = 40;
-            this.ChkCombatReplay.Text = "Compute Combat Replay";
+            this.ChkCombatReplay.Text = "計算戰鬥回放";
             this.ChkCombatReplay.UseVisualStyleBackColor = true;
             this.ChkCombatReplay.CheckedChanged += new System.EventHandler(this.ChkCombatReplayCheckedChanged);
             // 
@@ -305,7 +306,7 @@
             this.ChkUploadDPSReports.Name = "ChkUploadDPSReports";
             this.ChkUploadDPSReports.Size = new System.Drawing.Size(196, 17);
             this.ChkUploadDPSReports.TabIndex = 43;
-            this.ChkUploadDPSReports.Text = "Upload to DPSReports Elite Insights";
+            this.ChkUploadDPSReports.Text = "上傳至 DPSReports Elite Insights";
             this.ChkUploadDPSReports.UseVisualStyleBackColor = true;
             this.ChkUploadDPSReports.CheckedChanged += new System.EventHandler(this.ChkUploadDPSReportsCheckedChanged);
             // 
@@ -325,7 +326,7 @@
             this.ChkUploadWingman.Name = "ChkUploadWingman";
             this.ChkUploadWingman.Size = new System.Drawing.Size(175, 17);
             this.ChkUploadWingman.TabIndex = 45;
-            this.ChkUploadWingman.Text = "Upload to Wingman via uploadProcessed";
+            this.ChkUploadWingman.Text = "透過 uploadProcessed 上傳到 Wingman";
             this.ChkUploadWingman.UseVisualStyleBackColor = true;
             this.ChkUploadWingman.CheckedChanged += new System.EventHandler(this.ChkUploadWingmanCheckedChanged);
             // 
@@ -336,7 +337,7 @@
             this.ChkUploadWebhook.Name = "ChkUploadWebhook";
             this.ChkUploadWebhook.Size = new System.Drawing.Size(185, 17);
             this.ChkUploadWebhook.TabIndex = 45;
-            this.ChkUploadWebhook.Text = "Send Embed to Discord webhook";
+            this.ChkUploadWebhook.Text = "傳送 Embed 到 Discord Webhook";
             this.ChkUploadWebhook.UseVisualStyleBackColor = true;
             this.ChkUploadWebhook.CheckedChanged += new System.EventHandler(this.ChkUploadWebhookCheckedChanged);
             // 
@@ -347,7 +348,7 @@
             this.ChkUploadSimpleMessageWebhook.Name = "ChkUploadSimpleMessageWebhook";
             this.ChkUploadSimpleMessageWebhook.Size = new System.Drawing.Size(92, 17);
             this.ChkUploadSimpleMessageWebhook.TabIndex = 45;
-            this.ChkUploadSimpleMessageWebhook.Text = "Send link only";
+            this.ChkUploadSimpleMessageWebhook.Text = "僅傳送連結";
             this.ChkUploadSimpleMessageWebhook.UseVisualStyleBackColor = true;
             this.ChkUploadSimpleMessageWebhook.CheckedChanged += new System.EventHandler(this.ChkUploadSimpleMessageWebhookCheckedChanged);
             // 
@@ -367,7 +368,7 @@
             this.ChkOutputJson.Name = "ChkOutputJson";
             this.ChkOutputJson.Size = new System.Drawing.Size(103, 17);
             this.ChkOutputJson.TabIndex = 43;
-            this.ChkOutputJson.Text = "Output as JSON";
+            this.ChkOutputJson.Text = "輸出為 JSON";
             this.ChkOutputJson.UseVisualStyleBackColor = true;
             this.ChkOutputJson.CheckedChanged += new System.EventHandler(this.ChkOutputJSONCheckedChanged);
             // 
@@ -378,13 +379,13 @@
             this.ChkIndentJSON.Name = "ChkIndentJSON";
             this.ChkIndentJSON.Size = new System.Drawing.Size(87, 17);
             this.ChkIndentJSON.TabIndex = 44;
-            this.ChkIndentJSON.Text = "Indent JSON";
+            this.ChkIndentJSON.Text = "縮排的JSON";
             this.ChkIndentJSON.UseVisualStyleBackColor = true;
             this.ChkIndentJSON.CheckedChanged += new System.EventHandler(this.ChkIndentJSONCheckedChanged);
             // 
             // TlpSettings
             // 
-            this.TlpSettings.ToolTipTitle = "Setting description";
+            this.TlpSettings.ToolTipTitle = "設定描述";
             // 
             // GroupWebhookSettings
             // 
@@ -397,8 +398,8 @@
             this.GroupWebhookSettings.Size = new System.Drawing.Size(404, 92);
             this.GroupWebhookSettings.TabIndex = 45;
             this.GroupWebhookSettings.TabStop = false;
-            this.GroupWebhookSettings.Text = "Webhook Settings";
-            this.TlpSettings.SetToolTip(this.GroupWebhookSettings, "Disabled when not uploading to dps.reports");
+            this.GroupWebhookSettings.Text = "Webhook 設定";
+            this.TlpSettings.SetToolTip(this.GroupWebhookSettings, "不上傳到 dps.reports 時停用");
             // 
             // LblWebhookUrl
             // 
@@ -407,7 +408,7 @@
             this.LblWebhookUrl.Name = "LblWebhookUrl";
             this.LblWebhookUrl.Size = new System.Drawing.Size(73, 13);
             this.LblWebhookUrl.TabIndex = 47;
-            this.LblWebhookUrl.Text = "Webhook Url:";
+            this.LblWebhookUrl.Text = "Webhook網址:";
             // 
             // ChkMultiLogs
             // 
@@ -416,8 +417,8 @@
             this.ChkMultiLogs.Name = "ChkMultiLogs";
             this.ChkMultiLogs.Size = new System.Drawing.Size(194, 17);
             this.ChkMultiLogs.TabIndex = 20;
-            this.ChkMultiLogs.Text = "Parse Multiple logs at the same time";
-            this.TlpSettings.SetToolTip(this.ChkMultiLogs, "Keep default value if unsure.");
+            this.ChkMultiLogs.Text = "同時解析多個日誌";
+            this.TlpSettings.SetToolTip(this.ChkMultiLogs, "如果不確定，請保留預設值。");
             this.ChkMultiLogs.UseVisualStyleBackColor = true;
             this.ChkMultiLogs.CheckedChanged += new System.EventHandler(this.ChkMultiLogsCheckedChanged);
             // 
@@ -428,8 +429,8 @@
             this.ChkAnonymous.Name = "ChkAnonymous";
             this.ChkAnonymous.Size = new System.Drawing.Size(118, 17);
             this.ChkAnonymous.TabIndex = 20;
-            this.ChkAnonymous.Text = "Anonymous Players";
-            this.TlpSettings.SetToolTip(this.ChkAnonymous, "Replaces Players\' account names and character names by generic names");
+            this.ChkAnonymous.Text = "玩家匿名";
+            this.TlpSettings.SetToolTip(this.ChkAnonymous, "用通用名稱取代玩家的帳號名稱和角色名稱");
             this.ChkAnonymous.UseVisualStyleBackColor = true;
             this.ChkAnonymous.CheckedChanged += new System.EventHandler(this.ChkAnonymousCheckedChanged);
             // 
@@ -440,10 +441,9 @@
             this.ChkHtmlExternalScripts.Name = "ChkHtmlExternalScripts";
             this.ChkHtmlExternalScripts.Size = new System.Drawing.Size(99, 17);
             this.ChkHtmlExternalScripts.TabIndex = 46;
-            this.ChkHtmlExternalScripts.Text = "External Scripts";
-            this.TlpSettings.SetToolTip(this.ChkHtmlExternalScripts, "Writes static css and js scripts in own files, which are shared between all logs." +
-        " Log file size decreases, but the script files have to be kept along with the ht" +
-        "ml if you dont set a CDN Path");
+            this.ChkHtmlExternalScripts.Text = "外部腳本";
+            this.TlpSettings.SetToolTip(this.ChkHtmlExternalScripts, "在自己的檔案中寫入靜態 CSS 和 JS 腳本，這些檔案在所有日誌之間共用。" +
+        " 日誌檔案大小會減小，但如果不設定 CDN 路徑，腳本檔案必須與 HTML 一起保留");
             this.ChkHtmlExternalScripts.UseVisualStyleBackColor = true;
             this.ChkHtmlExternalScripts.CheckedChanged += new System.EventHandler(this.ChkHtmlExternalScriptsCheckedChanged);
             // 
@@ -454,8 +454,8 @@
             this.ChkHtmlCompressJson.Name = "ChkHtmlCompressJson";
             this.ChkHtmlCompressJson.Size = new System.Drawing.Size(97, 17);
             this.ChkHtmlCompressJson.TabIndex = 46;
-            this.ChkHtmlCompressJson.Text = "Compress Json";
-            this.TlpSettings.SetToolTip(this.ChkHtmlCompressJson, "Put the json inside the html file in a compressed state.");
+            this.ChkHtmlCompressJson.Text = "壓縮的JSON";
+            this.TlpSettings.SetToolTip(this.ChkHtmlCompressJson, "將 JSON 以壓縮狀態放入 HTML 檔案中。");
             this.ChkHtmlCompressJson.UseVisualStyleBackColor = true;
             this.ChkHtmlCompressJson.CheckedChanged += new System.EventHandler(this.ChkHtmlCompressCheckedChanged);
             // 
@@ -466,9 +466,8 @@
             this.ChkDetailledWvW.Name = "ChkDetailledWvW";
             this.ChkDetailledWvW.Size = new System.Drawing.Size(134, 17);
             this.ChkDetailledWvW.TabIndex = 41;
-            this.ChkDetailledWvW.Text = "Detailed WvW Parsing";
-            this.TlpSettings.SetToolTip(this.ChkDetailledWvW, "Keep default value if unsure. Enabling this will make parsing significantly slowe" +
-        "r and the generated files bigger");
+            this.ChkDetailledWvW.Text = "詳細的 WvW(世界之戰) 解析";
+            this.TlpSettings.SetToolTip(this.ChkDetailledWvW, "如果不確定，請保留預設值。 啟用此功能將使解析速度明顯變慢且產生的檔案更大");
             this.ChkDetailledWvW.UseVisualStyleBackColor = true;
             this.ChkDetailledWvW.CheckedChanged += new System.EventHandler(this.ChkDetailledWvWCheckedChange);
             // 
@@ -479,7 +478,7 @@
             this.LblHtmlExternalScriptsCdn.Name = "LblHtmlExternalScriptsCdn";
             this.LblHtmlExternalScriptsCdn.Size = new System.Drawing.Size(29, 13);
             this.LblHtmlExternalScriptsCdn.TabIndex = 56;
-            this.LblHtmlExternalScriptsCdn.Text = "Cdn:";
+            this.LblHtmlExternalScriptsCdn.Text = "CDN:";
             this.TlpSettings.SetToolTip(this.LblHtmlExternalScriptsCdn, resources.GetString("LblHtmlExternalScriptsCdn.ToolTip"));
             // 
             // LblHtmlExternalScriptsPath
@@ -489,9 +488,8 @@
             this.LblHtmlExternalScriptsPath.Name = "LblHtmlExternalScriptsPath";
             this.LblHtmlExternalScriptsPath.Size = new System.Drawing.Size(79, 13);
             this.LblHtmlExternalScriptsPath.TabIndex = 55;
-            this.LblHtmlExternalScriptsPath.Text = "Absolute Path: ";
-            this.TlpSettings.SetToolTip(this.LblHtmlExternalScriptsPath, "Fill in an absolute path of a directory here to place the external scripts at a d" +
-        "ifferent location then the report file.");
+            this.LblHtmlExternalScriptsPath.Text = "絕對路徑: ";
+            this.TlpSettings.SetToolTip(this.LblHtmlExternalScriptsPath, "此處填寫資料夾的絕對路徑，用以將外部腳本放置在與輸出檔案不同的位置。");
             // 
             // TxtHtmlExternalScriptsCdn
             // 
@@ -516,7 +514,7 @@
             this.ChkSaveOutTrace.Name = "ChkSaveOutTrace";
             this.ChkSaveOutTrace.Size = new System.Drawing.Size(108, 17);
             this.ChkSaveOutTrace.TabIndex = 40;
-            this.ChkSaveOutTrace.Text = "Save Log Traces";
+            this.ChkSaveOutTrace.Text = "保存日誌操作痕跡";
             this.ChkSaveOutTrace.UseVisualStyleBackColor = true;
             this.ChkSaveOutTrace.CheckedChanged += new System.EventHandler(this.ChkSaveOutTraceCheckedChanged);
             // 
@@ -529,7 +527,7 @@
             this.ChkDamageMods.Name = "ChkDamageMods";
             this.ChkDamageMods.Size = new System.Drawing.Size(156, 17);
             this.ChkDamageMods.TabIndex = 20;
-            this.ChkDamageMods.Text = "Compute Damage Modifiers";
+            this.ChkDamageMods.Text = "計算傷害修正";
             this.ChkDamageMods.UseVisualStyleBackColor = true;
             this.ChkDamageMods.CheckedChanged += new System.EventHandler(this.ChkComputeDamageModsCheckedChanged);
             // 
@@ -540,7 +538,7 @@
             this.ChkRawTimelineArrays.Name = "ChkRawTimelineArrays";
             this.ChkRawTimelineArrays.Size = new System.Drawing.Size(119, 17);
             this.ChkRawTimelineArrays.TabIndex = 20;
-            this.ChkRawTimelineArrays.Text = "Add Timeline Arrays";
+            this.ChkRawTimelineArrays.Text = "增加時間軸陣列";
             this.ChkRawTimelineArrays.UseVisualStyleBackColor = true;
             this.ChkRawTimelineArrays.CheckedChanged += new System.EventHandler(this.ChkRawTimelineArraysCheckedChanged);
             // 
@@ -573,7 +571,7 @@
             this.TabGeneral.Padding = new System.Windows.Forms.Padding(3);
             this.TabGeneral.Size = new System.Drawing.Size(471, 313);
             this.TabGeneral.TabIndex = 0;
-            this.TabGeneral.Text = "General";
+            this.TabGeneral.Text = "一般";
             this.TabGeneral.UseVisualStyleBackColor = true;
             // 
             // GroupParsing
@@ -590,7 +588,7 @@
             this.GroupParsing.Size = new System.Drawing.Size(251, 160);
             this.GroupParsing.TabIndex = 41;
             this.GroupParsing.TabStop = false;
-            this.GroupParsing.Text = "Parsing";
+            this.GroupParsing.Text = "解析";
             // 
             // ChkAutoParse
             // 
@@ -599,7 +597,7 @@
             this.ChkAutoParse.Name = "ChkAutoParse";
             this.ChkAutoParse.Size = new System.Drawing.Size(171, 17);
             this.ChkAutoParse.TabIndex = 39;
-            this.ChkAutoParse.Text = "Automatically parse added files";
+            this.ChkAutoParse.Text = "自動解析新增的檔案";
             this.ChkAutoParse.UseVisualStyleBackColor = true;
             this.ChkAutoParse.CheckedChanged += new System.EventHandler(this.ChkAutoParseCheckedChanged);
             // 
@@ -610,7 +608,7 @@
             this.ChkAutoAdd.Name = "ChkAutoAdd";
             this.ChkAutoAdd.Size = new System.Drawing.Size(154, 17);
             this.ChkAutoAdd.TabIndex = 40;
-            this.ChkAutoAdd.Text = "Automatically add new logs";
+            this.ChkAutoAdd.Text = "自動加入新日誌";
             this.ChkAutoAdd.UseVisualStyleBackColor = true;
             this.ChkAutoAdd.CheckedChanged += new System.EventHandler(this.ChkAutoAddCheckedChanged);
             // 
@@ -621,7 +619,7 @@
             this.ChkSkipFailedTries.Name = "ChkSkipFailedTries";
             this.ChkSkipFailedTries.Size = new System.Drawing.Size(153, 17);
             this.ChkSkipFailedTries.TabIndex = 38;
-            this.ChkSkipFailedTries.Text = "Skip log generation if failed";
+            this.ChkSkipFailedTries.Text = "如果敗戰則跳過日誌產生";
             this.ChkSkipFailedTries.UseVisualStyleBackColor = true;
             this.ChkSkipFailedTries.CheckedChanged += new System.EventHandler(this.ChkSkipFailedTriesCheckedChanged);
             // 
@@ -640,7 +638,7 @@
             this.GroupOutput.Size = new System.Drawing.Size(444, 129);
             this.GroupOutput.TabIndex = 37;
             this.GroupOutput.TabStop = false;
-            this.GroupOutput.Text = "Output";
+            this.GroupOutput.Text = "輸出";
             // 
             // ChkAddDuration
             // 
@@ -649,7 +647,7 @@
             this.ChkAddDuration.Name = "ChkAddDuration";
             this.ChkAddDuration.Size = new System.Drawing.Size(194, 17);
             this.ChkAddDuration.TabIndex = 19;
-            this.ChkAddDuration.Text = "Add encounter duration to file name";
+            this.ChkAddDuration.Text = "在檔案名稱中新增遭遇戰持續時間";
             this.ChkAddDuration.UseVisualStyleBackColor = true;
             this.ChkAddDuration.CheckedChanged += new System.EventHandler(this.ChkAddDurationCheckedChanged);
             // 
@@ -660,7 +658,7 @@
             this.ChkAddPoVProf.Name = "ChkAddPoVProf";
             this.ChkAddPoVProf.Size = new System.Drawing.Size(176, 17);
             this.ChkAddPoVProf.TabIndex = 18;
-            this.ChkAddPoVProf.Text = "Add PoV profession to file name";
+            this.ChkAddPoVProf.Text = "在檔案名稱中新增所使用職業";
             this.ChkAddPoVProf.UseVisualStyleBackColor = true;
             this.ChkAddPoVProf.CheckedChanged += new System.EventHandler(this.ChkAddPoVProfCheckedChanged);
             // 
@@ -675,7 +673,7 @@
             this.GroupEncounter.Size = new System.Drawing.Size(187, 160);
             this.GroupEncounter.TabIndex = 36;
             this.GroupEncounter.TabStop = false;
-            this.GroupEncounter.Text = "Encounter";
+            this.GroupEncounter.Text = "遭遇戰";
             // 
             // TabHTML
             // 
@@ -720,7 +718,7 @@
             this.BtnHtmlExternalScriptPathSelect.Name = "BtnHtmlExternalScriptPathSelect";
             this.BtnHtmlExternalScriptPathSelect.Size = new System.Drawing.Size(45, 22);
             this.BtnHtmlExternalScriptPathSelect.TabIndex = 58;
-            this.BtnHtmlExternalScriptPathSelect.Text = "Select";
+            this.BtnHtmlExternalScriptPathSelect.Text = "選擇";
             this.BtnHtmlExternalScriptPathSelect.UseVisualStyleBackColor = true;
             this.BtnHtmlExternalScriptPathSelect.Click += new System.EventHandler(this.BtnHtmlExternalScriptPathSelectClick);
             // 
@@ -741,7 +739,7 @@
             this.RadioThemeLight.Size = new System.Drawing.Size(84, 17);
             this.RadioThemeLight.TabIndex = 47;
             this.RadioThemeLight.TabStop = true;
-            this.RadioThemeLight.Text = "Light Theme";
+            this.RadioThemeLight.Text = "淺色主題";
             this.RadioThemeLight.UseVisualStyleBackColor = true;
             this.RadioThemeLight.CheckedChanged += new System.EventHandler(this.RadioThemeLightCheckedChanged);
             // 
@@ -753,7 +751,7 @@
             this.RadioThemeDark.Size = new System.Drawing.Size(84, 17);
             this.RadioThemeDark.TabIndex = 48;
             this.RadioThemeDark.TabStop = true;
-            this.RadioThemeDark.Text = "Dark Theme";
+            this.RadioThemeDark.Text = "深色主題";
             this.RadioThemeDark.UseVisualStyleBackColor = true;
             this.RadioThemeDark.CheckedChanged += new System.EventHandler(this.RadioThemeDarkCheckedChanged);
             // 
@@ -778,7 +776,7 @@
             this.TabRaw.Name = "TabRaw";
             this.TabRaw.Size = new System.Drawing.Size(471, 313);
             this.TabRaw.TabIndex = 3;
-            this.TabRaw.Text = "Raw formats";
+            this.TabRaw.Text = "原始格式";
             this.TabRaw.UseVisualStyleBackColor = true;
             // 
             // PanelXML
@@ -796,7 +794,7 @@
             this.ChkIndentXML.Name = "ChkIndentXML";
             this.ChkIndentXML.Size = new System.Drawing.Size(81, 17);
             this.ChkIndentXML.TabIndex = 44;
-            this.ChkIndentXML.Text = "Indent XML";
+            this.ChkIndentXML.Text = "縮排的XML";
             this.ChkIndentXML.UseVisualStyleBackColor = true;
             this.ChkIndentXML.CheckedChanged += new System.EventHandler(this.ChkIndentXMLCheckedChanged);
             // 
@@ -807,7 +805,7 @@
             this.ChkOutputXml.Name = "ChkOutputXml";
             this.ChkOutputXml.Size = new System.Drawing.Size(97, 17);
             this.ChkOutputXml.TabIndex = 46;
-            this.ChkOutputXml.Text = "Output as XML";
+            this.ChkOutputXml.Text = "輸出為 XML";
             this.ChkOutputXml.UseVisualStyleBackColor = true;
             this.ChkOutputXml.CheckedChanged += new System.EventHandler(this.ChkOutputXMLCheckedChanged);
             // 
@@ -828,7 +826,7 @@
             this.GroupRawSettings.Size = new System.Drawing.Size(150, 68);
             this.GroupRawSettings.TabIndex = 45;
             this.GroupRawSettings.TabStop = false;
-            this.GroupRawSettings.Text = "Raw Format Settings";
+            this.GroupRawSettings.Text = "原始格式設定";
             // 
             // ChkCompressRaw
             // 
@@ -837,7 +835,7 @@
             this.ChkCompressRaw.Name = "ChkCompressRaw";
             this.ChkCompressRaw.Size = new System.Drawing.Size(118, 17);
             this.ChkCompressRaw.TabIndex = 18;
-            this.ChkCompressRaw.Text = "Compress Raw files";
+            this.ChkCompressRaw.Text = "壓縮原始檔案";
             this.ChkCompressRaw.UseVisualStyleBackColor = true;
             this.ChkCompressRaw.CheckedChanged += new System.EventHandler(this.ChkCompressRawCheckedChanged);
             // 
@@ -852,7 +850,7 @@
             this.TabUpload.Name = "TabUpload";
             this.TabUpload.Size = new System.Drawing.Size(471, 313);
             this.TabUpload.TabIndex = 4;
-            this.TabUpload.Text = "Upload";
+            this.TabUpload.Text = "上傳";
             this.TabUpload.UseVisualStyleBackColor = true;
             // 
             // DPSReportUserTokenLabel
@@ -862,7 +860,7 @@
             this.DPSReportUserTokenLabel.Name = "DPSReportUserTokenLabel";
             this.DPSReportUserTokenLabel.Size = new System.Drawing.Size(66, 13);
             this.DPSReportUserTokenLabel.TabIndex = 46;
-            this.DPSReportUserTokenLabel.Text = "User Token:";
+            this.DPSReportUserTokenLabel.Text = "使用者令牌:";
             // 
             // TabAPI
             // 
@@ -876,7 +874,7 @@
             this.TabAPI.Name = "TabAPI";
             this.TabAPI.Size = new System.Drawing.Size(471, 313);
             this.TabAPI.TabIndex = 5;
-            this.TabAPI.Text = "Maintenance";
+            this.TabAPI.Text = "維護";
             this.TabAPI.UseVisualStyleBackColor = true;
             // 
             // LblResetSkill
@@ -886,7 +884,7 @@
             this.LblResetSkill.Name = "LblResetSkill";
             this.LblResetSkill.Size = new System.Drawing.Size(294, 13);
             this.LblResetSkill.TabIndex = 27;
-            this.LblResetSkill.Text = "Resets the local skill list and loads all skills from the GW2 API";
+            this.LblResetSkill.Text = "重置本機技能清單並從激戰2 API 載入所有技能";
             // 
             // LblResetTrait
             // 
@@ -895,7 +893,7 @@
             this.LblResetTrait.Name = "LblResetTrait";
             this.LblResetTrait.Size = new System.Drawing.Size(289, 13);
             this.LblResetTrait.TabIndex = 28;
-            this.LblResetTrait.Text = "Resets the local trait list and loads all trait from the GW2 API";
+            this.LblResetTrait.Text = "重置本機特性清單並從激戰2 API 載入所有特性";
             // 
             // LblResetSpec
             // 
@@ -904,7 +902,7 @@
             this.LblResetSpec.Name = "LblResetSpec";
             this.LblResetSpec.Size = new System.Drawing.Size(306, 13);
             this.LblResetSpec.TabIndex = 26;
-            this.LblResetSpec.Text = "Resets the local spec list and loads all specs from the GW2 API";
+            this.LblResetSpec.Text = "重置本機特化清單並從激戰2 API 載入所有特化";
             // 
             // BtnClose
             // 
@@ -913,7 +911,7 @@
             this.BtnClose.Name = "BtnClose";
             this.BtnClose.Size = new System.Drawing.Size(84, 24);
             this.BtnClose.TabIndex = 48;
-            this.BtnClose.Text = "Close";
+            this.BtnClose.Text = "關閉";
             this.BtnClose.UseVisualStyleBackColor = true;
             this.BtnClose.Click += new System.EventHandler(this.BtnCloseClick);
             // 
@@ -924,7 +922,7 @@
             this.BtnDumpSettings.Name = "BtnDumpSettings";
             this.BtnDumpSettings.Size = new System.Drawing.Size(84, 24);
             this.BtnDumpSettings.TabIndex = 49;
-            this.BtnDumpSettings.Text = "Save Settings";
+            this.BtnDumpSettings.Text = "儲存設定";
             this.BtnDumpSettings.UseVisualStyleBackColor = true;
             this.BtnDumpSettings.Click += new System.EventHandler(this.BtnDumpSettingsClicked);
             // 
@@ -935,7 +933,7 @@
             this.BtnLoadSettings.Name = "BtnLoadSettings";
             this.BtnLoadSettings.Size = new System.Drawing.Size(84, 24);
             this.BtnLoadSettings.TabIndex = 50;
-            this.BtnLoadSettings.Text = "Load Settings";
+            this.BtnLoadSettings.Text = "載入設定";
             this.BtnLoadSettings.UseVisualStyleBackColor = true;
             this.BtnLoadSettings.Click += new System.EventHandler(this.BtnLoadSettingsClicked);
             // 
@@ -954,7 +952,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "SettingsForm";
-            this.Text = "Parse settings";
+            this.Text = "解析設定";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SettingsFormFormClosing);
             this.VisibleChanged += new System.EventHandler(this.SettingsFormLoad);
             ((System.ComponentModel.ISupportInitialize)(this.NumericCustomTooShort)).EndInit();

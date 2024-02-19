@@ -1,49 +1,48 @@
-<template>
+﻿<template>
     <div>
         <ul class="nav nav-tabs">
             <li>
-                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">Boons</a>
+                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">恩賜</a>
             </li>
             <li v-if="hasOffBuffs">
-                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">Offensive Buffs</a>
+                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">進攻型增益</a>
             </li>
             <li v-if="hasSupBuffs">
-                <a class="nav-link" :class="{active: tab === 2}" @click="tab = 2">Support Buffs</a>
+                <a class="nav-link" :class="{active: tab === 2}" @click="tab = 2">支援型增益</a>
             </li>
             <li v-if="hasDefBuffs">
-                <a class="nav-link" :class="{active: tab === 3}" @click="tab = 3">Defensive Buffs</a>
+                <a class="nav-link" :class="{active: tab === 3}" @click="tab = 3">防禦型增益</a>
             </li>
             <li v-if="hasConditions">
-                <a class="nav-link" :class="{active: tab === 5}" @click="tab = 5">Conditions</a>
+                <a class="nav-link" :class="{active: tab === 5}" @click="tab = 5">症狀</a>
             </li>
             <li v-if="hasGearBuffs">
-                <a class="nav-link" :class="{active: tab === 4}" @click="tab = 4">Gear Buffs</a>
+                <a class="nav-link" :class="{active: tab === 4}" @click="tab = 4">裝備增益</a>
             </li>
             <li v-if="hasDebuffs">
-                <a class="nav-link" :class="{active: tab === 7}" @click="tab = 7">Debuffs</a>
+                <a class="nav-link" :class="{active: tab === 7}" @click="tab = 7">減益</a>
             </li>
             <li v-if="hasNourishments">
-                <a class="nav-link" :class="{active: tab === 8}" @click="tab = 8">Nourishments</a>
+                <a class="nav-link" :class="{active: tab === 8}" @click="tab = 8">食物</a>
             </li>
             <li v-if="hasEnhancements">
-                <a class="nav-link" :class="{active: tab === 9}" @click="tab = 9">Enhancements</a>
+                <a class="nav-link" :class="{active: tab === 9}" @click="tab = 9">扳手</a>
             </li>
             <li v-if="hasOtherConsumables">
-                <a class="nav-link" :class="{active: tab === 10}" @click="tab = 10">Other Consumables</a>
+                <a class="nav-link" :class="{active: tab === 10}" @click="tab = 10">其他消耗品</a>
             </li>
             <li v-if="hasPersBuffs">
-                <a class="nav-link" :class="{active: tab === 6}" @click="tab = 6">Personal Buffs</a>
+                <a class="nav-link" :class="{active: tab === 6}" @click="tab = 6">個人增益</a>
             </li>
         </ul>
         <div :key="'activeduration'" class="d-flex flex-row justify-content-center mt-1 mb-1" v-if="showActiveDuration">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 0" :class="{active: activeduration === 0}">Phase
-                        duration</a>
+                    <a class="nav-link" @click="activeduration = 0" :class="{active: activeduration === 0}">階段持續時間</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 1" data-original-title="Removed dead time and dc time"
-                        :class="{active: activeduration === 1 }">Phase active duration</a>
+                    <a class="nav-link" @click="activeduration = 1" data-original-title="去除死亡和斷線時間"
+                        :class="{active: activeduration === 1 }">階段存活持續時間</a>
                 </li>
             </ul>
         </div>

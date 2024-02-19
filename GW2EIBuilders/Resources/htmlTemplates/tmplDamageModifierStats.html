@@ -1,25 +1,22 @@
-<template>
+﻿<template>
     <div>
         <ul class="nav nav-tabs">
             <li v-if="itemModifiers.length > 0">
-                <a class="nav-link" :class="{active: displaymode === 0}" @click="displaymode = 0"> Gear Based Damage
-                    Modifiers </a>
+                <a class="nav-link" :class="{active: displaymode === 0}" @click="displaymode = 0"> 裝備傷害修正 </a>
             </li>
             <li v-if="commonModifiers.length > 0">
-                <a class="nav-link" :class="{active: displaymode === 1}" @click="displaymode = 1"> Shared Damage
-                    Modifiers </a>
+                <a class="nav-link" :class="{active: displaymode === 1}" @click="displaymode = 1"> 共享傷害修正 </a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: displaymode === 2}" @click="displaymode = 2"> Class Based Damage
-                    Modifiers </a>
+                <a class="nav-link" :class="{active: displaymode === 2}" @click="displaymode = 2"> 職業傷害修正 </a>
             </li>
         </ul>
         <ul v-if="!targetless" class="nav nav-pills d-flex flex-row justify-content-center mt-1 mb-1 scale85">
             <li class="nav-item">
-                <a class="nav-link" @click="mode = 1" :class="{active: mode}">Target</a>
+                <a class="nav-link" @click="mode = 1" :class="{active: mode}">目標</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" @click="mode = 0" :class="{active: !mode }">All</a>
+                <a class="nav-link" @click="mode = 0" :class="{active: !mode }">全部</a>
             </li>
         </ul>
         <keep-alive>

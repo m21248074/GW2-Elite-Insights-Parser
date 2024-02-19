@@ -1,44 +1,44 @@
-<template>
+﻿<template>
     <div>
         <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%" :id="tableid">
             <thead>
                 <tr>
                     <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">
-                        Sub
+                        小隊
                     </th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')">
 
                     </th>
                     <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">
-                        Name
+                        角色名
                     </th>
                     <th class="text-left" :class="getHeaderClass('Account')" @click="sortBy('Account')">
-                        Account
+                        帳號
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 0)" @click="sortBy('Data', 0)"
-                        data-original-title="Time wasted(in seconds) interupting skill casts">
+                        data-original-title="中斷技能施放所浪費的時間(以秒為單位)">
                         <img src="https://wiki.guildwars2.com/images/b/b3/Out_Of_Health_Potions.png" alt="Wasted"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 2)" @click="sortBy('Data', 2)"
-                        data-original-title="Time saved(in seconds) interupting skill casts">
+                        data-original-title="中斷技能施放節省的時間(以秒為單位)">
                         <img src="https://wiki.guildwars2.com/images/e/eb/Ready.png" alt="Saved"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4)"
-                        data-original-title="Times weapon swapped">
+                        data-original-title="交換武器次數">
                         <img src="https://wiki.guildwars2.com/images/c/ce/Weapon_Swap_Button.png" alt="Swap"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7)"
-                        data-original-title="% of time in combat spent in animation">
+                        data-original-title="戰鬥中花在動畫上的時間百分比">
                         <img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Animation" class="icon">
                         /
                         <img src="https://wiki.guildwars2.com/images/9/92/Arena_Proprietor.png" alt="Combat"
                             class="icon">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 8)" @click="sortBy('Data', 8)"
-                        data-original-title="% of time in combat spent in animation, excluding auto attack skills">
+                        data-original-title="戰鬥中花在動畫上的時間百分比，不包括自動攻擊技能">
                         (<img src="https://wiki.guildwars2.com/images/6/6e/Activation.png" alt="Animation" class="icon">
                         - <img src="https://wiki.guildwars2.com/images/a/a1/Hammer_Marker_Yellow.png" alt="Auto attack"
                             class="icon">)
@@ -47,12 +47,12 @@
                             class="icon">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5)"
-                        data-original-title="Average Distance to the center of the squad">
+                        data-original-title="到團隊中心的平均距離">
                         <img src="https://wiki.guildwars2.com/images/e/ef/Commander_arrow_marker.png" alt="Stack Center"
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" v-if="hasCommander" :class="getHeaderClass('Data', 6)"
-                        @click="sortBy('Data', 6)" data-original-title="Average Distance to the commander">
+                        @click="sortBy('Data', 6)" data-original-title="到指揮官的平均距離">
                         <img src="https://wiki.guildwars2.com/images/5/54/Commander_tag_%28blue%29.png"
                             alt="Stack Commander" class="icon icon-hover">
                     </th>
@@ -74,11 +74,11 @@
                         {{row.player.acc}}
                     </td>
                     <td :class="getBodyClass('Data', 0)"
-                        :data-original-title="row.commons[1] + ' cancels <br>' + round2(100.0 * row.commons[0] / phase.durationS) + '% of the phase'">
+                        :data-original-title="row.commons[1] + ' 次取消 <br>佔階段的' + round2(100.0 * row.commons[0] / phase.durationS) + '%'">
                         {{row.commons[0]}}
                     </td>
                     <td :class="getBodyClass('Data', 2)"
-                        :data-original-title="row.commons[3] + ' cancels <br>' + round2(100.0 * row.commons[2] / phase.durationS) + '% of the phase'">
+                        :data-original-title="row.commons[3] + ' 次取消 <br>佔階段的' + round2(100.0 * row.commons[2] / phase.durationS) + '%'">
                         {{row.commons[2]}}
                     </td>
                     <td :class="getBodyClass('Data', 4)">
@@ -104,8 +104,8 @@
                     <td></td>
                     <td class="text-left">{{row.name}}</td>
                     <td></td>
-                    <td :data-original-title="row.commons[1] + ' cancels'">{{round3(row.commons[0])}}</td>
-                    <td :data-original-title="row.commons[3] + ' cancels'">{{round3(row.commons[2])}}</td>
+                    <td :data-original-title="row.commons[1] + ' 次取消'">{{round3(row.commons[0])}}</td>
+                    <td :data-original-title="row.commons[3] + ' 次取消'">{{round3(row.commons[2])}}</td>
                     <td>{{row.commons[4]}}</td>
                     <td></td>
                     <td></td>
@@ -185,7 +185,7 @@
                 var sums = [];
                 var groups = [];
                 var total = {
-                    name: "Total",
+                    name: "全團",
                     commons: [],
                     count: 0
                 };
@@ -197,7 +197,7 @@
                     }
                     if (!groups[player.group]) {
                         groups[player.group] = {
-                            name: "Group " + player.group,
+                            name: "小隊 " + player.group,
                             commons: [],
                             count: 0
                         };

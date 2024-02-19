@@ -1,7 +1,7 @@
-<template>
+﻿<template>
     <div class="d-flex flex-column justify-content-center align-items-center">
         <div class="target-status" :style="{'background': getHPGradient(time, status)}" @click="select">
-            <h6 class="actor-shorten text-center" :title="target.name + ' - ' + target.health + ' health'">
+            <h6 class="actor-shorten text-center" :title="target.name + ' - ' + target.health + ' 生命值'">
                 <img :src="target.icon" height="18" width="18"/>
                 {{target.name}}
             </h6>

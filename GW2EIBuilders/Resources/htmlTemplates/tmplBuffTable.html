@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div v-if="buffs.length > 0">
         <img v-if="generation" class="mb-1 icon" src="https://i.imgur.com/nSYuby8.png"
             :data-original-title="tooltipExpl" />
@@ -8,9 +8,9 @@
         <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%" :id="tableid">
             <thead>
                 <tr>
-                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">Sub</th>
+                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">小隊</th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')"></th>
-                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">Name</th>
+                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">角色名</th>
                     <th class="stat-cell" v-for="(buff, index) in buffs" :class="getHeaderClass('Data', index)" @click="sortBy('Data', index)"
                         v-show="isInColPage(index)"
                         :data-original-title="buff.name + (buff.description ? '<br> ' + buff.description : '')">
@@ -113,8 +113,8 @@
             getAvgTooltip: function (avg) {
                 if (avg) {
                     return (
-                        "Average number of " +
-                        (this.condition ? "conditions: " : "boons: ") +
+                        "平均" +
+                        (this.condition ? "症狀數: " : "恩賜數: ") +
                         avg
                     );
                 }
@@ -129,23 +129,23 @@
                         }
                         if (val[4] > 0) {
                             res += res.length > 0 ? "<br>" : '';
-                            res += val[4] + (buff.stacking ? "" : "%") + " by extension";
+                            res += "延長" + val[4] + (buff.stacking ? "" : "%");
                         }
                         if (val[2] > 0) {
                             res += res.length > 0 ? "<br>" : '';
-                            res += val[2] + (buff.stacking ? "" : "%") + " wasted";
+                            res += val[2] + (buff.stacking ? "" : "%") + " 浪費了";
                         }
                         if (val[5] > 0) {
                             res += res.length > 0 ? "<br>" : '';
-                            res += val[5] + (buff.stacking ? "" : "%") + " extended";
+                            res += "被延長" + val[5] + (buff.stacking ? "" : "%");
                         }
                         if (val[3] > 0) {
                             res += res.length > 0 ? "<br>" : '';
-                            res += val[3] + (buff.stacking ? "" : "%") + " extended by unknown source";
+                            res += "被未知來源延長" + val[3] + (buff.stacking ? "" : "%");
                         }
                         return res.length > 0 ? res : false;
                     } else if (buff.stacking && val[1] > 0) {
-                        return "Uptime: " + val[1] + "%";
+                        return "維持時間: " + val[1] + "%";
                     } else {
                         return false;
                     }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>      
         <dps-graph-mode-selector-component :data="graphdata"
             :phaseduration="this.phase.end - this.phase.start" :phasehassubphases="!!this.phase.subPhases" :ignorebreakbar="false" :column="false">
@@ -26,7 +26,7 @@
                     color: textColor
                 },
                 xaxis: {
-                    title: 'Time(sec)',
+                    title: '時間(秒)',
                     color: textColor,
                     gridcolor: textColor,
                     rangemode: 'nonnegative',
@@ -148,16 +148,16 @@
                 var name = getDamageGraphName(this.graphdata.damagemode, this.graphdata.graphmode);
                 switch (this.graphdata.dpsmode) {
                     case 0:
-                        name = "Full " + name;
+                        name = "全程 " + name;
                         break;
                     case -1:
-                        name = "Phase " + name;
+                        name = "階段 " + name;
                         break;
                     default:                       
-                        name = this.graphdata.dpsmode + "s " + name;
+                        name = this.graphdata.dpsmode + "秒 " + name;
                         break;
                 }
-                name = (this.mode === 0 ? "Total " : (this.mode === 1 ? "Target " : "Cleave ")) + name;
+                name = (this.mode === 0 ? "全部 " : (this.mode === 1 ? "目標 " : "斬擊 ")) + name;
                 return name;
             },
             computeData: function () {

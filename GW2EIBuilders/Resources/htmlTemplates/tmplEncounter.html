@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="card fight-summary" style="min-width: 350px;">
         <h3 class="card-header text-center">{{ encounter.name }}</h3>
         <div class="card-body container">
@@ -19,19 +19,19 @@
                             {{target.name}}
                         </div>
                         <div v-if="target.health > 0" class="super-small" style="text-align:center;">
-                            {{ target.health }} Health
+                            {{ target.health }} 生命值
                         </div>
                         <div :style="{'background': getGradient(target.hpLeft ? target.hpLeft : 0), 'height': '10px', 'width': '100%', 'border-radius': '5px'}">
                         </div>
                         <div class="small" style="text-align:center;">
-                            {{ target.hpLeft ? target.hpLeft : 0 }}% remaining
+                            剩餘 {{ target.hpLeft ? target.hpLeft : 0 }}%
                         </div>
                     </div>
                     <div v-if="!wvw" class="mb-2 text" :class="resultStatus.class">
-                        Result: {{resultStatus.text}}
+                        結果: {{resultStatus.text}}
                     </div>
-                    <div class="mb-2">Duration: {{ encounter.duration }}</div>
-                    <div class="mb-2" v-if="fractalScale > 0">Fractal Scale: {{ fractalScale }}</div>
+                    <div class="mb-2">持續時間: {{ encounter.duration }}</div>
+                    <div class="mb-2" v-if="fractalScale > 0">碎層難度係數: {{ fractalScale }}</div>
                 </div>
             </div>
         </div>
@@ -89,7 +89,7 @@
                 return logData.fractalScale;
             },
             resultStatus: function () {
-                return logData.success ? { text: 'Success', class: ["text-success"] } : { text: 'Failure', class: ["text-warning"] };
+                return logData.success ? { text: '成功', class: ["text-success"] } : { text: '失敗', class: ["text-warning"] };
             },
             instanceBuffs: function () {
                 if (logData.instanceBuffs.length == 0) {

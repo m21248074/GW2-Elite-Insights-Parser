@@ -79,7 +79,7 @@ namespace GW2EIParser
                 _logsFiles.Add(file);
                 AddTraceMessage("UI: Added " + file);
 
-                var operation = new FormOperationController(file, "Ready to parse", DgvFiles, OperatorBindingSource);
+                var operation = new FormOperationController(file, "準備解析", DgvFiles, OperatorBindingSource);
 
                 if (Properties.Settings.Default.AutoParse)
                 {
@@ -398,7 +398,7 @@ namespace GW2EIParser
                         AddTraceMessage("UI: Sorting logs");
                         _fileNameSorting *= -1;
                         SortDgvFiles();
-                        LocationDataGridViewTextBoxColumn.HeaderText = "Input File " + (_fileNameSorting < 0 ? "↓" : "↑");
+                        LocationDataGridViewTextBoxColumn.HeaderText = "輸入檔案 " + (_fileNameSorting < 0 ? "↓" : "↑");
                         break;
                     default:
                         break;

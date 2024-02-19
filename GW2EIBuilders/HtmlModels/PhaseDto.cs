@@ -375,20 +375,20 @@ namespace GW2EIBuilders.HtmlModels
         private static List<object> GetDefenseStatData(FinalDefensesAll defenses, PhaseData phase)
         {
             int downCount = 0;
-            string downTooltip = "0% Downed";
+            string downTooltip = "0% 倒地";
             if (defenses.DownDuration > 0)
             {
                 var downDuration = TimeSpan.FromMilliseconds(defenses.DownDuration);
                 downCount = (defenses.DownCount);
-                downTooltip = (downDuration.TotalSeconds + " seconds downed, " + Math.Round((downDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1) + "% Downed");
+                downTooltip = ("倒地" + downDuration.TotalSeconds + " 秒, " + Math.Round((downDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1) + "% 倒地");
             }
             int deadCount = 0;
-            string deadTooltip = "100% Alive";
+            string deadTooltip = "100% 存活";
             if (defenses.DeadCount > 0)
             {
                 var deathDuration = TimeSpan.FromMilliseconds(defenses.DeadDuration);
                 deadCount = (defenses.DeadCount);
-                deadTooltip = (deathDuration.TotalSeconds + " seconds dead, " + (100.0 - Math.Round((deathDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1)) + "% Alive");
+                deadTooltip = ("死亡" + deathDuration.TotalSeconds + " 秒, " + (100.0 - Math.Round((deathDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1)) + "% 存活");
             }
             var data = new List<object>
                 {

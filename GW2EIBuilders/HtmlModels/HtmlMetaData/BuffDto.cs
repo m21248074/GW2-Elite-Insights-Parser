@@ -24,11 +24,11 @@ namespace GW2EIBuilders.HtmlModels.HTMLMetaData
             {
                 var descriptions = new List<string>() {
                     "ID: " + buff.ID,
-                    "Max Stack(s) " + buffInfoEvent.MaxStacks
+                    "最大堆疊數: " + buffInfoEvent.MaxStacks
                 };
                 if (buffInfoEvent.DurationCap > 0)
                 {
-                    descriptions.Add("Duration Cap: " + Math.Round(buffInfoEvent.DurationCap / 1000.0, 3) + " seconds");
+                    descriptions.Add("持續時間上限: " + Math.Round(buffInfoEvent.DurationCap / 1000.0, 3) + " 秒");
                 }
                 foreach (BuffFormula formula in buffInfoEvent.Formulas)
                 {

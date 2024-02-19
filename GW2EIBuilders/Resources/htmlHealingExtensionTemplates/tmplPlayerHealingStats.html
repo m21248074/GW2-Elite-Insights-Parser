@@ -1,46 +1,44 @@
-<template>
+﻿<template>
     <div>
         <h3 v-for="player in players" :key="player.id" v-show="player.id === activeplayer"
             class="text-center mt-2"><img :alt="player.profession" class="icon" :src="player.icon">{{player.name}}</h3>
         <ul class="nav nav-tabs" v-show="activeplayer > -1">
             <li>
                 <a class="nav-link" :class="{active: tabmode === 0}" @click="tabmode = 0">
-                    Outgoing Healing
+                    輸出治療
                 </a>
             </li>
             <li v-if="hasBarrier">
                 <a class="nav-link" :class="{active: tabmode === 6}" @click="tabmode = 6">
-                    Outgoing Barrier
+                    輸出屏障
                 </a>
             </li>
             <li>
                 <a class="nav-link" :class="{active: tabmode === 1}" @click="tabmode = 1">
-                    Incoming Healing
+                    接受治療
                 </a>
             </li>
             <li v-if="hasBarrier">
                 <a class="nav-link" :class="{active: tabmode === 7}" @click="tabmode = 7">
-                    Incoming Barrier
+                    接受屏障
                 </a>
             </li>
             <li>
-                <a class="nav-link" :class="{active: tabmode === 2}" @click="tabmode = 2">Healing Graph</a>
+                <a class="nav-link" :class="{active: tabmode === 2}" @click="tabmode = 2">治療圖表</a>
             </li>     
             <li>
                 <a class="nav-link" :class="{active: tabmode === 3}" @click="tabmode = 3">
-                    Simple
-                    Rotation
+                    簡易循環
                 </a>
             </li>        
             <li>
                 <a class="nav-link" :class="{active: tabmode === 4}" @click="tabmode = 4">
-                    Advanced
-                    Rotation
+                    進階循環
                 </a>
             </li>
             <li>
                 <a class="nav-link" :class="{active: tabmode === 5}" @click="tabmode = 5">
-                    Consumables
+                    消耗品
                 </a>
             </li>
         </ul>
@@ -50,7 +48,7 @@
                 :phaseindex="phaseindex" :activetargets="activetargets" :light="light"></player-healing-tab-component>
         </keep-alive>
         <div v-if="activeplayer === -1">
-            <h3 class="text-center">No player selected</h3>
+            <h3 class="text-center">沒有選擇任何玩家</h3>
         </div>
     </div>
 </template>

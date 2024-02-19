@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center">
             <div v-if="rowPageCount > 0" style="width:25px;">
@@ -13,10 +13,10 @@
                         <tr>
                             <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')"></th>
                             <th class="name-cr-cell text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">
-                                Name
+                                角色名
                             </th>
                             <th class="damage-dist-cell" :class="getHeaderClass('All')" @click="sortBy('All')">
-                                All
+                                全部
                             </th>
                             <th v-if="!targetless" v-for="(col, colIndex) in tableData.cols" v-show="isInColPage(colIndex)"
                                 class="damage-cr-cell" :class="getHeaderClass('Target', colIndex)" @click="sortBy('Target', colIndex)">
@@ -233,7 +233,7 @@
                     });
                 }
                 sums.push({
-                    name: "Total",
+                    name: rows.length>5?"全團":"全隊",
                     dps: total
                 });
                 var res = {
