@@ -249,7 +249,7 @@ namespace GW2EIWingman
                 return multiPartContent;
             };
 
-            string response = GetWingmanResponse("UploadProcessed", UploadProcessedURL, traceHandler, parserVersion, HttpMethod.Post, contentCreator);
+            string response = GetWingmanResponse("UploadProcessed", UploadProcessedURL, traceHandler, null, HttpMethod.Post, contentCreator);
             return response != null && response != "False";
         }
 
@@ -289,9 +289,17 @@ namespace GW2EIWingman
                         return stringContents;
                     }
                 }
+                catch (AggregateException agg)
+                {
+                    traceHandler(requestName + " tentaive failed - main message - " + agg.Message);
+                    foreach (Exception e in agg.InnerExceptions)
+                    {
+                        traceHandler(requestName + " tentaive failed - sub message - " + e.Message);
+                    }
+                }
                 catch (Exception e)
                 {
-                    traceHandler(requestName + " failed " + e.Message);
+                    traceHandler(requestName + " tentaive failed - " + e.Message);
                 }
                 finally
                 {
