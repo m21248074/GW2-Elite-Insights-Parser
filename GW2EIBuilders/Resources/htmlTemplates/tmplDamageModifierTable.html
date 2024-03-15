@@ -233,12 +233,12 @@
             },
             getBodyClass: function(key, index, approximate, cellValue) {
                 var classes = this.getBodyClassBase(this.sortdata, key, index);
-                classes.approximate = cellValue !== "-" && cellValue !== "Tooltip" ? !!approximate : false;
+                classes.approximate = cellValue !== "-" && cellValue !== "提示" ? !!approximate : false;
                 return classes;
             },
             getSumClass: function( approximate, cellValue) {
                 var classes = {};
-                classes.approximate = cellValue !== "-" && cellValue !== "Tooltip" ? !!approximate : false;
+                classes.approximate = cellValue !== "-" && cellValue !== "提示" ? !!approximate : false;
                 return classes;
             },
             sortData: function(rows) {
@@ -293,7 +293,7 @@
             },
             getNumericalCellValue: function (item, mod) {
                 var cellValue = this.getCellValue(item, mod);
-                if (cellValue === 'Tooltip') {
+                if (cellValue === '提示') {
                     return Number.MAX_SAFE_INTEGER;
                 } else if (cellValue === '-') {
                     return 0;
@@ -303,12 +303,12 @@
             getCellValue: function (item, mod) {
                 if (item[2] === 0) {
                     if (item[0] > 0) {
-                        return 'Tooltip';
+                        return '提示';
                     }
                     return '-';
                 }
                 if (mod.nonMultiplier) {
-                    return 'Tooltip';
+                    return '提示';
                 }
                 var damageIncrease = this.round3(100 * (item[3] / (item[3] - item[2]) - 1.0));
                 if (Math.abs(damageIncrease) < 1e-6 || isNaN(damageIncrease) || !isFinite(damageIncrease)) {
