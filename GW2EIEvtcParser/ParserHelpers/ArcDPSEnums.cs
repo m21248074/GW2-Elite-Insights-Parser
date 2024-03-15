@@ -68,6 +68,7 @@ namespace GW2EIEvtcParser
             internal const ulong January2024Balance = 157732;
             internal const ulong February2024NewWeapons = 158837;
             internal const ulong February2024CerusCMHPFix = 158968;
+            internal const ulong March2024BalanceAndCerusLegendary = ulong.MaxValue;
             //
             internal const ulong EndOfLife = ulong.MaxValue;
         }
@@ -88,6 +89,7 @@ namespace GW2EIEvtcParser
             internal const int BuffExtensionBroken = 20230905;
             internal const int BuffExtensionOverstackValueChanged = 20231107;
             internal const int LingeringAgents = 20231110;
+            internal const int RemovedDurationForInfiniteDurationStacksChanged = 20240211;
             //
             internal const int EndOfLife = int.MaxValue;
         }
@@ -541,6 +543,12 @@ namespace GW2EIEvtcParser
         private const int GravityBall = -50;
         private const int JormagMovingFrostBeam = -51;
         private const int GrandStrikeChest = -52;
+        private const int PermanentEmbodimentOfGluttony = -53;
+        private const int PermanentEmbodimentOfRage = -54;
+        private const int PermanentEmbodimentOfDespair = -55;
+        private const int PermanentEmbodimentOfRegret = -56;
+        private const int PermanentEmbodimentOfEnvy = -57;
+        private const int PermanentEmbodimentOfMalice = -58;
         public const int NonIdentifiedSpecies = 0;
 
         //
@@ -927,6 +935,13 @@ namespace GW2EIEvtcParser
             EmbodimentOfEnvy = 25967,
             EmbodimentOfMalice = 25700,
             MaliciousShadow = 25747,
+            MaliciousShadowCM = 25645,
+            PermanentEmbodimentOfGluttony = ArcDPSEnums.PermanentEmbodimentOfGluttony,
+            PermanentEmbodimentOfRage = ArcDPSEnums.PermanentEmbodimentOfRage,
+            PermanentEmbodimentOfDespair = ArcDPSEnums.PermanentEmbodimentOfDespair,
+            PermanentEmbodimentOfRegret = ArcDPSEnums.PermanentEmbodimentOfRegret,
+            PermanentEmbodimentOfEnvy = ArcDPSEnums.PermanentEmbodimentOfEnvy,
+            PermanentEmbodimentOfMalice = ArcDPSEnums.PermanentEmbodimentOfMalice,
             // Freezie
             FreeziesFrozenHeart = 21328,
             IceStormer = 21325,
