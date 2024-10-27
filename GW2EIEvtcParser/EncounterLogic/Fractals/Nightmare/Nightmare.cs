@@ -1,14 +1,10 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser.Exceptions;
-using GW2EIEvtcParser.ParsedData;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.EncounterLogic.EncounterCategory;
+﻿using System.Collections.Generic;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Extensions;
+using GW2EIEvtcParser.ParsedData;
 using static GW2EIEvtcParser.ArcDPSEnums;
+using static GW2EIEvtcParser.EncounterLogic.EncounterCategory;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -20,7 +16,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             EncounterID |= EncounterIDs.FractalMasks.NightmareMask;
         }
 
-        protected static void AddCascadeOfTormentDecoration(ParsedEvtcLog log, List<GenericDecoration> environmentDecorations, string guid, uint innerRadius, uint outerRadius)
+        protected static void AddCascadeOfTormentDecoration(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations, string guid, uint innerRadius, uint outerRadius)
         {
             int duration = 1000;
             if (log.CombatData.TryGetEffectEventsByGUID(guid, out IReadOnlyList<EffectEvent> cascadeOfTorment))
@@ -43,7 +39,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             }
         }
 
-        internal override void EIEvtcParse(ulong gw2Build, int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
+        internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
         {
             // Set manual FractalScale for old logs without the event
             AddFractalScaleEvent(gw2Build, combatData, new List<(ulong, byte)>
@@ -56,7 +52,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             base.EIEvtcParse(gw2Build, evtcVersion, fightData, agentData, combatData, extensions);
         }
 
-        internal override long GetFightOffset(int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
+        internal override long GetFightOffset(EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
         {
             return GetFightOffsetByFirstInvulFilter(fightData, agentData, combatData, GenericTriggerID, Determined762);
         }

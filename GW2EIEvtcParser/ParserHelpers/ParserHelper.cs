@@ -14,7 +14,7 @@ namespace GW2EIEvtcParser
 
         internal static readonly AgentItem _unknownAgent = new AgentItem();
 
-        public const int CombatReplayPollingRate = 150;
+        public const int CombatReplayPollingRate = 300;
         internal const uint CombatReplaySkillDefaultSizeInPixel = 22;
         internal const uint CombatReplaySkillDefaultSizeInWorld = 90;
         internal const uint CombatReplayOverheadDefaultSizeInPixel = 20;
@@ -38,7 +38,7 @@ namespace GW2EIEvtcParser
 
         public const long MinimumInCombatDuration = 2200;
 
-        internal const int PhaseTimeLimit = 2000;
+        internal const int PhaseTimeLimit = 1000;
 
 
         public enum Source
@@ -265,6 +265,21 @@ namespace GW2EIEvtcParser
         }
 
 
+        public static string ToDurationString(long duration)
+        {
+            var durationTimeSpan = TimeSpan.FromMilliseconds(Math.Abs(duration));
+            string durationString = durationTimeSpan.ToString("mm") + "m " + durationTimeSpan.ToString("ss") + "s " + durationTimeSpan.Milliseconds + "ms";
+            if (durationTimeSpan.Hours > 0)
+            {
+                durationString = durationTimeSpan.ToString("hh") + "h " + durationString;
+            }
+            if (duration < 0)
+            {
+                durationString = "-" + durationString;
+            }
+            return durationString;
+        }
+
 
         internal delegate bool ExtraRedirection(CombatItem evt, AgentItem from, AgentItem to);
         /// <summary>
@@ -330,7 +345,7 @@ namespace GW2EIEvtcParser
                 (x) => (x.IsStateChange == StateChange.EnterCombat || x.IsStateChange == StateChange.ExitCombat),
                 (x) => (x.IsStateChange == StateChange.Spawn || x.IsStateChange == StateChange.Despawn || x.IsStateChange == StateChange.ChangeDead || x.IsStateChange == StateChange.ChangeDown || x.IsStateChange == StateChange.ChangeUp),
             };
-            if (!copyPositionalDataFromAttackTarget || !attackTargetAgents.Any())
+            if (!copyPositionalDataFromAttackTarget || attackTargetAgents.Count == 0)
             {
                 stateChangeCopyFromAgentConditions.Add((x) => x.IsStateChange == StateChange.Position);
                 stateChangeCopyFromAgentConditions.Add((x) => x.IsStateChange == StateChange.Rotation);
@@ -345,7 +360,7 @@ namespace GW2EIEvtcParser
                 }
             }
             // Copy positional data from attack targets
-            if (copyPositionalDataFromAttackTarget && attackTargetAgents.Any())
+            if (copyPositionalDataFromAttackTarget && attackTargetAgents.Count != 0)
             {
                 Func<CombatItem, bool> canCopyFromAttackTarget = (evt) => attackTargetAgents.Any(x => evt.SrcMatchesAgent(x));
                 var stateChangeCopyFromAttackTargetConditions = new List<Func<CombatItem, bool>>()
@@ -625,6 +640,7 @@ namespace GW2EIEvtcParser
             { BuffAttribute.Condition, "Condition Damage" },
             { BuffAttribute.Concentration, "Concentration" },
             { BuffAttribute.Expertise, "Expertise" },
+            { BuffAttribute.AllStatsPercent, "All Stats" },
             { BuffAttribute.FishingPower, "Fishing Power" },
             { BuffAttribute.Armor, "Armor" },
             { BuffAttribute.Agony, "Agony" },
@@ -709,6 +725,7 @@ namespace GW2EIEvtcParser
             { BuffAttribute.WXP, "%" },
             { BuffAttribute.DefensePercent, "%" },
             { BuffAttribute.VitalityPercent, "%" },
+            { BuffAttribute.AllStatsPercent, "%" },
             { BuffAttribute.MovementActivationDamageFormula, " adds" },
             { BuffAttribute.SkillActivationDamageFormula, " replaces" },
             { BuffAttribute.Unknown, "Unknown" },

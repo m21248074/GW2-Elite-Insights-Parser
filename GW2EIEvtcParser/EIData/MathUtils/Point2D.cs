@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser.ParsedData;
 
 namespace GW2EIEvtcParser.EIData
 {
@@ -15,6 +13,25 @@ namespace GW2EIEvtcParser.EIData
             return (1.0f - c) * a + c * b;
         }
 
+        public static bool operator >(Point2D a, Point2D b)
+        {
+            return a.X > b.X && a.Y > b.Y;
+        }
+
+        public static bool operator <(Point2D a, Point2D b)
+        {
+            return a.X < b.X && a.Y < b.Y ;
+        }
+
+        public static bool operator >=(Point2D a, Point2D b)
+        {
+            return a.X >= b.X && a.Y >= b.Y ;
+        }
+
+        public static bool operator <=(Point2D a, Point2D b)
+        {
+            return a.X <= b.X && a.Y <= b.Y ;
+        }
         public static Point2D operator +(Point2D a, Point2D b)
         {
             var newPt = new Point2D(a);
@@ -148,6 +165,13 @@ namespace GW2EIEvtcParser.EIData
         public static bool IsInTriangle2D(Point2D p, IReadOnlyList<Point2D> points)
         {
             return points.Count == 3 && IsInTriangle(p, points[0], points[1], points[2]);
+        }
+
+        public static bool IsInBox(Point2D p, Point2D p0, Point2D p1)
+        {
+            var minBB = new Point2D(Math.Min(p0.X, p1.X), Math.Min(p0.Y, p1.Y));
+            var maxBB = new Point2D(Math.Max(p0.X, p1.X), Math.Max(p0.Y, p1.Y));
+            return p >= minBB && p <= maxBB;
         }
     }
 }

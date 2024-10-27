@@ -6,11 +6,9 @@ using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -73,16 +71,29 @@ namespace GW2EIEvtcParser.EncounterLogic
                 (int)ArcDPSEnums.TrashID.GreenGuardian
             };
         }
+        protected override Dictionary<int, int> GetTargetsSortIDs()
+        {
+            return new Dictionary<int, int>()
+            {
+                {(int)ArcDPSEnums.TargetID.ValeGuardian, 0 },
+                {(int)ArcDPSEnums.TrashID.RedGuardian, 1 },
+                {(int)ArcDPSEnums.TrashID.BlueGuardian, 1 },
+                {(int)ArcDPSEnums.TrashID.GreenGuardian, 1 },
+            };
+        }
 
         internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
         {
             List<PhaseData> phases = GetInitialPhase(log);
-            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(ArcDPSEnums.TargetID.ValeGuardian));
-            if (mainTarget == null)
-            {
-                throw new MissingKeyActorsException("Vale Guardian not found");
-            }
+            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(ArcDPSEnums.TargetID.ValeGuardian)) ?? throw new MissingKeyActorsException("Vale Guardian not found");
             phases[0].AddTarget(mainTarget);
+            var splitGuardianIds = new List<int>
+            {
+                (int) ArcDPSEnums.TrashID.BlueGuardian,
+                (int) ArcDPSEnums.TrashID.GreenGuardian,
+                (int) ArcDPSEnums.TrashID.RedGuardian
+            };
+            phases[0].AddSecondaryTargets(Targets.Where(x => x.IsAnySpecies(splitGuardianIds)));
             if (!requirePhases)
             {
                 return phases;
@@ -95,13 +106,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                 if (i % 2 == 0)
                 {
                     phase.Name = "Split " + (i) / 2;
-                    var ids = new List<int>
-                    {
-                       (int) ArcDPSEnums.TrashID.BlueGuardian,
-                       (int) ArcDPSEnums.TrashID.GreenGuardian,
-                       (int) ArcDPSEnums.TrashID.RedGuardian
-                    };
-                    AddTargetsToPhaseAndFit(phase, ids, log);
+                    AddTargetsToPhaseAndFit(phase, splitGuardianIds, log);
                 }
                 else
                 {
@@ -112,7 +117,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             return phases;
         }
 
-        internal override void EIEvtcParse(ulong gw2Build, int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
+        internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
         {
             base.EIEvtcParse(gw2Build, evtcVersion, fightData, agentData, combatData, extensions);
             int curRed = 1;
@@ -158,7 +163,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                     int end = Math.Min(expectedEnd, (int)distributedMagic.Src.LastAware);
                     var circle = new CircleDecoration(180, (start, end), Colors.Green, 0.2, new PositionConnector(distributedMagic.Position));
                     EnvironmentDecorations.Add(circle);
-                    EnvironmentDecorations.Add(circle.Copy().UsingGrowingEnd(expectedEnd)) ;
+                    EnvironmentDecorations.Add(circle.Copy().UsingGrowingEnd(expectedEnd));
                 }
             }
             if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.ValeGuardianMagicSpike, out IReadOnlyList<EffectEvent> magicSpikeEvents))
@@ -203,7 +208,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                             var positionConnector = new PositionConnector(new Point3D(-4749.838867f, -20607.296875f, 0.0f));
                             var rotationConnector = new AngleConnector(151);
                             replay.Decorations.Add(new PieDecoration(arenaRadius, 120, (start, end), Colors.Green, 0.1, positionConnector).UsingGrowingEnd(start + distributedMagicDuration).UsingRotationConnector(rotationConnector));
-                            replay.Decorations.Add(new PieDecoration( arenaRadius, 120, (end, end + impactDuration), Colors.Green, 0.3, positionConnector).UsingRotationConnector(rotationConnector));
+                            replay.Decorations.Add(new PieDecoration(arenaRadius, 120, (end, end + impactDuration), Colors.Green, 0.3, positionConnector).UsingRotationConnector(rotationConnector));
                             replay.Decorations.Add(new CircleDecoration(180, (start, end), Colors.Green, 0.2, new PositionConnector(new Point3D(-5449.0f, -20219.0f, 0.0f))));
                         }
                         var distributedMagicBlue = cls.Where(x => x.SkillId == DistributedMagicBlue).ToList();
@@ -228,7 +233,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                             replay.Decorations.Add(new PieDecoration(arenaRadius, 120, (end, end + impactDuration), Colors.Green, 0.3, positionConnector).UsingRotationConnector(rotationConnector));
                             replay.Decorations.Add(new CircleDecoration(180, (start, end), Colors.Green, 0.2, new PositionConnector(new Point3D(-4735.0f, -21407.0f, 0.0f))));
                         }
-                    } 
+                    }
                     //CombatReplay.DebugEffects(target, log, replay, knownEffectsIDs, target.FirstAware, target.LastAware);
                     //CombatReplay.DebugUnknownEffects(log, replay, knownEffectsIDs, target.FirstAware, target.LastAware);
                     break;

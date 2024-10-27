@@ -105,7 +105,8 @@
             </div>
         </div>
         <div class="footer">
-            <div>開始時間: {{getLogData().encounterStart}} | 結束時間: {{getLogData().encounterEnd}}</div>
+            <div>開始時間: {{getLogData().encounterStart}} | 結束時間: {{getLogData().encounterEnd}}</div>      
+            <div v-if="getLogData().instanceStart">地圖開始時間: {{getLogData().instanceStart}} {{ getLogData().instanceIP ? ' | 地圖 IP: ' + getLogData().instanceIP : '' }}</div>
             <div>ARC: {{getLogData().arcVersion}} | GW2 Build: {{getLogData().gw2Build}} | Trigger ID: {{getLogData().triggerID}} | 遭遇戰 ID: {{getLogData().encounterID}} | {{getLogData().parser}}</div>
             <div v-if="uploadLinks">
                 <p v-for="link in uploadLinks" v-if="link.url.length > 0">{{link.key}}: <a :href="link.url">{{link.url}}</a> </p>

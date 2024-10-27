@@ -5,11 +5,11 @@ using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.ParsedData;
 using static GW2EIEvtcParser.ArcDPSEnums;
-using static GW2EIEvtcParser.SkillIDs;
 using static GW2EIEvtcParser.EncounterLogic.EncounterCategory;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -26,8 +26,9 @@ namespace GW2EIEvtcParser.EncounterLogic
             new SpawnMechanic((int)TrashID.FractalVindicator, "Fractal Vindicator", new MechanicPlotlySetting(Symbols.StarDiamondOpen,Colors.Black,10), "Vindicator","Fractal Vindicator spawned", "Vindicator spawn",0),
             new PlayerDstBuffApplyMechanic(DebilitatedToxicSickness, "Debilitated", new MechanicPlotlySetting(Symbols.TriangleUp, Colors.Pink, 10), "Debil.A", "Debilitated Application (Toxic Sickness)", "Received Debilitated", 0),
             new PlayerSrcEffectMechanic(new [] { EffectGUIDs.ToxicSicknessOldIndicator, EffectGUIDs.ToxicSicknessNewIndicator }, "Toxic Sickness", new MechanicPlotlySetting(Symbols.TriangleUpOpen, Colors.LightOrange, 10), "ToxSick.A", "Toxic Sickness Application", "Toxic Sickness Application", 0),
+            new PlayerSrcBuffApplyMechanic(DebilitatedToxicSickness, "Toxic Sickness", new MechanicPlotlySetting(Symbols.TriangleLeftOpen, Colors.LightOrange, 10), "ToxSick.HitTo", "Hit another player with Toxic Sickness", "Toxic Sickness Hit To Player", 0).UsingChecker((bae, log) => bae.To.IsPlayer),
+            new PlayerDstBuffApplyMechanic(DebilitatedToxicSickness, "Toxic Sickness", new MechanicPlotlySetting(Symbols.TriangleRightOpen, Colors.LightOrange, 10), "ToxSick.HitBy", "Got hit by Toxic Sickness", "Toxic Sickness Hit By Player", 0).UsingChecker((bae, log) => bae.By.IsPlayer),
             /* Not trackable due to health % damage for now
-            new PlayerDstHitMechanic(ToxicSickness, "Toxic Sickness", new MechanicPlotlySetting(Symbols.TriangleUpOpen, Colors.DarkGreen, 10), "ToxSick.H", "Hit by Toxic Sickness", "Toxic Sickness Hit", 0),
             new PlayerDstHitMechanic(ToxicTrail, "Toxic Trail", new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.DarkGreen, 10), "ToxTrail.H", "Hit by Toxic Trail", "Toxic Trail Hit", 0),
             new PlayerDstHitMechanic(ExplodeLastLaugh, "Explode", new MechanicPlotlySetting(Symbols.CircleOpenDot, Colors.Orange, 10), "Explode.H", "Hit by Last Laugh Explode", "Last Laugh Hit", 0),
             new PlayerDstHitMechanic(WeBleedFireBig, "We Bleed Fire", new MechanicPlotlySetting(Symbols.Star, Colors.LightRed, 10), "BleedFireB.H", "Hit by We Bleed Fire (Big)", "Big Bleed Fire Hit", 0),
@@ -42,11 +43,7 @@ namespace GW2EIEvtcParser.EncounterLogic
         {
             // generic method for fractals
             List<PhaseData> phases = GetInitialPhase(log);
-            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(GenericTriggerID));
-            if (mainTarget == null)
-            {
-                throw new MissingKeyActorsException("Main target of the fight not found");
-            }
+            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(GenericTriggerID)) ?? throw new MissingKeyActorsException("Main target of the fight not found");
             phases[0].AddTarget(mainTarget);
             if (!requirePhases)
             {
@@ -86,12 +83,8 @@ namespace GW2EIEvtcParser.EncounterLogic
         internal override void CheckSuccess(CombatData combatData, AgentData agentData, FightData fightData, IReadOnlyCollection<AgentItem> playerAgents)
         {
             // check reward
-            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(GenericTriggerID));
-            if (mainTarget == null)
-            {
-                throw new MissingKeyActorsException("Main target of the fight not found");
-            }
-            RewardEvent reward = combatData.GetRewardEvents().LastOrDefault(x => x.RewardType == 13);
+            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(GenericTriggerID)) ?? throw new MissingKeyActorsException("Main target of the fight not found");
+            RewardEvent reward = combatData.GetRewardEvents().LastOrDefault(x => x.RewardType == RewardTypes.Daily && x.Time > fightData.FightStart);
             AbstractHealthDamageEvent lastDamageTaken = combatData.GetDamageTakenData(mainTarget.AgentItem).LastOrDefault(x => (x.HealthDamage > 0) && playerAgents.Contains(x.From.GetFinalMaster()));
             if (lastDamageTaken != null)
             {
@@ -106,15 +99,15 @@ namespace GW2EIEvtcParser.EncounterLogic
             }
         }
         protected static long GetFightOffsetByFirstInvulFilter(FightData fightData, AgentData agentData, List<CombatItem> combatData, int targetID, long invulID)
-        {         
+        {
             long startToUse = GetGenericFightOffset(fightData);
-            CombatItem logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.LogStartNPCUpdate);
+            CombatItem logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.LogNPCUpdate);
             AgentItem target;
             if (logStartNPCUpdate != null)
             {
                 target = agentData.GetNPCsByIDAndAgent(targetID, logStartNPCUpdate.DstAgent).FirstOrDefault() ?? agentData.GetNPCsByID(targetID).FirstOrDefault();
                 startToUse = GetEnterCombatTime(fightData, agentData, combatData, logStartNPCUpdate.Time, targetID, logStartNPCUpdate.DstAgent);
-            } 
+            }
             else
             {
                 target = agentData.GetNPCsByID(targetID).FirstOrDefault();
@@ -239,7 +232,7 @@ namespace GW2EIEvtcParser.EncounterLogic
         /// <param name="distanceThreshold">Threshold distance of the effect from the caster.</param>
         /// <param name="onDistanceSuccessDuration">Duration of the AoE effects closer to the caster.</param>
         /// <param name="onDistanceFailDuration">Duration of the AoE effects farther away from the caster.</param>
-        protected static void AddDistanceCorrectedOrbDecorations(ParsedEvtcLog log, List<GenericDecoration> environmentDecorations, string effectGUID, TargetID target, double distanceThreshold, long onDistanceSuccessDuration, long onDistanceFailDuration)
+        protected static void AddDistanceCorrectedOrbDecorations(ParsedEvtcLog log, CombatReplayDecorationContainer environmentDecorations, string effectGUID, TargetID target, double distanceThreshold, long onDistanceSuccessDuration, long onDistanceFailDuration)
         {
             if (!log.AgentData.TryGetFirstAgentItem(target, out AgentItem agent))
             {
@@ -253,7 +246,12 @@ namespace GW2EIEvtcParser.EncounterLogic
                     // Correcting the duration of the effects for CTBS 45, based on the distance from the target casting the mechanic.
                     if (effect is EffectEventCBTS45)
                     {
-                        var distance = effect.Position.DistanceToPoint(agent.GetCurrentPosition(log, effect.Time));
+                        Point3D agentPos = agent.GetCurrentPosition(log, effect.Time);
+                        if (agentPos == null)
+                        {
+                            continue;
+                        }
+                        var distance = effect.Position.DistanceToPoint(agentPos);
                         if (distance < distanceThreshold)
                         {
                             lifespan.end = effect.Time + onDistanceSuccessDuration;

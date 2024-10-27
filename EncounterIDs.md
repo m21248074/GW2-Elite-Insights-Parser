@@ -15,6 +15,8 @@ Gorseval: 0x020102
 
 Sabetha: 0x020103
 
+SpiritRace: 0x020104
+
 ### Wing 2
 Slothasor: 0x020201
 
@@ -101,7 +103,7 @@ Icebrood Construct: 0x040201
 
 Fraenir of Jormag: 0x040202
 
-Freezie: 0x040203
+Voice&Claw: 0x040203
 
 Boneskinner: 0x040204
 

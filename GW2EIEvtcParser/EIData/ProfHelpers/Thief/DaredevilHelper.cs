@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using GW2EIEvtcParser.EIData.Buffs;
+using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.EIData.Buff;
-using static GW2EIEvtcParser.EIData.DamageModifier;
 using static GW2EIEvtcParser.EIData.DamageModifiersUtils;
+using static GW2EIEvtcParser.EIData.InstantCastFinder;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.SkillIDs;
 
@@ -13,9 +13,12 @@ namespace GW2EIEvtcParser.EIData
     {
         internal static readonly List<InstantCastFinder> InstantCastFinder = new List<InstantCastFinder>()
         {
-            new BuffGainCastFinder(Bound, BoundingDodger), 
-            new BuffGainCastFinder(ImpalingLotus, LotusTraining),
-            new BuffGainCastFinder(Dash, UnhinderedCombatant),
+            new BuffGainCastFinder(Bound, BoundingDodger)
+                .UsingOrigin(InstantCastOrigin.Trait),
+            new BuffGainCastFinder(ImpalingLotus, LotusTraining)
+                .UsingOrigin(InstantCastOrigin.Trait),
+            new BuffGainCastFinder(Dash, UnhinderedCombatant)
+                .UsingOrigin(InstantCastOrigin.Trait),
             //new DamageCastFinder(30520, 30520), // Debilitating Arc
         };
 
@@ -47,21 +50,21 @@ namespace GW2EIEvtcParser.EIData
             new Buff("Lotus Training", LotusTraining, Source.Daredevil, BuffClassification.Other, BuffImages.LotusTraining),
             new Buff("Unhindered Combatant", UnhinderedCombatant, Source.Daredevil, BuffClassification.Other, BuffImages.UnhinderedCombatant),
             new Buff("Bounding Dodger", BoundingDodger, Source.Daredevil, BuffClassification.Other, BuffImages.BoundingDodger),
-            new Buff("Weakening Strikes", WeakeningStrikes, Source.Daredevil, BuffClassification.Other, BuffImages.WeakeningStrikes).WithBuilds(GW2Builds.April2019Balance, GW2Builds.EndOfLife),
+            new Buff("Weakening Strikes", WeakeningStrikes, Source.Daredevil, BuffClassification.Other, BuffImages.WeakeningStrikes).WithBuilds(GW2Builds.April2019Balance),
         };
 
         private static HashSet<int> Minions = new HashSet<int>()
         {
-            (int)MinionID.Daredevil1,
-            (int)MinionID.Daredevil2,
-            (int)MinionID.Daredevil3,
-            (int)MinionID.Daredevil4,
-            (int)MinionID.Daredevil5,
-            (int)MinionID.Daredevil6,
-            (int)MinionID.Daredevil7,
-            (int)MinionID.Daredevil8,
-            (int)MinionID.Daredevil9,
-            (int)MinionID.Daredevil10,
+            (int)MinionID.DaredevilSylvari1,
+            (int)MinionID.DaredevilAsura1,
+            (int)MinionID.DaredevilHuman1,
+            (int)MinionID.DaredevilAsura2,
+            (int)MinionID.DaredevilNorn1,
+            (int)MinionID.DaredevilNorn2,
+            (int)MinionID.DaredevilCharr1,
+            (int)MinionID.DaredevilSylvari2,
+            (int)MinionID.DaredevilHuman2,
+            (int)MinionID.DaredevilCharr2,
         };
         internal static bool IsKnownMinionID(int id)
         {

@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using GW2EIEvtcParser.EIData.Buffs;
 using GW2EIEvtcParser.ParsedData;
+using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.EIData.Buff;
-using static GW2EIEvtcParser.EIData.DamageModifier;
 using static GW2EIEvtcParser.EIData.DamageModifiersUtils;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.SkillIDs;
@@ -151,6 +150,10 @@ namespace GW2EIEvtcParser.EIData
 
         internal static readonly List<DamageModifierDescriptor> IncomingDamageModifiers = new List<DamageModifierDescriptor>
         {
+            new BuffOnActorDamageModifier(CrashingCourage, "Deathless Courage", "50%", DamageSource.NoPets, 50.0, DamageType.StrikeAndCondition, DamageType.All, Source.Willbender, ByPresence, BuffImages.DeathlessCourage, DamageModifierMode.PvE)
+                .WithBuilds(GW2Builds.March2024BalanceAndCerusLegendary),
+            new BuffOnActorDamageModifier(CrashingCourage, "Deathless Courage", "20%", DamageSource.NoPets, 20.0, DamageType.StrikeAndCondition, DamageType.All, Source.Willbender, ByPresence, BuffImages.DeathlessCourage, DamageModifierMode.sPvPWvW)
+                .WithBuilds(GW2Builds.March2024BalanceAndCerusLegendary)
         };
 
         internal static readonly List<Buff> Buffs = new List<Buff>

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using GW2EIEvtcParser.ParsedData;
 
@@ -15,9 +14,9 @@ namespace GW2EIEvtcParser.EIData
         protected override bool DebugEffectChecker(EffectEvent evt, CombatData combatData, AgentData agentData, SkillData skillData)
         {
             var test = combatData.GetEffectEventsBySrc(evt.Dst).Where(x => Math.Abs(x.Time - evt.Time) <= ParserHelper.ServerDelayConstant && x.EffectID != evt.EffectID).ToList();
-            var testGUIDs = test.Select(x => combatData.GetEffectGUIDEvent(x.EffectID)).Select(x => x.HexContentGUID).ToList();
+            var testGUIDs = test.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             var test2 = combatData.GetEffectEventsByDst(evt.Dst).Where(x => Math.Abs(x.Time - evt.Time) <= ParserHelper.ServerDelayConstant && x.EffectID != evt.EffectID).ToList();
-            var test2GUIDs = test2.Select(x => combatData.GetEffectGUIDEvent(evt.EffectID)).Select(x => x.HexContentGUID).ToList();
+            var test2GUIDs = test2.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             return true;
         }
 

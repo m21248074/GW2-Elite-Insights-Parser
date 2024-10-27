@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser.EIData.Buffs;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.EIData.Buff;
-using static GW2EIEvtcParser.EIData.DamageModifier;
 using static GW2EIEvtcParser.EIData.DamageModifiersUtils;
+using static GW2EIEvtcParser.EIData.ProfHelper;
 using static GW2EIEvtcParser.EIData.SkillModeDescriptor;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.SkillIDs;
@@ -54,16 +52,16 @@ namespace GW2EIEvtcParser.EIData
 
         private static HashSet<int> Minions = new HashSet<int>()
         {
-            (int)MinionID.Specter1,
-            (int)MinionID.Specter2,
-            (int)MinionID.Specter3,
-            (int)MinionID.Specter4,
-            (int)MinionID.Specter5,
-            (int)MinionID.Specter6,
-            (int)MinionID.Specter7,
-            (int)MinionID.Specter8,
-            (int)MinionID.Specter9,
-            (int)MinionID.Specter10,
+            (int)MinionID.SpecterAsura1,
+            (int)MinionID.SpecterHuman1,
+            (int)MinionID.SpecterAsura2,
+            (int)MinionID.SpecterSylvari1,
+            (int)MinionID.SpecterHuman2,
+            (int)MinionID.SpecterNorn1,
+            (int)MinionID.SpecterCharr1,
+            (int)MinionID.SpecterSylvari2,
+            (int)MinionID.SpecterCharr2,
+            (int)MinionID.SpecterNorn2,
         };
 
         internal static bool IsKnownMinionID(int id)
@@ -82,21 +80,17 @@ namespace GW2EIEvtcParser.EIData
                 foreach (EffectEvent effect in wellsOfGloom)
                 {
                     (long, long) lifespan = effect.ComputeLifespan(log, 5000);
-                    var connector = new PositionConnector(effect.Position);
-                    replay.Decorations.Add(new CircleDecoration(240, lifespan, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
-                    replay.Decorations.Add(new IconDecoration(ParserIcons.EffectWellOfGloom, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, connector).UsingSkillMode(skill));
+                    AddCircleSkillDecoration(replay, effect, color, skill, lifespan, 240, ParserIcons.EffectWellOfGloom);
                 }
             }
             // Well of Bounty
             if (log.CombatData.TryGetEffectEventsBySrcWithGUID(player.AgentItem, EffectGUIDs.SpecterWellOfBounty2, out IReadOnlyList<EffectEvent> wellsOfBounty))
             {
-                var skill = new SkillModeDescriptor(player, Spec.Specter, WellOfBounty);
+                var skill = new SkillModeDescriptor(player, Spec.Specter, WellOfBounty, SkillModeCategory.ImportantBuffs);
                 foreach (EffectEvent effect in wellsOfBounty)
                 {
                     (long, long) lifespan = effect.ComputeLifespan(log, 5000);
-                    var connector = new PositionConnector(effect.Position);
-                    replay.Decorations.Add(new CircleDecoration(240, lifespan, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
-                    replay.Decorations.Add(new IconDecoration(ParserIcons.EffectWellOfBounty, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, connector).UsingSkillMode(skill));
+                    AddCircleSkillDecoration(replay, effect, color, skill, lifespan, 240, ParserIcons.EffectWellOfBounty);
                 }
             }
             // Well of Tears
@@ -106,21 +100,17 @@ namespace GW2EIEvtcParser.EIData
                 foreach (EffectEvent effect in wellsOfTears)
                 {
                     (long, long) lifespan = effect.ComputeLifespan(log, 5000);
-                    var connector = new PositionConnector(effect.Position);
-                    replay.Decorations.Add(new CircleDecoration(240, lifespan, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
-                    replay.Decorations.Add(new IconDecoration(ParserIcons.EffectWellOfTears, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, connector).UsingSkillMode(skill));
+                    AddCircleSkillDecoration(replay, effect, color, skill, lifespan, 240, ParserIcons.EffectWellOfTears);
                 }
             }
             // Well of Silence
             if (log.CombatData.TryGetEffectEventsBySrcWithGUID(player.AgentItem, EffectGUIDs.SpecterWellOfSilence2, out IReadOnlyList<EffectEvent> wellsOfSilence))
             {
-                var skill = new SkillModeDescriptor(player, Spec.Specter, WellOfSilence);
+                var skill = new SkillModeDescriptor(player, Spec.Specter, WellOfSilence, SkillModeCategory.CC);
                 foreach (EffectEvent effect in wellsOfSilence)
                 {
                     (long, long) lifespan = effect.ComputeLifespan(log, 5000);
-                    var connector = new PositionConnector(effect.Position);
-                    replay.Decorations.Add(new CircleDecoration(240, lifespan, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
-                    replay.Decorations.Add(new IconDecoration(ParserIcons.EffectWellOfSilence, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, connector).UsingSkillMode(skill));
+                    AddCircleSkillDecoration(replay, effect, color, skill, lifespan, 240, ParserIcons.EffectWellOfSilence);
                 }
             }
             // Well of Sorrow
@@ -130,9 +120,7 @@ namespace GW2EIEvtcParser.EIData
                 foreach (EffectEvent effect in wellsOfSorrow)
                 {
                     (long, long) lifespan = effect.ComputeLifespan(log, 5000);
-                    var connector = new PositionConnector(effect.Position);
-                    replay.Decorations.Add(new CircleDecoration(240, lifespan, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
-                    replay.Decorations.Add(new IconDecoration(ParserIcons.EffectWellOfSorrow, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, connector).UsingSkillMode(skill));
+                    AddCircleSkillDecoration(replay, effect, color, skill, lifespan, 240, ParserIcons.EffectWellOfSorrow);
                 }
             }
             // Shadowfall
@@ -142,9 +130,7 @@ namespace GW2EIEvtcParser.EIData
                 foreach (EffectEvent effect in shadowfalls)
                 {
                     (long, long) lifespan = effect.ComputeLifespan(log, 2250);
-                    var connector = new PositionConnector(effect.Position);
-                    replay.Decorations.Add(new CircleDecoration(240, lifespan, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
-                    replay.Decorations.Add(new IconDecoration(ParserIcons.EffectShadowfall, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, connector).UsingSkillMode(skill));
+                    AddCircleSkillDecoration(replay, effect, color, skill, lifespan, 240, ParserIcons.EffectShadowfall);
                 }
             }
         }

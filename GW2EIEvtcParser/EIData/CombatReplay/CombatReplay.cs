@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using GW2EIEvtcParser.ParsedData;
-using GW2EIEvtcParser.ParserHelpers;
 
 namespace GW2EIEvtcParser.EIData
 {
@@ -18,25 +17,26 @@ namespace GW2EIEvtcParser.EIData
         private long _end = -1;
         internal (long start, long end) TimeOffsets => (_start, _end);
         // actors
-        internal List<GenericDecoration> Decorations { get; } = new List<GenericDecoration>();
+        internal CombatReplayDecorationContainer Decorations { get; }
 
         internal CombatReplay(ParsedEvtcLog log)
         {
             _start = log.FightData.FightStart;
             _end = log.FightData.FightEnd;
+            Decorations = new CombatReplayDecorationContainer(log.FightData.Logic.DecorationCache);
         }
 
         internal void Trim(long start, long end)
         {
-            PolledPositions.RemoveAll(x => x.Time < start || x.Time > end);
-            PolledRotations.RemoveAll(x => x.Time < start || x.Time > end);
             _start = Math.Max(start, _start);
             _end = Math.Max(_start, Math.Min(end, _end));
+            PolledPositions.RemoveAll(x => x.Time < _start || x.Time > _end);
+            PolledRotations.RemoveAll(x => x.Time < _start || x.Time > _end);
         }
 
         private static int UpdateVelocityIndex(List<ParametricPoint3D> velocities, int time, int currentIndex)
         {
-            if (!velocities.Any())
+            if (velocities.Count == 0)
             {
                 return -1;
             }
@@ -53,31 +53,38 @@ namespace GW2EIEvtcParser.EIData
             return res - 1;
         }
 
-        private void PositionPolling(int rate, long fightDuration)
+        private void PositionPolling(int rate, long fightDuration, bool forcePolling)
         {
-            if (Positions.Count == 0)
+            List<ParametricPoint3D> positions = Positions;
+            if (Positions.Count == 0 && forcePolling)
             {
-                Positions.Add(new ParametricPoint3D(int.MinValue, int.MinValue, 0, 0));
+                positions = new List<ParametricPoint3D>()
+                {
+                    new ParametricPoint3D(int.MinValue, int.MinValue, 0, 0)
+                };
+            } else if (Positions.Count == 0)
+            {
+                return;
             }
             int positionTablePos = 0;
             int velocityTablePos = 0;
             //
-            for (int i = (int)Math.Min(0, rate * ((Positions[0].Time / rate) - 1)); i < fightDuration; i += rate)
+            for (int i = (int)Math.Min(0, rate * ((positions[0].Time / rate) - 1)); i < fightDuration; i += rate)
             {
-                ParametricPoint3D pt = Positions[positionTablePos];
+                ParametricPoint3D pt = positions[positionTablePos];
                 if (i <= pt.Time)
                 {
                     PolledPositions.Add(new ParametricPoint3D(pt.X, pt.Y, pt.Z, i));
                 }
                 else
                 {
-                    if (positionTablePos == Positions.Count - 1)
+                    if (positionTablePos == positions.Count - 1)
                     {
                         PolledPositions.Add(new ParametricPoint3D(pt.X, pt.Y, pt.Z, i));
                     }
                     else
                     {
-                        ParametricPoint3D ptn = Positions[positionTablePos + 1];
+                        ParametricPoint3D ptn = positions[positionTablePos + 1];
                         if (ptn.Time < i)
                         {
                             positionTablePos++;
@@ -163,9 +170,9 @@ namespace GW2EIEvtcParser.EIData
             PolledRotations = PolledRotations.Where(x => x.Time >= 0).ToList();
         }
 
-        internal void PollingRate(long fightDuration)
+        internal void PollingRate(long fightDuration, bool forcePositionPolling)
         {
-            PositionPolling(ParserHelper.CombatReplayPollingRate, fightDuration);
+            PositionPolling(ParserHelper.CombatReplayPollingRate, fightDuration, forcePositionPolling);
             RotationPolling(ParserHelper.CombatReplayPollingRate, fightDuration);
         }
 
@@ -175,7 +182,7 @@ namespace GW2EIEvtcParser.EIData
         internal static void DebugEffects(AbstractSingleActor actor, ParsedEvtcLog log, CombatReplay replay, HashSet<long> knownEffectIDs, long start = long.MinValue, long end = long.MaxValue)
         {
             IReadOnlyList<EffectEvent> effectEventsOnAgent = log.CombatData.GetEffectEventsByDst(actor.AgentItem).Where(x => !knownEffectIDs.Contains(x.EffectID) && x.Time >= start && x.Time <= end).ToList();
-            var effectGUIDsOnAgent = effectEventsOnAgent.Select(x => log.CombatData.GetEffectGUIDEvent(x.EffectID).HexContentGUID).ToList();
+            var effectGUIDsOnAgent = effectEventsOnAgent.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             var effectGUIDsOnAgentDistinct = effectGUIDsOnAgent.GroupBy(x => x).ToDictionary(x => x.Key, x => x.ToList().Count);
             foreach (EffectEvent effectEvt in effectEventsOnAgent)
             {
@@ -186,16 +193,16 @@ namespace GW2EIEvtcParser.EIData
                 }
                 if (effectEvt.IsAroundDst)
                 {
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Blue, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Blue, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
                 }
                 else
                 {
 
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Blue, 0.5, new PositionConnector(effectEvt.Position)));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Blue, 0.5, new PositionConnector(effectEvt.Position)));
                 }
             }
             IReadOnlyList<EffectEvent> effectEventsByAgent = log.CombatData.GetEffectEventsBySrc(actor.AgentItem).Where(x => !knownEffectIDs.Contains(x.EffectID) && x.Time >= start && x.Time <= end).ToList(); ;
-            var effectGUIDsByAgent = effectEventsByAgent.Select(x => log.CombatData.GetEffectGUIDEvent(x.EffectID).HexContentGUID).ToList();
+            var effectGUIDsByAgent = effectEventsByAgent.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             var effectGUIDsByAgentDistinct = effectGUIDsByAgent.GroupBy(x => x).ToDictionary(x => x.Key, x => x.ToList().Count);
             foreach (EffectEvent effectEvt in effectEventsByAgent)
             {
@@ -206,20 +213,20 @@ namespace GW2EIEvtcParser.EIData
                 }
                 if (effectEvt.IsAroundDst)
                 {
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Green, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Green, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
                 }
                 else
                 {
 
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Green, 0.5, new PositionConnector(effectEvt.Position)));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Green, 0.5, new PositionConnector(effectEvt.Position)));
                 }
             }
         }
 
         internal static void DebugUnknownEffects(ParsedEvtcLog log, CombatReplay replay, HashSet<long> knownEffectIDs, long start = long.MinValue, long end = long.MaxValue)
         {
-            IReadOnlyList<EffectEvent> allEffectEvents = log.CombatData.GetEffectEvents().Where(x => !knownEffectIDs.Contains(x.EffectID) && x.Src.IsNonIdentifiedSpecies() && x.Time >= start && x.Time <= end && x.EffectID > 0).ToList(); ;
-            var effectGUIDs = allEffectEvents.Select(x => log.CombatData.GetEffectGUIDEvent(x.EffectID).HexContentGUID).ToList();
+            IReadOnlyList<EffectEvent> allEffectEvents = log.CombatData.GetEffectEvents().Where(x => !knownEffectIDs.Contains(x.EffectID) && x.Src.IsUnamedSpecies() && x.Time >= start && x.Time <= end && x.EffectID > 0).ToList(); ;
+            var effectGUIDs = allEffectEvents.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             var effectGUIDsDistinct = effectGUIDs.GroupBy(x => x).ToDictionary(x => x.Key, x => x.ToList().Count);
             foreach (EffectEvent effectEvt in allEffectEvents)
             {
@@ -230,12 +237,12 @@ namespace GW2EIEvtcParser.EIData
                 }
                 if (effectEvt.IsAroundDst)
                 {
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
                 }
                 else
                 {
 
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new PositionConnector(effectEvt.Position)));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new PositionConnector(effectEvt.Position)));
                 }
             }
 
@@ -244,7 +251,7 @@ namespace GW2EIEvtcParser.EIData
         internal static void DebugAllNPCEffects(ParsedEvtcLog log, CombatReplay replay, HashSet<long> knownEffectIDs, long start = long.MinValue, long end = long.MaxValue)
         {
             IReadOnlyList<EffectEvent> allEffectEvents = log.CombatData.GetEffectEvents().Where(x => !knownEffectIDs.Contains(x.EffectID) && !x.Src.GetFinalMaster().IsPlayer && (!x.IsAroundDst || !x.Dst.GetFinalMaster().IsPlayer) && x.Time >= start && x.Time <= end && x.EffectID > 0).ToList(); ;
-            var effectGUIDs = allEffectEvents.Select(x => log.CombatData.GetEffectGUIDEvent(x.EffectID).HexContentGUID).ToList();
+            var effectGUIDs = allEffectEvents.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             var effectGUIDsDistinct = effectGUIDs.GroupBy(x => x).ToDictionary(x => x.Key, x => x.ToList().Count);
             foreach (EffectEvent effectEvt in allEffectEvents)
             {
@@ -255,12 +262,12 @@ namespace GW2EIEvtcParser.EIData
                 }
                 if (effectEvt.IsAroundDst)
                 {
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
                 }
                 else
                 {
 
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new PositionConnector(effectEvt.Position)));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new PositionConnector(effectEvt.Position)));
                 }
             }
         }
@@ -268,7 +275,7 @@ namespace GW2EIEvtcParser.EIData
         internal static void DebugAllEffects(ParsedEvtcLog log, CombatReplay replay, HashSet<long> knownEffectIDs, long start = long.MinValue, long end = long.MaxValue)
         {
             IReadOnlyList<EffectEvent> allEffectEvents = log.CombatData.GetEffectEvents().Where(x => !knownEffectIDs.Contains(x.EffectID) && x.Time >= start && x.Time <= end && x.EffectID > 0).ToList(); ;
-            var effectGUIDs = allEffectEvents.Select(x => log.CombatData.GetEffectGUIDEvent(x.EffectID).HexContentGUID).ToList();
+            var effectGUIDs = allEffectEvents.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             var effectGUIDsDistinct = effectGUIDs.GroupBy(x => x).ToDictionary(x => x.Key, x => x.ToList().Count);
             foreach (EffectEvent effectEvt in allEffectEvents)
             {
@@ -279,12 +286,12 @@ namespace GW2EIEvtcParser.EIData
                 }
                 if (effectEvt.IsAroundDst)
                 {
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new AgentConnector(log.FindActor(effectEvt.Dst))));
                 }
                 else
                 {
 
-                    replay.Decorations.Insert(0, new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new PositionConnector(effectEvt.Position)));
+                    replay.Decorations.Add(new CircleDecoration(180, lifeSpan, Colors.Teal, 0.5, new PositionConnector(effectEvt.Position)));
                 }
             }
         }
@@ -310,12 +317,26 @@ namespace GW2EIEvtcParser.EIData
         /// <param name="segment">Lifespan interval</param>
         /// <param name="actor">actor to which the decoration will be attached to</param>
         /// <param name="icon">URL of the icon</param>
-        /// <param name="rotation">URL of the icon</param>
+        /// <param name="rotation">rotation of the icon</param>
         /// <param name="pixelSize">Size in pixel of the icon</param>
         /// <param name="opacity">Opacity of the icon</param>
         internal void AddRotatedOverheadIcon(Segment segment, AbstractSingleActor actor, string icon, float rotation, uint pixelSize = ParserHelper.CombatReplayOverheadDefaultSizeInPixel, float opacity = ParserHelper.CombatReplayOverheadDefaultOpacity)
         {
             Decorations.Add(new IconOverheadDecoration(icon, pixelSize, opacity, segment, new AgentConnector(actor)).UsingRotationConnector(new AngleConnector(rotation)));
+        }
+
+        /// <summary>
+        /// Add an overhead squad marker
+        /// </summary>
+        /// <param name="segment">Lifespan interval</param>
+        /// <param name="actor">actor to which the decoration will be attached to</param>
+        /// <param name="icon">URL of the icon</param>
+        /// <param name="rotation">rotation of the icon</param>
+        /// <param name="pixelSize">Size in pixel of the icon</param>
+        /// <param name="opacity">Opacity of the icon</param>
+        internal void AddRotatedOverheadMarkerIcon(Segment segment, AbstractSingleActor actor, string icon, float rotation, uint pixelSize = ParserHelper.CombatReplayOverheadDefaultSizeInPixel, float opacity = ParserHelper.CombatReplayOverheadDefaultOpacity)
+        {
+            Decorations.Add(new IconOverheadDecoration(icon, pixelSize, opacity, segment, new AgentConnector(actor)).UsingSquadMarker(true).UsingRotationConnector(new AngleConnector(rotation)));
         }
 
         /// <summary>
@@ -511,7 +532,7 @@ namespace GW2EIEvtcParser.EIData
         /// <param name="firstAwareThreshold">Time threshold in case the agent spawns before the buff application.</param>
         internal void AddTetherByThirdPartySrcBuff(ParsedEvtcLog log, AbstractPlayer player, long buffId, int buffSrcAgentId, int toTetherAgentId, string color, int firstAwareThreshold = 2000)
         {
-            var buffEvents = log.CombatData.GetBuffData(buffId).Where(x => x.To == player.AgentItem && x.CreditedBy.IsSpecies(buffSrcAgentId)).ToList();
+            var buffEvents = log.CombatData.GetBuffDataByIDByDst(buffId, player.AgentItem).Where(x => x.CreditedBy.IsSpecies(buffSrcAgentId)).ToList();
             var buffApplies = buffEvents.OfType<BuffApplyEvent>().ToList();
             var buffRemoves = buffEvents.OfType<BuffRemoveAllEvent>().ToList();
             var agentsToTether = log.AgentData.GetNPCsByID(toTetherAgentId).ToList();
@@ -545,7 +566,7 @@ namespace GW2EIEvtcParser.EIData
         /// <param name="firstAwareThreshold">Time threshold in case the agent spawns before the buff application.</param>
         internal void AddTetherByThirdPartySrcBuff(ParsedEvtcLog log, AbstractPlayer player, long buffId, int buffSrcAgentId, int toTetherAgentId, Color color, double opacity, int firstAwareThreshold = 2000)
         {
-             AddTetherByThirdPartySrcBuff(log, player, buffId, buffSrcAgentId, toTetherAgentId, color.WithAlpha(opacity).ToString(true), firstAwareThreshold);
+            AddTetherByThirdPartySrcBuff(log, player, buffId, buffSrcAgentId, toTetherAgentId, color.WithAlpha(opacity).ToString(true), firstAwareThreshold);
         }
 
         /// <summary>
@@ -572,11 +593,43 @@ namespace GW2EIEvtcParser.EIData
         /// <param name="radius">Radius of the circle.</param>
         internal void AddProjectile(Point3D startingPoint, Point3D endingPoint, (long start, long end) lifespan, string color, uint radius = 50)
         {
+            if (startingPoint == null || endingPoint == null)
+            {
+                return;
+            }
             var startPoint = new ParametricPoint3D(startingPoint, lifespan.start);
             var endPoint = new ParametricPoint3D(endingPoint, lifespan.end);
             var shootingCircle = new CircleDecoration(radius, lifespan, color, new InterpolationConnector(new List<ParametricPoint3D>() { startPoint, endPoint }));
             Decorations.Add(shootingCircle);
         }
+
+        /// <summary>
+        /// Adds a non-filled growing circle resembling a shockwave.
+        /// </summary>
+        /// <param name="connector">Starting position point.</param>
+        /// <param name="lifespan">Lifespan of the shockwave.</param>
+        /// <param name="color">Color.</param>
+        /// <param name="opacity">Opacity of the <paramref name="color"/>.</param>
+        /// <param name="radius">Radius of the shockwave.</param>
+        /// <remarks>Uses <see cref="GeographicalConnector"/> which allows us to use <see cref="AgentConnector"/> and <see cref="PositionConnector"/>.</remarks>
+        internal void AddShockwave(GeographicalConnector connector, (long start, long end) lifespan, Color color, double opacity, uint radius)
+        {
+            AddShockwave(connector, lifespan, color.WithAlpha(opacity).ToString(true), radius);
+        }
+
+        /// <summary>
+        /// Adds a non-filled growing circle resembling a shockwave.
+        /// </summary>
+        /// <param name="connector">Starting position point.</param>
+        /// <param name="lifespan">Lifespan of the shockwave.</param>
+        /// <param name="color">Color.</param>
+        /// <param name="radius">Radius of the shockwave.</param>
+        /// <remarks>Uses <see cref="GeographicalConnector"/> which allows us to use <see cref="AgentConnector"/> and <see cref="PositionConnector"/>.</remarks>
+        internal void AddShockwave(GeographicalConnector connector, (long start, long end) lifespan, string color, uint radius)
+        {
+            Decorations.Add(new CircleDecoration(radius, lifespan, color, connector).UsingFilled(false).UsingGrowingEnd(lifespan.end));
+        }
+
         /// <summary>
         /// Add hide based on buff's presence
         /// </summary>

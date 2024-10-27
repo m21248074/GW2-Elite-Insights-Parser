@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using GW2EIEvtcParser.EIData.Buffs;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.EIData.Buff;
-using static GW2EIEvtcParser.EIData.DamageModifier;
 using static GW2EIEvtcParser.EIData.DamageModifiersUtils;
+using static GW2EIEvtcParser.EIData.ProfHelper;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.SkillIDs;
 
@@ -22,7 +21,7 @@ namespace GW2EIEvtcParser.EIData
                 if(evt.Src.Spec != Spec.Virtuoso) {
                     return false;
                 }
-                if (!combatData.GetBuffData(DistortionBuff).Any(buffEvt => buffEvt is BuffApplyEvent && buffEvt.To == evt.Src && Math.Abs(buffEvt.Time - evt.Time) < ServerDelayConstant))
+                if (!combatData.GetBuffDataByIDByDst(DistortionBuff, evt.Src).Any(buffEvt => buffEvt is BuffApplyEvent && Math.Abs(buffEvt.Time - evt.Time) < ServerDelayConstant))
                 {
                     return false;
                 }
@@ -62,7 +61,7 @@ namespace GW2EIEvtcParser.EIData
             new Buff("Virtuoso Blade", VirtuosoBlades, Source.Virtuoso, BuffStackType.StackingConditionalLoss, 5, BuffClassification.Other, BuffImages.PowerAttribute),
         };
 
-        public static List<AbstractBuffEvent> TransformVirtuosoBladeStorage(IReadOnlyList<AbstractBuffEvent> buffs, AgentItem a, SkillData skillData, int evtcVersion)
+        public static List<AbstractBuffEvent> TransformVirtuosoBladeStorage(IReadOnlyList<AbstractBuffEvent> buffs, AgentItem a, SkillData skillData, EvtcVersionEvent evtcVersion)
         {
             var res = new List<AbstractBuffEvent>();
             var bladeIDs = new HashSet<long>
@@ -93,7 +92,7 @@ namespace GW2EIEvtcParser.EIData
                         elapsedTime = brae.Time - apply.Time;
                     }
                     int removedDuration = brae.RemovedDuration;
-                    if (evtcVersion >= ArcDPSBuilds.RemovedDurationForInfiniteDurationStacksChanged)
+                    if (evtcVersion.Build >= ArcDPSBuilds.RemovedDurationForInfiniteDurationStacksChanged)
                     {
                         removedDuration -= (int)elapsedTime;
                     }
@@ -124,9 +123,7 @@ namespace GW2EIEvtcParser.EIData
                 foreach (EffectEvent effect in rainOfSwords)
                 {
                     (long, long) lifespan = effect.ComputeLifespan(log, 6000);
-                    var connector = new PositionConnector(effect.Position);
-                    replay.Decorations.Add(new CircleDecoration(280, lifespan, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
-                    replay.Decorations.Add(new IconDecoration(ParserIcons.EffectRainOfSwords, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, connector).UsingSkillMode(skill));
+                    AddCircleSkillDecoration(replay, effect, color, skill, lifespan, 280, ParserIcons.EffectRainOfSwords);
                 }
             }
             // Thousand Cuts

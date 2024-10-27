@@ -35,6 +35,8 @@
             this.TxtCustomSaveLocation = new System.Windows.Forms.TextBox();
             this.NumericCustomTooShort = new System.Windows.Forms.NumericUpDown();
             this.LblCustomTooShort = new System.Windows.Forms.Label();
+            this.NumericMemoryLimit = new System.Windows.Forms.NumericUpDown();
+            this.LblMemoryLimit = new System.Windows.Forms.Label();
             this.BtnCustomSaveLocSelect = new System.Windows.Forms.Button();
             this.LblCustomSaveLoc = new System.Windows.Forms.Label();
             this.BtnResetSkillList = new System.Windows.Forms.Button();
@@ -103,6 +105,7 @@
             this.BtnDumpSettings = new System.Windows.Forms.Button();
             this.BtnLoadSettings = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.NumericCustomTooShort)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.NumericMemoryLimit)).BeginInit();
             this.GroupWebhookSettings.SuspendLayout();
             this.TabControl.SuspendLayout();
             this.TabGeneral.SuspendLayout();
@@ -126,7 +129,7 @@
             // 
             this.LblSettingsInfoMsg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.LblSettingsInfoMsg.AutoSize = true;
-            this.LblSettingsInfoMsg.Location = new System.Drawing.Point(9, 354);
+            this.LblSettingsInfoMsg.Location = new System.Drawing.Point(9, 383);
             this.LblSettingsInfoMsg.Name = "LblSettingsInfoMsg";
             this.LblSettingsInfoMsg.Size = new System.Drawing.Size(251, 13);
             this.LblSettingsInfoMsg.TabIndex = 12;
@@ -187,6 +190,30 @@
             this.LblCustomTooShort.Size = new System.Drawing.Size(151, 13);
             this.LblCustomTooShort.TabIndex = 17;
             this.LblCustomTooShort.Text = "跳過短於(毫秒)的戰鬥:";
+            // 
+            // NumericMemoryLimit
+            // 
+            this.NumericMemoryLimit.Location = new System.Drawing.Point(216, 313);
+            this.NumericMemoryLimit.Maximum = new decimal(new int[] {
+            2147483647,
+            0,
+            0,
+            0});
+            this.NumericMemoryLimit.Name = "NumericMemoryLimit";
+            this.NumericMemoryLimit.Size = new System.Drawing.Size(90, 20);
+            this.NumericMemoryLimit.TabIndex = 15;
+            this.NumericMemoryLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.NumericMemoryLimit.ValueChanged += new System.EventHandler(this.NumericMemoryLimitValueChanged);
+            // 
+            // LblMemoryLimit
+            // 
+            this.LblMemoryLimit.AutoSize = true;
+            this.LblMemoryLimit.Location = new System.Drawing.Point(15, 315);
+            this.LblMemoryLimit.Name = "LblMemoryLimit";
+            this.LblMemoryLimit.Size = new System.Drawing.Size(200, 13);
+            this.LblMemoryLimit.TabIndex = 17;
+            this.LblMemoryLimit.Text = "Kill Application if using more than (in MB):";
+            this.TlpSettings.SetToolTip(this.LblMemoryLimit, "Keep default value if unsure (0).");
             // 
             // BtnCustomSaveLocSelect
             // 
@@ -279,7 +306,7 @@
             this.ChkSingleThreaded.AutoSize = true;
             this.ChkSingleThreaded.Location = new System.Drawing.Point(6, 19);
             this.ChkSingleThreaded.Name = "ChkSingleThreaded";
-            this.ChkSingleThreaded.Size = new System.Drawing.Size(202, 17);
+            this.ChkSingleThreaded.Size = new System.Drawing.Size(217, 17);
             this.ChkSingleThreaded.TabIndex = 29;
             this.ChkSingleThreaded.Text = "計算日誌時使用單線程";
             this.TlpSettings.SetToolTip(this.ChkSingleThreaded, "如果不確定，請保留預設值(不選取)。");
@@ -310,6 +337,17 @@
             this.ChkUploadDPSReports.UseVisualStyleBackColor = true;
             this.ChkUploadDPSReports.CheckedChanged += new System.EventHandler(this.ChkUploadDPSReportsCheckedChanged);
             // 
+            // ChkUploadWingman
+            // 
+            this.ChkUploadWingman.AutoSize = true;
+            this.ChkUploadWingman.Location = new System.Drawing.Point(12, 64);
+            this.ChkUploadWingman.Name = "ChkUploadWingman";
+            this.ChkUploadWingman.Size = new System.Drawing.Size(222, 17);
+            this.ChkUploadWingman.TabIndex = 45;
+            this.ChkUploadWingman.Text = "透過 uploadProcessed 上傳到 Wingman";
+            this.ChkUploadWingman.UseVisualStyleBackColor = true;
+            this.ChkUploadWingman.CheckedChanged += new System.EventHandler(this.ChkUploadWingmanCheckedChanged);
+            // 
             // TxtDPSReportUserToken
             // 
             this.TxtDPSReportUserToken.Location = new System.Drawing.Point(91, 38);
@@ -318,17 +356,6 @@
             this.TxtDPSReportUserToken.TabIndex = 15;
             this.TxtDPSReportUserToken.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.TxtDPSReportUserToken.TextChanged += new System.EventHandler(this.ChkDPSReportUserTokenTextChanged);
-            // 
-            // ChkUploadRaidar
-            // 
-            this.ChkUploadWingman.AutoSize = true;
-            this.ChkUploadWingman.Location = new System.Drawing.Point(12, 64);
-            this.ChkUploadWingman.Name = "ChkUploadWingman";
-            this.ChkUploadWingman.Size = new System.Drawing.Size(175, 17);
-            this.ChkUploadWingman.TabIndex = 45;
-            this.ChkUploadWingman.Text = "透過 uploadProcessed 上傳到 Wingman";
-            this.ChkUploadWingman.UseVisualStyleBackColor = true;
-            this.ChkUploadWingman.CheckedChanged += new System.EventHandler(this.ChkUploadWingmanCheckedChanged);
             // 
             // ChkUploadWebhook
             // 
@@ -558,7 +585,7 @@
             this.TabControl.Multiline = true;
             this.TabControl.Name = "TabControl";
             this.TabControl.SelectedIndex = 0;
-            this.TabControl.Size = new System.Drawing.Size(479, 339);
+            this.TabControl.Size = new System.Drawing.Size(479, 368);
             this.TabControl.TabIndex = 47;
             // 
             // TabGeneral
@@ -566,10 +593,12 @@
             this.TabGeneral.Controls.Add(this.GroupParsing);
             this.TabGeneral.Controls.Add(this.GroupOutput);
             this.TabGeneral.Controls.Add(this.GroupEncounter);
+            this.TabGeneral.Controls.Add(this.LblMemoryLimit);
+            this.TabGeneral.Controls.Add(this.NumericMemoryLimit);
             this.TabGeneral.Location = new System.Drawing.Point(4, 22);
             this.TabGeneral.Name = "TabGeneral";
             this.TabGeneral.Padding = new System.Windows.Forms.Padding(3);
-            this.TabGeneral.Size = new System.Drawing.Size(471, 313);
+            this.TabGeneral.Size = new System.Drawing.Size(471, 342);
             this.TabGeneral.TabIndex = 0;
             this.TabGeneral.Text = "一般";
             this.TabGeneral.UseVisualStyleBackColor = true;
@@ -907,7 +936,7 @@
             // BtnClose
             // 
             this.BtnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnClose.Location = new System.Drawing.Point(412, 374);
+            this.BtnClose.Location = new System.Drawing.Point(412, 403);
             this.BtnClose.Name = "BtnClose";
             this.BtnClose.Size = new System.Drawing.Size(84, 24);
             this.BtnClose.TabIndex = 48;
@@ -918,7 +947,7 @@
             // BtnDumpSettings
             // 
             this.BtnDumpSettings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnDumpSettings.Location = new System.Drawing.Point(322, 374);
+            this.BtnDumpSettings.Location = new System.Drawing.Point(322, 403);
             this.BtnDumpSettings.Name = "BtnDumpSettings";
             this.BtnDumpSettings.Size = new System.Drawing.Size(84, 24);
             this.BtnDumpSettings.TabIndex = 49;
@@ -929,7 +958,7 @@
             // BtnLoadSettings
             // 
             this.BtnLoadSettings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnLoadSettings.Location = new System.Drawing.Point(232, 374);
+            this.BtnLoadSettings.Location = new System.Drawing.Point(232, 403);
             this.BtnLoadSettings.Name = "BtnLoadSettings";
             this.BtnLoadSettings.Size = new System.Drawing.Size(84, 24);
             this.BtnLoadSettings.TabIndex = 50;
@@ -942,7 +971,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(503, 410);
+            this.ClientSize = new System.Drawing.Size(503, 439);
             this.Controls.Add(this.BtnLoadSettings);
             this.Controls.Add(this.BtnDumpSettings);
             this.Controls.Add(this.BtnClose);
@@ -956,10 +985,12 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SettingsFormFormClosing);
             this.VisibleChanged += new System.EventHandler(this.SettingsFormLoad);
             ((System.ComponentModel.ISupportInitialize)(this.NumericCustomTooShort)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.NumericMemoryLimit)).EndInit();
             this.GroupWebhookSettings.ResumeLayout(false);
             this.GroupWebhookSettings.PerformLayout();
             this.TabControl.ResumeLayout(false);
             this.TabGeneral.ResumeLayout(false);
+            this.TabGeneral.PerformLayout();
             this.GroupParsing.ResumeLayout(false);
             this.GroupParsing.PerformLayout();
             this.GroupOutput.ResumeLayout(false);
@@ -1007,6 +1038,8 @@
         private System.Windows.Forms.CheckBox ChkSingleThreaded;
         private System.Windows.Forms.Label LblCustomTooShort;
         private System.Windows.Forms.NumericUpDown NumericCustomTooShort;
+        private System.Windows.Forms.Label LblMemoryLimit;
+        private System.Windows.Forms.NumericUpDown NumericMemoryLimit;
         private System.Windows.Forms.CheckBox ChkCombatReplay;
         private System.Windows.Forms.CheckBox ChkUploadDPSReports;
         private System.Windows.Forms.TextBox TxtDPSReportUserToken;

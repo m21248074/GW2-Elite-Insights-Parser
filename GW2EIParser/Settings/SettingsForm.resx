@@ -120,9 +120,6 @@
   <metadata name="TlpSettings.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
-  <metadata name="TlpSettings.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
   <data name="LblHtmlExternalScriptsCdn.ToolTip" xml:space="preserve">
     <value>填寫 CDN 網址以僅放置一次外部腳本並將其重複用於您的報告。
 如果您將這些檔案放在不同的 CDN 伺服器上，請記住考慮 CORS。 

@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace GW2EIEvtcParser.EIData
 {
     public abstract class AbstractSingleActorCombatReplayDescription : AbstractCombatReplayDescription
     {
+        public long Start { get; protected set; }
+        public long End { get; protected set; }
         public string Img { get; }
         public int ID { get; }
         public IReadOnlyList<float> Positions { get; }
@@ -57,7 +58,7 @@ namespace GW2EIEvtcParser.EIData
             {
                 angles.Add(-Point3D.GetZRotationFromFacing(facing));
             }
-            if (replay.Hidden.Any())
+            if (replay.Hidden.Count != 0)
             {
                 var hide = new List<long>();
                 foreach (Segment seg in replay.Hidden)

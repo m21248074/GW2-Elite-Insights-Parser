@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.ParsedData;
-using static GW2EIEvtcParser.ParserHelper;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
-using GW2EIEvtcParser.Extensions;
 using static GW2EIEvtcParser.ArcDPSEnums;
+using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -26,7 +22,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             new PlayerDstHitMechanic(Leap, "Leap", new MechanicPlotlySetting(Symbols.TriangleDown,Colors.Red), "Jump","Leap (<33% only)", "Leap",0),
             new PlayerDstHitMechanic(ShootGreenBalls, "Shoot", new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Brown), "Shoot","Toxic Shoot (Green Bullets)", "Toxic Shoot",0),
             new PlayerDstHitMechanic(ExplosiveImpact, "Explosive Impact", new MechanicPlotlySetting(Symbols.Circle,Colors.Yellow), "Knight Jump","Explosive Impact (Knight Jump)", "Knight Jump",0),
-            new PlayerDstHitMechanic(SweepingStrikes, "Sweeping Strikes", new MechanicPlotlySetting(Symbols.AsteriskOpen,Colors.Red), "Sweep","Swings (Many rapid front spins)", "Sweeping Strikes",200),
+            new PlayerDstHitMechanic(SweepingStrikes, "Sweeping Strikes", new MechanicPlotlySetting(Symbols.BowtieOpen,Colors.Red), "Sweep","Swings (Many rapid front spins)", "Sweeping Strikes",200),
             new PlayerDstHitMechanic(NightmareMiasmaMAMA, "Nightmare Miasma", new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Magenta), "Goo","Nightmare Miasma (Poison Puddle)", "Poison Goo",700),
             new PlayerDstHitMechanic(new long[] { GrenadeBarrage, GrenadeBarrage2 }, "Grenade Barrage", new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Yellow), "Barrage","Grenade Barrage (Red Bullets with AoEs)", "Ball Barrage",0),
             new PlayerDstHitMechanic(new long[] { ShootRedBalls, ShootRedBalls2 }, "Red Ball Shot", new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Red), "Ball","Shoot (Direct Red Bullets)", "Bullet",0),
@@ -56,10 +52,10 @@ namespace GW2EIEvtcParser.EncounterLogic
             return FightData.EncounterMode.CMNoName;
         }
 
-        internal override long GetFightOffset(int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
+        internal override long GetFightOffset(EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
         {
             long startToUse = base.GetFightOffset(evtcVersion, fightData, agentData, combatData);
-            if (evtcVersion >= ArcDPSBuilds.NewLogStart)
+            if (evtcVersion.Build >= ArcDPSBuilds.NewLogStart)
             {
                 // players may enter combat with knights or an invisible hitbox before
                 AgentItem mama = agentData.GetNPCsByID(TargetID.MAMA).FirstOrDefault();
@@ -81,12 +77,15 @@ namespace GW2EIEvtcParser.EncounterLogic
         internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
         {
             List<PhaseData> phases = GetInitialPhase(log);
-            AbstractSingleActor mama = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.MAMA));
-            if (mama == null)
-            {
-                throw new MissingKeyActorsException("MAMA not found");
-            }
+            AbstractSingleActor mama = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.MAMA)) ?? throw new MissingKeyActorsException("MAMA not found");
             phases[0].AddTarget(mama);
+            var knightIds = new List<int>
+            {
+                (int) TrashID.GreenKnight,
+                (int) TrashID.RedKnight,
+                (int) TrashID.BlueKnight,
+            };
+            phases[0].AddSecondaryTargets(Targets.Where(x => x.IsAnySpecies(knightIds)));
             if (!requirePhases)
             {
                 return phases;
@@ -97,13 +96,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                 PhaseData phase = phases[i];
                 if (i % 2 == 0)
                 {
-                    var ids = new List<int>
-                    {
-                       (int) TrashID.GreenKnight,
-                       (int) TrashID.RedKnight,
-                       (int) TrashID.BlueKnight,
-                    };
-                    AddTargetsToPhaseAndFit(phase, ids, log);
+                    AddTargetsToPhaseAndFit(phase, knightIds, log);
                     if (phase.Targets.Count > 0)
                     {
                         AbstractSingleActor phaseTar = phase.Targets[0];
@@ -195,7 +188,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                         if (targetPosition != null)
                         {
                             replay.AddDecorationWithGrowing(new CircleDecoration(350, lifespan, Colors.Orange, 0.2, new PositionConnector(targetPosition)), expectedEndCast);
-                        
+
                             // 3 rounds of decorations for the 3 waves
                             if (lifespan.end == expectedEndCast)
                             {
@@ -204,7 +197,9 @@ namespace GW2EIEvtcParser.EncounterLogic
                                 for (int i = 0; i < 3; i++)
                                 {
                                     long shockWaveStart = expectedEndCast + i * 120;
-                                    replay.Decorations.Add(new CircleDecoration(shockwaveRadius, (shockWaveStart, shockWaveStart + duration), Colors.Yellow, 0.3, new PositionConnector(targetPosition)).UsingFilled(false).UsingGrowingEnd(shockWaveStart + duration));
+                                    (long, long) lifespanShockwave = (shockWaveStart, shockWaveStart + duration);
+                                    GeographicalConnector connector = new PositionConnector(targetPosition);
+                                    replay.AddShockwave(connector, lifespanShockwave, Colors.Yellow, 0.3, shockwaveRadius);
                                 }
                             }
                         }

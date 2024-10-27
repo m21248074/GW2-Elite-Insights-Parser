@@ -185,13 +185,15 @@ const SkillDecorationCategory = {
     "清症": 1 << 4,
     "剝奪增益": 1 << 5,
     "傳送門": 1 << 6,
+    "CC": 1 << 7,
 };
 
 let AllSkillDecorations = 0;
 for (let key in SkillDecorationCategory) {
     AllSkillDecorations |= SkillDecorationCategory[key];
 }
-let DefaultSkillDecorations = AllSkillDecorations;
+
+let DefaultSkillDecorations = AllSkillDecorations & ~SkillDecorationCategory.CC;
 
 const RotationStatus = {
     UNKNOWN: 0,
@@ -200,3 +202,5 @@ const RotationStatus = {
     FULL: 3,
     INSTANT: 4
 };
+
+const EIUrlParams = new URLSearchParams(window.location.search);

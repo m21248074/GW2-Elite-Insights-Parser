@@ -1,24 +1,28 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using GW2EIEvtcParser.EIData;
-using GW2EIEvtcParser.ParsedData;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
 using GW2EIEvtcParser.Exceptions;
+using GW2EIEvtcParser.ParsedData;
+using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
     internal class StatueOfDeath : HallOfChains
     {
-        // TODO - add CR icons/indicators (vomit, greens, etc) and some mechanics
+        
         public StatueOfDeath(int triggerID) : base(triggerID)
         {
             MechanicList.AddRange(new List<Mechanic>
             {
             new PlayerDstHitMechanic(HungeringMiasma, "Hungering Miasma", new MechanicPlotlySetting(Symbols.TriangleLeftOpen,Colors.DarkGreen), "Vomit","Hungering Miasma (Vomit Goo)", "Vomit Dmg",0),
+            new PlayerDstBuffApplyMechanic(ReclaimedEnergyBuff, "Reclaimed Energy", new MechanicPlotlySetting(Symbols.Circle,Colors.Yellow), "Light Orb Collected","Applied when taking a light orb", "Light Orb",0),
+            new PlayerCastStartMechanic(ReclaimedEnergySkill, "Reclaimed Energy Thrown", new MechanicPlotlySetting(Symbols.CircleOpen,Colors.Yellow), "Light Orb Thrown","Has thrown a light orb", "Light Orb Thrown",0)
+                .UsingChecker((evt, log) =>
+                {
+                    return evt.Status != AbstractCastEvent.AnimationStatus.Interrupted;
+                }),
             new PlayerDstBuffApplyMechanic(FracturedSpirit, "Fractured Spirit", new MechanicPlotlySetting(Symbols.Circle,Colors.Green), "Orb CD","Applied when taking green", "Green port",0),
             }
             );
@@ -56,25 +60,25 @@ namespace GW2EIEvtcParser.EncounterLogic
             };
         }
 
-        internal override long GetFightOffset(int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
+        internal override long GetFightOffset(EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
         {
             if (!agentData.TryGetFirstAgentItem(ArcDPSEnums.TargetID.EaterOfSouls, out AgentItem eaterOfSouls))
             {
                 throw new MissingKeyActorsException("Eater of Souls not found");
             }
             long startToUse = GetGenericFightOffset(fightData);
-            CombatItem logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == ArcDPSEnums.StateChange.LogStartNPCUpdate);
+            CombatItem logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == ArcDPSEnums.StateChange.LogNPCUpdate);
             if (logStartNPCUpdate != null)
             {
                 var peasants = new List<AgentItem>(agentData.GetNPCsByID(ArcDPSEnums.TrashID.AscalonianPeasant1));
                 peasants.AddRange(agentData.GetNPCsByID(ArcDPSEnums.TrashID.AscalonianPeasant2));
-                if (peasants.Any())
+                if (peasants.Count != 0)
                 {
                     startToUse = peasants.Max(x => x.LastAware);
-                } 
+                }
                 else
                 {
-                    startToUse = GetPostLogStartNPCUpdateDamageEventTime(fightData, agentData, combatData, logStartNPCUpdate.Time, eaterOfSouls);
+                    startToUse = GetFirstDamageEventTime(fightData, agentData, combatData, eaterOfSouls);
                 }
             }
             return startToUse;
@@ -108,7 +112,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                         Point3D position = target.GetCurrentPosition(log, start);
                         if (facing != null && position != null)
                         {
-                            replay.Decorations.Add(new PieDecoration( radius, 60, (start, end), Colors.GreenishYellow, 0.5, new PositionConnector(position)).UsingGrowingEnd(start + cascading).UsingRotationConnector(new AngleConnector(facing)));
+                            replay.Decorations.Add(new PieDecoration(radius, 60, (start, end), Colors.GreenishYellow, 0.5, new PositionConnector(position)).UsingGrowingEnd(start + cascading).UsingRotationConnector(new AngleConnector(facing)));
                         }
                     }
                     var pseudoDeath = cls.Where(x => x.SkillId == PseudoDeathEaterOfSouls).ToList();
@@ -143,10 +147,62 @@ namespace GW2EIEvtcParser.EncounterLogic
 
         }
 
+        internal override void ComputeEnvironmentCombatReplayDecorations(ParsedEvtcLog log)
+        {
+            base.ComputeEnvironmentCombatReplayDecorations(log);
+            // TODO check sizes
+            if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.EaterOfSoulsSpiritOrbs, out IReadOnlyList<EffectEvent> orbEffectEvents))
+            {
+                foreach (EffectEvent effectEvent in orbEffectEvents)
+                {
+                    (long start, long end) lifespan = effectEvent.ComputeDynamicLifespan(log, 0);
+                    EnvironmentDecorations.Add(new CircleDecoration(20, lifespan, Colors.Pink, 0.8, new PositionConnector(effectEvent.Position)));
+                }
+            }
+            if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.EaterOfSoulsSpiderWeb, out IReadOnlyList<EffectEvent> webEffectEvents))
+            {
+                foreach (EffectEvent effectEvent in webEffectEvents)
+                {
+                    (long start, long end) lifespan = effectEvent.ComputeLifespan(log, effectEvent.Duration);
+                    uint webRadius = 320;
+                    var webIndicator = new CircleDecoration(webRadius, lifespan, Colors.Orange, 0.1, new PositionConnector(effectEvent.Position));
+                    var web = new CircleDecoration(webRadius, (lifespan.end, lifespan.end + 750), Colors.Orange, 0.3, new PositionConnector(effectEvent.Position));
+                    EnvironmentDecorations.Add(webIndicator);
+                    EnvironmentDecorations.Add(webIndicator.GetBorderDecoration(Colors.Orange, 0.3));
+                    EnvironmentDecorations.Add(webIndicator.Copy().UsingGrowingEnd(lifespan.end));
+                    EnvironmentDecorations.Add(web);
+                }
+            }
+            if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.EaterOfSoulsLightOrbOnGround, out IReadOnlyList<EffectEvent> orbOnGroundEffectEvents))
+            {
+                foreach (EffectEvent effectEvent in orbOnGroundEffectEvents)
+                {
+                    (long start, long end) lifespan = effectEvent.ComputeDynamicLifespan(log, 0);
+                    EnvironmentDecorations.Add(new CircleDecoration(80, lifespan, Colors.Yellow, 0.6, new PositionConnector(effectEvent.Position)));
+                }
+            }
+            if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.EaterOfSoulsLightOrbThrowHitGround, out IReadOnlyList<EffectEvent> orbThrowEffectEvents))
+            {
+                foreach (EffectEvent effectEvent in orbThrowEffectEvents)
+                {
+                    (long start, long end) lifespan = (effectEvent.Time, effectEvent.Time + 500);
+                    EnvironmentDecorations.Add(new CircleDecoration(40, lifespan, Colors.Yellow, 0.6, new PositionConnector(effectEvent.Position)));
+                }
+            }
+            if (log.CombatData.TryGetEffectEventsByGUID(EffectGUIDs.EaterOfSoulsSpiritShockwave2, out IReadOnlyList<EffectEvent> shockwaveEffectEvents))
+            {
+                foreach (EffectEvent effectEvent in shockwaveEffectEvents)
+                {
+                    (long start, long end) lifespan = effectEvent.ComputeLifespan(log, 3600);
+                    EnvironmentDecorations.Add(new CircleDecoration(1400, lifespan, Colors.Red, 0.3, new PositionConnector(effectEvent.Position)).UsingFilled(false).UsingGrowingEnd(lifespan.end));
+                }
+            }
+        }
+
         internal override void ComputePlayerCombatReplayActors(AbstractPlayer p, ParsedEvtcLog log, CombatReplay replay)
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
-            var spiritTransform = log.CombatData.GetBuffData(FracturedSpirit).Where(x => x.To == p.AgentItem && x is BuffApplyEvent).ToList();
+            var spiritTransform = log.CombatData.GetBuffDataByIDByDst(FracturedSpirit, p.AgentItem).Where(x => x is BuffApplyEvent).ToList();
             foreach (AbstractBuffEvent c in spiritTransform)
             {
                 int duration = 30000;

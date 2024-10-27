@@ -1,5 +1,4 @@
 ﻿using GW2EIEvtcParser.EIData;
-using Newtonsoft.Json;
 using static GW2EIJSON.JsonStatistics;
 
 namespace GW2EIBuilders.JsonModels.JsonActorUtilities
@@ -36,7 +35,9 @@ namespace GW2EIBuilders.JsonModels.JsonActorUtilities
                 BoonStrips = defStats.BoonStrips,
                 BoonStripsTime = defStats.BoonStripsTime,
                 ConditionCleanses = defStats.ConditionCleanses,
-                ConditionCleansesTime = defStats.ConditionCleansesTime
+                ConditionCleansesTime = defStats.ConditionCleansesTime,
+                ReceivedCrowdControl = defStats.ReceivedCrowdControl,
+                ReceivedCrowdControlDuration = defStats.ReceivedCrowdControlDuration
             };
             return jsonDefensesAll;
         }
@@ -96,6 +97,8 @@ namespace GW2EIBuilders.JsonModels.JsonActorUtilities
             jsonGameplayStats.ConnectedPowerCount = offStats.ConnectedPowerCount;
             jsonGameplayStats.AgainstDownedCount = offStats.AgainstDownedCount;
             jsonGameplayStats.AgainstDownedDamage = offStats.AgainstDownedDamage;
+            jsonGameplayStats.AppliedCrowdControl = offStats.AppliedCrowdControl;
+            jsonGameplayStats.AppliedCrowdControlDuration = offStats.AppliedCrowdControlDuration;
         }
 
         public static JsonGameplayStats BuildJsonGameplayStats(FinalOffensiveStats offStats)
@@ -139,7 +142,9 @@ namespace GW2EIBuilders.JsonModels.JsonActorUtilities
                 CondiCleanseSelf = playerToPlayerStats.CondiCleanseSelf,
                 CondiCleanseTimeSelf = playerToPlayerStats.CondiCleanseTimeSelf,
                 BoonStrips = playerToPlayerStats.BoonStrips,
-                BoonStripsTime = playerToPlayerStats.BoonStripsTime
+                BoonStripsTime = playerToPlayerStats.BoonStripsTime,
+                StunBreak = playerToPlayerStats.StunBreak,
+                RemovedStunDuration = playerToPlayerStats.RemovedStunDuration
             };
             return jsonPlayerSupport;
         }

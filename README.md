@@ -17,6 +17,8 @@ For general ArcDPS-related discussions and troubleshooting, including ArcDPS, Ar
 
 [![](https://discordapp.com/api/guilds/456611641526845473/widget.png?style=banner2)](https://discord.gg/T4kSbKJ5Sf)
 
+The key for verifying the release's signature can be found on [openpgp](https://keys.openpgp.org/search?q=CC2A0529D3469F39A6155C73FA6E8DECE596BCE9).
+
 ## Logging
 
 We suggest following [this guide](https://snowcrows.com/guides/getting-started/arc-dps) written by Snow Crows on how to setup your ArcDPS installation and generate encounter logs.
@@ -156,6 +158,10 @@ Note it may take some time for each file to parse and they will not be ready to 
 -__SendEmbedToWebhook__: if true, the Webhook URL will receive a small embed containing meta data + dps.reports link.
 
 -__SendSimpleMessageToWebhook__: if true, only the dps.reports link will be sent to the webhook.
+
+### General Settings
+
+-__MemoryLimit__: In MB. If the application uses more RAM than provided number, the application will exit with code 2. 0 to disable the feature. When enabled, the maximum between given number and 100 MB will be used.
 
 ## HTML Overview
 

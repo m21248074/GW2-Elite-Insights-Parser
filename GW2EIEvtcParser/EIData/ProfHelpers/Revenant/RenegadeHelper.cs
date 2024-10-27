@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
-using GW2EIEvtcParser.EIData.Buffs;
+using System.Linq;
+using GW2EIEvtcParser.ParsedData;
+using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.EIData.Buff;
-using static GW2EIEvtcParser.EIData.DamageModifier;
 using static GW2EIEvtcParser.EIData.DamageModifiersUtils;
 using static GW2EIEvtcParser.ParserHelper;
 using static GW2EIEvtcParser.SkillIDs;
@@ -11,13 +12,27 @@ namespace GW2EIEvtcParser.EIData
 {
     internal static class RenegadeHelper
     {
+        private class BandTogetherCastFinder : EffectCastFinder
+        {
+            public BandTogetherCastFinder(long baseSkillID, long enhancedSkill, string effect) : base(enhancedSkill, effect)
+            {
+                UsingSrcSpecChecker(Spec.Renegade);
+                UsingChecker((evt, combatData, agentData, skillData) => !combatData.IsCasting(baseSkillID, evt.Src, evt.Time));
+            }
+        }
 
         internal static readonly List<InstantCastFinder> InstantCastFinder = new List<InstantCastFinder>()
         {
-            new BuffGainCastFinder(LegendaryRenegadeStanceSkill, LegendaryRenegadeStanceBuff), // Legendary Renegade Stance
-            new DamageCastFinder(CallOfTheRenegade, CallOfTheRenegade), // Call of the Renegade
+            new BuffGainCastFinder(LegendaryRenegadeStanceSkill, LegendaryRenegadeStanceBuff),
+            new DamageCastFinder(CallOfTheRenegade, CallOfTheRenegade),
+            new EffectCastFinder(OrdersFromAbove, EffectGUIDs.RenegadeOrdersFromAboveRighteousRebel)
+                .UsingSrcSpecChecker(Spec.Renegade),
             new EffectCastFinder(OrdersFromAbove, EffectGUIDs.RenegadeOrdersFromAbove)
-                .UsingSrcSpecChecker(Spec.Revenant)
+                .UsingSrcSpecChecker(Spec.Renegade),
+            new BandTogetherCastFinder(BreakrazorsBastionSkill, BreakrazorsBastionSkillEnhanced, EffectGUIDs.RenegadeBreakrazorsBastion),
+            new BandTogetherCastFinder(RazorclawsRageSkill, RazorclawsRageSkillEnhanced, EffectGUIDs.RenegadeRazorclawsRage),
+            new BandTogetherCastFinder(DarkrazorsDaringSkill, DarkrazorsDaringSkillEnhanced, EffectGUIDs.RenegadeDarkrazorsDaring),
+            new BandTogetherCastFinder(IcerazorsIreSkill, IcerazorsIreSkillEnhanced, EffectGUIDs.RenegadeIcerazorsIre),
         };
 
         internal static readonly List<DamageModifierDescriptor> OutgoingDamageModifiers = new List<DamageModifierDescriptor>
@@ -61,6 +76,59 @@ namespace GW2EIEvtcParser.EIData
         internal static bool IsKnownMinionID(int id)
         {
             return Minions.Contains(id);
+        }
+
+        internal static void ComputeProfessionCombatReplayActors(AbstractPlayer player, ParsedEvtcLog log, CombatReplay replay)
+        {
+            Color color = Colors.Revenant;
+
+            // Citadel Bombardment
+            if (log.CombatData.TryGetEffectEventsBySrcWithGUID(player.AgentItem, EffectGUIDs.RenegadeCitadelBombardmentPortal, out IReadOnlyList<EffectEvent> citadelBombardment))
+            {
+                var skill = new SkillModeDescriptor(player, Spec.Revenant, CitadelBombardment);
+                if (log.CombatData.TryGetEffectEventsBySrcWithGUID(player.AgentItem, EffectGUIDs.RenegadeCitadelBombardment1, out IReadOnlyList<EffectEvent> citadelBombardmentHits))
+                {
+                    foreach (EffectEvent effect in citadelBombardment)
+                    {
+                        Point3D playerPosition = player.AgentItem.GetCurrentPosition(log, effect.Time);
+                        if (playerPosition != null)
+                        {
+                            var playerPositionConnector = new PositionConnector(playerPosition);
+                            var positions = new List<Point3D>();
+                            foreach (EffectEvent hitEffect in citadelBombardmentHits.Where(x => x.Time >= effect.Time && x.Time <= effect.Time + 3000))
+                            {
+                                positions.Add(hitEffect.Position);
+
+                                // Shooting Animation
+                                long animationDuration = hitEffect.Time - effect.Time;
+                                (long start, long end) lifespanAnimation = (effect.Time, effect.Time + animationDuration);
+                                var startPoint = new ParametricPoint3D(playerPosition, lifespanAnimation.start);
+                                var endPoint = new ParametricPoint3D(hitEffect.Position, lifespanAnimation.end);
+                                var rotationConnector = new AngleConnector(effect.Rotation.Z);
+                                var shootingArrow = (RectangleDecoration)new RectangleDecoration(15, 100, lifespanAnimation, color, 0.5, new InterpolationConnector(new List<ParametricPoint3D>() { startPoint, endPoint }))
+                                    .UsingRotationConnector(rotationConnector)
+                                    .UsingSkillMode(skill);
+                                replay.Decorations.Add(shootingArrow);
+
+                                // Hit circles
+                                (long, long) lifespanHit = hitEffect.ComputeLifespan(log, 500);
+                                var connector = new PositionConnector(hitEffect.Position);
+                                replay.Decorations.Add(new CircleDecoration(120, lifespanHit, color, 0.5, connector).UsingFilled(false).UsingSkillMode(skill));
+                            }
+                            // AoE Radius and icons
+                            (long, long) lifespan = (effect.Time, effect.Time + 3000);
+                            var centralPoint = Point3D.FindCentralPoint(positions);
+                            var centralConnector = new PositionConnector(centralPoint);
+                            replay.Decorations.Add(new IconDecoration(ParserIcons.EffectCitadelBombardmentPortal, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, playerPositionConnector)
+                                .UsingSkillMode(skill));
+                            replay.Decorations.Add(new IconDecoration(ParserIcons.EffectCitadelBombardment, CombatReplaySkillDefaultSizeInPixel, CombatReplaySkillDefaultSizeInWorld, 0.5f, lifespan, centralConnector)
+                                .UsingSkillMode(skill));
+                            // TODO: Find a way to tell the user that the circle is approximative.
+                            //replay.Decorations.Add(new CircleDecoration(230, lifespan, color, 0.5, centralConnector).UsingFilled(false).UsingSkillMode(skill));
+                        }
+                    }
+                }
+            }
         }
     }
 }

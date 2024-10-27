@@ -7,13 +7,11 @@ using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using static GW2EIEvtcParser.ArcDPSEnums;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.ParserHelper;
-using static GW2EIEvtcParser.EncounterLogic.EncounterCategory;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.ParserHelper;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -36,9 +34,9 @@ namespace GW2EIEvtcParser.EncounterLogic
                         // 5s extreme vulnerability from dread visage
                         const int duration = 5000;
                         // find last apply
-                        BuffApplyEvent apply = log.CombatData.GetBuffData(ExtremeVulnerability)
+                        BuffApplyEvent apply = log.CombatData.GetBuffDataByIDByDst(ExtremeVulnerability, remove.To)
                             .OfType<BuffApplyEvent>()
-                            .Where(e => e.Time <= remove.Time && e.To == remove.To)
+                            .Where(e => e.Time <= remove.Time)
                             .MaxBy(e => e.Time);
                         // check for removed duration, applied duration & death within 1s after
                         return remove.RemovedDuration > ServerDelayConstant
@@ -55,9 +53,9 @@ namespace GW2EIEvtcParser.EncounterLogic
                         // 60s extreme vulnerability from frightening speed
                         const int duration = 60000;
                         // find last apply
-                        BuffApplyEvent apply = log.CombatData.GetBuffData(ExtremeVulnerability)
+                        BuffApplyEvent apply = log.CombatData.GetBuffDataByIDByDst(ExtremeVulnerability, remove.To)
                             .OfType<BuffApplyEvent>()
-                            .Where(e => e.Time <= remove.Time && e.To == remove.To)
+                            .Where(e => e.Time <= remove.Time)
                             .MaxBy(e => e.Time);
                         // check for removed duration, applied duration & death within 1s after
                         return remove.RemovedDuration > ServerDelayConstant
@@ -121,7 +119,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             return FightData.EncounterMode.CMNoName;
         }
 
-        internal override void EIEvtcParse(ulong gw2Build, int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
+        internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
         {
             base.EIEvtcParse(gw2Build, evtcVersion, fightData, agentData, combatData, extensions);
             var aspectCounts = new Dictionary<int, int>();
@@ -152,11 +150,7 @@ namespace GW2EIEvtcParser.EncounterLogic
         internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
         {
             List<PhaseData> phases = GetInitialPhase(log);
-            AbstractSingleActor kanaxai = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KanaxaiScytheOfHouseAurkusCM));
-            if (kanaxai == null)
-            {
-                throw new MissingKeyActorsException("Kanaxai not found");
-            }
+            AbstractSingleActor kanaxai = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KanaxaiScytheOfHouseAurkusCM)) ?? throw new MissingKeyActorsException("Kanaxai not found");
             phases[0].AddTarget(kanaxai);
             if (!requirePhases)
             {
@@ -165,8 +159,8 @@ namespace GW2EIEvtcParser.EncounterLogic
             // Phases
             List<PhaseData> encounterPhases = GetPhasesByInvul(log, DeterminedToDestroy, kanaxai, true, true);
 
-            var worldCleaverPhaseStarts = log.CombatData.GetBuffData(DeterminedToDestroy).OfType<BuffApplyEvent
-                >().Where(x => x.To == kanaxai.AgentItem).Select(x => x.Time).ToList();
+            var worldCleaverPhaseStarts = log.CombatData.GetBuffDataByIDByDst(DeterminedToDestroy, kanaxai.AgentItem).OfType<BuffApplyEvent
+                >().Select(x => x.Time).ToList();
             int worldCleaverCount = 0;
             int repeatedCount = 0;
             var isRepeatedWorldCleaverPhase = new List<bool>();
@@ -271,13 +265,9 @@ namespace GW2EIEvtcParser.EncounterLogic
 
         internal override void CheckSuccess(CombatData combatData, AgentData agentData, FightData fightData, IReadOnlyCollection<AgentItem> playerAgents)
         {
-            AbstractSingleActor kanaxai = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KanaxaiScytheOfHouseAurkusCM));
-            if (kanaxai == null)
-            {
-                throw new MissingKeyActorsException("Kanaxai not found");
-            }
-            BuffApplyEvent invul762Gain = combatData.GetBuffData(Determined762).OfType<BuffApplyEvent>().Where(x => x.To == kanaxai.AgentItem).FirstOrDefault(x => x.Time > 0);
-            if (invul762Gain != null)
+            AbstractSingleActor kanaxai = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KanaxaiScytheOfHouseAurkusCM)) ?? throw new MissingKeyActorsException("Kanaxai not found");
+            BuffApplyEvent invul762Gain = combatData.GetBuffDataByIDByDst(Determined762, kanaxai.AgentItem).OfType<BuffApplyEvent>().FirstOrDefault(x => x.Time > 0);
+            if (invul762Gain != null && !combatData.GetDespawnEvents(kanaxai.AgentItem).Any(x => Math.Abs(x.Time - invul762Gain.Time) < ServerDelayConstant))
             {
                 fightData.SetSuccess(true, invul762Gain.Time);
             }
@@ -289,7 +279,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             long maxEnd = log.FightData.FightEnd;
 
             // Orange Tether from Aspect to player
-            IEnumerable<AbstractBuffEvent> tethers = log.CombatData.GetBuffData(AspectTetherBuff).Where(x => x.To == player.AgentItem);
+            IEnumerable<AbstractBuffEvent> tethers = log.CombatData.GetBuffDataByIDByDst(AspectTetherBuff, player.AgentItem);
             IEnumerable<BuffApplyEvent> tetherApplies = tethers.OfType<BuffApplyEvent>();
             IEnumerable<BuffRemoveAllEvent> tetherRemoves = tethers.OfType<BuffRemoveAllEvent>();
             AgentItem tetherAspect = _unknownAgent;
@@ -393,7 +383,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                     {
                         int castDuration = 5400;
                         int expectedEndCastTime = (int)c.Time + castDuration;
-                        
+
                         Segment quickness = target.GetBuffStatus(log, Quickness, c.Time, expectedEndCastTime).Where(x => x.Value == 1).FirstOrDefault();
 
                         // If the aspect has Sugar Rush AND Quickness
@@ -454,7 +444,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                 // Get World Cleaver casts
                 AbstractSingleActor kanaxai = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.KanaxaiScytheOfHouseAurkusCM));
                 IReadOnlyList<AbstractCastEvent> casts = kanaxai.GetCastEvents(log, log.FightData.FightStart, log.FightData.FightEnd);
-                
+
                 // Get Axe AoE Buffs
                 var axes = new List<AbstractBuffEvent>();
                 axes.AddRange(log.CombatData.GetBuffData(RendingStormAxeTargetBuff1));

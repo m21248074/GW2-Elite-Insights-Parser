@@ -23,10 +23,18 @@ namespace GW2EIEvtcParser.ParsedData
         public IReadOnlyCollection<ulong> AgentValues => new HashSet<ulong>(_allAgentsList.Select(x => x.Agent));
         public IReadOnlyCollection<ushort> InstIDValues => new HashSet<ushort>(_allAgentsList.Select(x => x.InstID));
 
-        internal AgentData(List<AgentItem> allAgentsList)
+
+        private readonly GW2EIGW2API.GW2APIController _apiController;
+
+        internal AgentData(GW2EIGW2API.GW2APIController apiController, List<AgentItem> allAgentsList)
         {
+            _apiController = apiController;
             _allAgentsList = allAgentsList;
             Refresh();
+        }
+        internal string GetSpec(uint prof, uint elite)
+        {
+            return _apiController.GetSpec(prof, elite);
         }
 
         internal AgentItem AddCustomNPCAgent(long start, long end, string name, ParserHelper.Spec spec, int ID, bool isFake, ushort toughness = 0, ushort healing = 0, ushort condition = 0, ushort concentration = 0, uint hitboxWidth = 0, uint hitboxHeight = 0)
@@ -186,12 +194,12 @@ namespace GW2EIEvtcParser.ParsedData
 
         internal void RemoveAllFrom(HashSet<AgentItem> agents)
         {
-            if (!agents.Any())
+            if (agents.Count == 0)
             {
                 return;
             }
             _allAgentsList.RemoveAll(x => agents.Contains(x));
-            
+
             Refresh();
         }
 

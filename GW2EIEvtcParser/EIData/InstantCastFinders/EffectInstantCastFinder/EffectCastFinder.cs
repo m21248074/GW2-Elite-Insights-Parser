@@ -46,7 +46,7 @@ namespace GW2EIEvtcParser.EIData
             UsingChecker((evt, combatData, agentData, skillData) => evt.IsAroundDst && evt.Dst.BaseSpec == spec);
             return this;
         }
-        
+
         internal EffectCastFinder UsingSrcSpecChecker(Spec spec)
         {
             UsingChecker((evt, combatData, agentData, skillData) => evt.Src.Spec == spec);
@@ -99,7 +99,7 @@ namespace GW2EIEvtcParser.EIData
             {
                 if (combatData.TryGetEffectEventsByGUID(effectGUID, out IReadOnlyList<EffectEvent> effectEvents))
                 {
-                    return effectEvents.Any(other => GetAgent(other) == GetAgent(evt) && Math.Abs(other.Time - timeOffset - evt.Time) < epsilon);
+                    return effectEvents.Any(other => other != evt && GetAgent(other) == GetAgent(evt) && Math.Abs(other.Time - timeOffset - evt.Time) < epsilon);
                 }
                 return false;
             });
@@ -109,9 +109,9 @@ namespace GW2EIEvtcParser.EIData
         protected virtual bool DebugEffectChecker(EffectEvent evt, CombatData combatData, AgentData agentData, SkillData skillData)
         {
             var test = combatData.GetEffectEventsBySrc(evt.Src).Where(x => Math.Abs(x.Time - evt.Time) <= ServerDelayConstant && x.EffectID != evt.EffectID).ToList();
-            var testGUIDs = test.Select(x => combatData.GetEffectGUIDEvent(x.EffectID)).Select(x => x.HexContentGUID).ToList();
+            var testGUIDs = test.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             var test2 = combatData.GetEffectEventsByDst(evt.Src).Where(x => Math.Abs(x.Time - evt.Time) <= ServerDelayConstant && x.EffectID != evt.EffectID).ToList();
-            var test2GUIDs = test2.Select(x => combatData.GetEffectGUIDEvent(evt.EffectID)).Select(x => x.HexContentGUID).ToList();
+            var test2GUIDs = test2.Select(x => x.GUIDEvent.HexContentGUID).ToList();
             return true;
         }
 
@@ -136,6 +136,10 @@ namespace GW2EIEvtcParser.EIData
                 var effects = combatData.GetEffectEventsByEffectID(effectGUIDEvent.ContentID).GroupBy(x => GetAgent(x)).ToDictionary(x => x.Key, x => x.ToList());
                 foreach (KeyValuePair<AgentItem, List<EffectEvent>> pair in effects)
                 {
+                    if (pair.Key == ParserHelper._unknownAgent)
+                    {
+                        continue;
+                    }
                     long lastTime = int.MinValue;
                     foreach (EffectEvent effectEvent in pair.Value)
                     {
@@ -148,7 +152,7 @@ namespace GW2EIEvtcParser.EIData
                             }
                             lastTime = effectEvent.Time;
                             AgentItem caster = pair.Key;
-                            if (_speciesId > 0 && caster.IsNonIdentifiedSpecies())
+                            if (_speciesId > 0 && caster.IsUnamedSpecies())
                             {
                                 AgentItem agent = agentData.GetNPCsByID(_speciesId).FirstOrDefault(x => x.LastAware >= effectEvent.Time && x.FirstAware <= effectEvent.Time);
                                 if (agent != null)

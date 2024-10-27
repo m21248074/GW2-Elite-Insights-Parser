@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using GW2EIEvtcParser.ParsedData;
 
 namespace GW2EIEvtcParser.EIData
 {
@@ -14,6 +13,26 @@ namespace GW2EIEvtcParser.EIData
         private static float Mix(float a, float b, float c)
         {
             return (1.0f - c) * a + c * b;
+        }
+
+        public static bool operator >(Point3D a, Point3D b)
+        {
+            return a.X > b.X && a.Y > b.Y && a.Z > b.Z;
+        }
+
+        public static bool operator <(Point3D a, Point3D b)
+        {
+            return a.X < b.X && a.Y < b.Y && a.Z < b.Z;
+        }
+
+        public static bool operator >=(Point3D a, Point3D b)
+        {
+            return a.X >= b.X && a.Y >= b.Y && a.Z >= b.Z;
+        }
+
+        public static bool operator <=(Point3D a, Point3D b)
+        {
+            return a.X <= b.X && a.Y <= b.Y && a.Z <= b.Z;
         }
 
         public static Point3D operator +(Point3D a, Point3D b)
@@ -90,6 +109,12 @@ namespace GW2EIEvtcParser.EIData
             return distance;
         }
 
+        public float Length2D()
+        {
+            float length = (float)Math.Sqrt(X * X + Y * Y);
+            return length;
+        }
+
         public float Length()
         {
             float length = (float)Math.Sqrt(X * X + Y * Y + Z * Z);
@@ -103,7 +128,7 @@ namespace GW2EIEvtcParser.EIData
             Z = 0;
         }
 
-        public Point3D(float x, float y, float z) : this(x,y)
+        public Point3D(float x, float y, float z) : this(x, y)
         {
             Z = z;
         }
@@ -164,5 +189,35 @@ namespace GW2EIEvtcParser.EIData
             return points.Count == 3 && IsInTriangle2D(p, points[0], points[1], points[2]);
         }
 
+
+        public static bool IsInBox(Point3D p, Point3D p0, Point3D p1)
+        {
+            var minBB = new Point3D(Math.Min(p0.X, p1.X), Math.Min(p0.Y, p1.Y), Math.Min(p0.Z, p1.Z));
+            var maxBB = new Point3D(Math.Max(p0.X, p1.X), Math.Max(p0.Y, p1.Y), Math.Max(p0.Z, p1.Z));
+            return p >= minBB && p <= maxBB;
+        }
+
+        public static bool IsInBox2D(Point3D p, Point3D p0, Point3D p1)
+        {
+            return Point2D.IsInBox(new Point2D(p), new Point2D(p0), new Point2D(p1));
+        }
+        public static bool IsInBox2D(Point3D p, Point2D p0, Point2D p1)
+        {
+            return Point2D.IsInBox(new Point2D(p), p0, p1);
+        }
+
+
+        /// <summary>
+        /// Calculates the central 3D point based on the points provided.
+        /// </summary>
+        /// <param name="points">List of points to use to find the center.</param>
+        /// <returns><see cref="Point3D"/> with the center values.</returns>
+        public static Point3D FindCentralPoint(IReadOnlyList<Point3D> points)
+        {
+            float sumX = points.Sum(p => p.X);
+            float sumY = points.Sum(p => p.Y);
+            float sumZ = points.Sum(p => p.Z);
+            return new Point3D(sumX / points.Count, sumY / points.Count, sumZ / points.Count);
+        }
     }
 }

@@ -1,0 +1,66 @@
+<template>
+    <div class="d-flex flex-row justify-content-center flex-wrap" style="width: 500px;">
+        <div class="d-flex flex-row justify-content-center align-items-center flex-wrap" style="max-width: 500px;">
+            <div v-for="target in mainTargets">
+                <img class="icon-lg mr-2 ml-2 target-cell" 
+                    :src="getTargetData(target.id).icon" 
+                    :alt="getTargetData(target.id).name"
+                    :data-original-title="getTargetData(target.id).name" 
+                    :class="{active: target.data.active}"
+                    @click="target.data.active = !target.data.active">
+                <target-data-component :targetid="target.id"></target-data-component>
+            </div>
+        </div>
+        <div v-show="secondaryTargets.length > 0" class="ml-4 d-flex flex-row justify-content-center align-items-center flex-wrap" style="max-width: 350px;">
+            <div v-for="target in secondaryTargets">
+                <img class=" icon-ll mr-2 ml-2 target-cell" 
+                    :src="getTargetData(target.id).icon" 
+                    :alt="getTargetData(target.id).name"
+                    :data-original-title="getTargetData(target.id).name" 
+                    :class="{active: target.data.active}"
+                    @click="target.data.active = !target.data.active">
+                <target-data-component :targetid="target.id"></target-data-component>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    Vue.component("target-component", {
+        props: ["targets", "phaseindex"],
+        template: `${template}`,
+        computed: {
+            phase: function () {
+                return logData.phases[this.phaseindex];
+            },
+            mainTargets: function() {
+                let result = [];
+                for (let i = 0; i < this.targets.length; i++) {
+                    let target = this.targets[i][this.phaseindex];
+                    if (!target.secondary && this.show(i)) {
+                        result.push({id: i, data: target});
+                    }
+                }
+                return result;
+            },
+            secondaryTargets: function() {
+                let result = [];
+                for (let i = 0; i < this.targets.length; i++) {
+                    let target = this.targets[i][this.phaseindex];
+                    if (target.secondary && this.show(i)) {
+                        result.push({id: i, data: target});
+                    }
+                }
+                return result;
+            }
+        },
+        methods: {
+            show: function (index) {
+                return this.phase.targets.indexOf(index) !== -1;
+            },
+            getTargetData: function (id) {
+                return logData.targets[id];
+            }
+        }
+    });
+</script>

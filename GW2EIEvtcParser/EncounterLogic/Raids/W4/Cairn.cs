@@ -4,11 +4,10 @@ using System.Linq;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.ParsedData;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -66,17 +65,13 @@ namespace GW2EIEvtcParser.EncounterLogic
         internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
         {
             List<PhaseData> phases = GetInitialPhase(log);
-            AbstractSingleActor cairn = Targets.FirstOrDefault(x => x.IsSpecies(ArcDPSEnums.TargetID.Cairn));
-            if (cairn == null)
-            {
-                throw new MissingKeyActorsException("Cairn not found");
-            }
+            AbstractSingleActor cairn = Targets.FirstOrDefault(x => x.IsSpecies(ArcDPSEnums.TargetID.Cairn)) ?? throw new MissingKeyActorsException("Cairn not found");
             phases[0].AddTarget(cairn);
             if (!requirePhases)
             {
                 return phases;
             }
-            BuffApplyEvent enrageApply = log.CombatData.GetBuffData(EnragedCairn).OfType<BuffApplyEvent>().FirstOrDefault(x => x.To == cairn.AgentItem);
+            BuffApplyEvent enrageApply = log.CombatData.GetBuffDataByIDByDst(EnragedCairn, cairn.AgentItem).OfType<BuffApplyEvent>().FirstOrDefault();
             if (enrageApply != null)
             {
                 var normalPhase = new PhaseData(log.FightData.FightStart, enrageApply.Time)
@@ -173,7 +168,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             }
         }
 
-        internal override long GetFightOffset(int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
+        internal override long GetFightOffset(EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
         {
             if (!agentData.TryGetFirstAgentItem(ArcDPSEnums.TargetID.Cairn, out AgentItem cairn))
             {
@@ -221,7 +216,7 @@ namespace GW2EIEvtcParser.EncounterLogic
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
             // shared agony
-            var agony = log.CombatData.GetBuffData(SharedAgony).Where(x => (x.To == p.AgentItem && x is BuffApplyEvent)).ToList();
+            var agony = log.CombatData.GetBuffDataByIDByDst(SharedAgony, p.AgentItem).Where(x => x is BuffApplyEvent).ToList();
             foreach (AbstractBuffEvent c in agony)
             {
                 long agonyStart = c.Time;

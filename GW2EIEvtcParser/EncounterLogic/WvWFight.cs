@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using static GW2EIEvtcParser.EncounterLogic.EncounterCategory;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
 using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
@@ -30,6 +28,19 @@ namespace GW2EIEvtcParser.EncounterLogic
             _defaultName = _detailed ? "Detailed WvW" : "World vs World";
             EncounterCategoryInformation.Category = FightCategory.WvW;
             EncounterID |= EncounterIDs.EncounterMasks.WvWMask;
+            MechanicList.AddRange(new List<Mechanic>
+            {
+                new PlayerDamageMechanic("Killing Blows to enemy Players", new MechanicPlotlySetting(Symbols.TriangleDown, Colors.Blue), "Kllng.Blw.Player", "Killing Blows inflicted by Squad Players to enemy Players", "Killing Blows to enemy Players", 0, (log, a) => {
+                    if (a.Type != AgentItem.AgentType.Player)
+                    {
+                        return new List<AbstractHealthDamageEvent>();
+                    }
+                    return log.FindActor(a).GetDamageEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd);
+                }).UsingChecker((x, log) => x.HasKilled && (x.To.Type == AgentItem.AgentType.NonSquadPlayer || x.To.IsSpecies(ArcDPSEnums.TargetID.WorldVersusWorld))),
+                new EnemyDamageMechanic("Killing Blows received by enemies", new MechanicPlotlySetting(Symbols.TriangleDown, Colors.Red), "Kllng.Blw.Enemy", "Killing Blows inflicted enemy Players by Squad Players", "Killing Blows received by enemies", 0, (log, a) => {
+                    return log.FindActor(a).GetDamageTakenEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd);
+                }).UsingChecker((x, log) => x.HasKilled && x.CreditedFrom.Type == AgentItem.AgentType.Player),
+            });
         }
 
         protected override HashSet<int> GetUniqueNPCIDs()
@@ -40,11 +51,7 @@ namespace GW2EIEvtcParser.EncounterLogic
         internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
         {
             List<PhaseData> phases = GetInitialPhase(log);
-            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(ArcDPSEnums.TargetID.WorldVersusWorld));
-            if (mainTarget == null)
-            {
-                throw new MissingKeyActorsException("Main target of the fight not found");
-            }
+            AbstractSingleActor mainTarget = Targets.FirstOrDefault(x => x.IsSpecies(ArcDPSEnums.TargetID.WorldVersusWorld)) ?? throw new MissingKeyActorsException("Main target of the fight not found");
             phases[0].AddTarget(mainTarget);
             if (!requirePhases)
             {
@@ -70,7 +77,21 @@ namespace GW2EIEvtcParser.EncounterLogic
             return phases;
         }
 
-        internal override long GetFightOffset(int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
+        internal override void UpdatePlayersSpecAndGroup(IReadOnlyList<Player> players, CombatData combatData, FightData fightData)
+        {
+            foreach (Player p in players)
+            {
+                // We get the first enter combat for the player, we ignore it however if there was an exit combat before it as that means the player was already in combat at log start
+                var enterCombat = combatData.GetEnterCombatEvents(p.AgentItem).FirstOrDefault();
+                if (enterCombat != null && enterCombat.Spec != ParserHelper.Spec.Unknown && !combatData.GetExitCombatEvents(p.AgentItem).Any(x => x.Time < enterCombat.Time))
+                {
+                    p.AgentItem.OverrideSpec(enterCombat.Spec);
+                    p.OverrideGroup(enterCombat.Subgroup);
+                }
+            }
+        }
+
+        internal override long GetFightOffset(EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
         {
             return GetGenericFightOffset(fightData);
         }
@@ -234,17 +255,19 @@ namespace GW2EIEvtcParser.EncounterLogic
             fightData.SetSuccess(true, fightData.FightEnd);
         }
 
-        internal override void EIEvtcParse(ulong gw2Build, int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
+        internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
         {
             AgentItem dummyAgent = agentData.AddCustomNPCAgent(fightData.FightStart, fightData.FightEnd, _detailed ? "Dummy PvP Agent" : "Enemy Players", ParserHelper.Spec.NPC, ArcDPSEnums.TargetID.WorldVersusWorld, true);
             // Handle non squad players
             IReadOnlyList<AgentItem> aList = agentData.GetAgentByType(AgentItem.AgentType.NonSquadPlayer);
-            var garbageList = new List<AbstractSingleActor>();
             //
+            var garbageList = new List<AbstractSingleActor>();
+            var auxTargets = new List<AbstractSingleActor>();
+            var auxFriendlies = new List<AbstractSingleActor>();
             foreach (AgentItem a in aList)
             {
                 var nonSquadPlayer = new PlayerNonSquad(a);
-                List<AbstractSingleActor> actorListToFill = nonSquadPlayer.IsFriendlyPlayer ? _nonPlayerFriendlies : _detailed ? _targets : garbageList;
+                List<AbstractSingleActor> actorListToFill = nonSquadPlayer.IsFriendlyPlayer ? auxFriendlies : _detailed ? auxTargets : garbageList;
                 actorListToFill.Add(nonSquadPlayer);
             }
             //
@@ -289,7 +312,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                 switch ((long)modeEvent.SkillID)
                 {
                     case GuildHallPvEMode:
-                        SkillMode = SkillModeEnum.PvE; 
+                        SkillMode = SkillModeEnum.PvE;
                         break;
                     case GuildHallsPvPMode:
                         SkillMode = SkillModeEnum.sPvP;
@@ -300,6 +323,10 @@ namespace GW2EIEvtcParser.EncounterLogic
                 }
             }
             ComputeFightTargets(agentData, combatData, extensions);
+            auxFriendlies = auxFriendlies.OrderBy(x => x.Character).ToList();
+            _nonPlayerFriendlies.AddRange(auxFriendlies);
+            auxTargets = auxTargets.OrderBy(x => x.Character).ToList();
+            _targets.AddRange(auxTargets);
         }
     }
 }

@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
-using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
-using static GW2EIEvtcParser.ParserHelper;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.ArcDPSEnums;
+using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
-using static GW2EIEvtcParser.ArcDPSEnums;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -35,7 +32,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                 new PlayerDstSkillMechanic(ExhaustPlume, "Exhaust Plume", new MechanicPlotlySetting(Symbols.TriangleDown, Colors.Blue), "IndiFall.H", "Hit by Exhaust Plume (Indigo Fall)", "Exhaust Plume Hit (Indigo)", 150).UsingChecker((de, log) => de.CreditedFrom.IsAnySpecies(new List<ArcDPSEnums.TargetID> { TargetID.PrototypeIndigo, TargetID.PrototypeIndigoCM })),
                 new PlayerDstBuffApplyMechanic(Spaghettification, "Spaghettification", new MechanicPlotlySetting(Symbols.Bowtie, Colors.DarkRed), "Spgt.H", "Hit by Spaghettification", "Spaghettification Hit", 0),
                 new PlayerDstBuffApplyMechanic(Dysapoptosis, "Dysapoptosis", new MechanicPlotlySetting(Symbols.BowtieOpen, Colors.DarkRed), "Dysp.H", "Hit by Dysapoptosis", "Dysapoptosis Hit", 0),
-                new PlayerDstBuffApplyMechanic(ThunderingUltimatum, "Thundering Ultimatum", new MechanicPlotlySetting(Symbols.Asterisk, Colors.DarkRed), "ThunUlti.H", "Hit by Thundering Ultimatum", "Thunderin gUltimatum Hit", 0),
+                new PlayerDstBuffApplyMechanic(ThunderingUltimatum, "Thundering Ultimatum", new MechanicPlotlySetting(Symbols.TriangleDown, Colors.DarkRed), "ThunUlti.H", "Hit by Thundering Ultimatum", "Thunderin gUltimatum Hit", 0),
                 new PlayerDstBuffApplyMechanic(new long [] { TidalTorment, TidalTormentCM }, "Tidal Torment", new MechanicPlotlySetting(Symbols.Star, Colors.Red), "TidTorm.A", "Tidal Torment Applied", "Tidal Torment Applied", 0),
                 new PlayerDstBuffApplyMechanic(new long [] { ErgoShear, ErgoShearCM }, "Ergo Shear", new MechanicPlotlySetting(Symbols.StarOpen, Colors.Red), "ErgShr.A", "Ergo Shear Applied", "Ergo Shear Applied", 0),
                 new PlayerDstBuffApplyMechanic(FixatedOldLionsCourt, "Fixated (Vermilion)", new MechanicPlotlySetting(Symbols.Diamond, Colors.Red), "Fix.Verm.A", "Fixated Applied", "Fixated Applied", 0).UsingChecker((bae, log) => bae.CreditedBy.IsAnySpecies(new List<ArcDPSEnums.TargetID> { TargetID.PrototypeVermilion, TargetID.PrototypeVermilionCM })),
@@ -96,7 +93,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                     return FightData.EncounterStartStatus.Late;
                 }
 
-            } 
+            }
             else
             {
                 if (TargetHPPercentUnderThreshold(TargetID.PrototypeVermilion, fightData.FightStart, combatData, Targets) ||
@@ -123,7 +120,7 @@ namespace GW2EIEvtcParser.EncounterLogic
                         (int)TargetID.PrototypeIndigoCM,
                         (int)TargetID.PrototypeArseniteCM,
                     };
-                } 
+                }
                 else
                 {
                     idsToCheck = new List<int>
@@ -176,7 +173,7 @@ namespace GW2EIEvtcParser.EncounterLogic
             if (dead != null && dead.Time < end)
             {
                 end = dead.Time;
-            } 
+            }
             List<PhaseData> subPhases = GetPhasesByInvul(log, new[] { LeyWovenShielding, MalfunctioningLeyWovenShielding }, target, false, true, start, end);
             string[] phaseNames;
             if (log.FightData.IsCM)
@@ -214,13 +211,13 @@ namespace GW2EIEvtcParser.EncounterLogic
             return subPhases;
         }
 
-        internal override long GetFightOffset(int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
+        internal override long GetFightOffset(EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
         {
             long startToUse = base.GetFightOffset(evtcVersion, fightData, agentData, combatData);
             AgentItem vermilion = agentData.GetNPCsByID(TargetID.PrototypeVermilionCM).FirstOrDefault() ?? agentData.GetNPCsByID(TargetID.PrototypeVermilion).FirstOrDefault();
             if (vermilion != null)
             {
-                CombatItem breakbarStateActive = combatData.FirstOrDefault(x => x.SrcMatchesAgent(vermilion) && x.IsStateChange == StateChange.BreakbarState && x.Value == 0);
+                CombatItem breakbarStateActive = combatData.FirstOrDefault(x => x.SrcMatchesAgent(vermilion) && x.IsStateChange == StateChange.BreakbarState && BreakbarStateEvent.GetBreakbarState(x) == BreakbarState.Active);
                 if (breakbarStateActive != null)
                 {
                     startToUse = breakbarStateActive.Time;
@@ -280,11 +277,7 @@ namespace GW2EIEvtcParser.EncounterLogic
 
         internal override FightData.EncounterMode GetEncounterMode(CombatData combatData, AgentData agentData, FightData fightData)
         {
-            AbstractSingleActor target = Vermilion() ?? Indigo() ?? Arsenite();
-            if (target == null)
-            {
-                throw new MissingKeyActorsException("Main target not found");
-            }
+            AbstractSingleActor target = (Vermilion() ?? Indigo() ?? Arsenite()) ?? throw new MissingKeyActorsException("Main target not found");
             return target.GetHealth(combatData) > 20e6 ? FightData.EncounterMode.CM : FightData.EncounterMode.Normal;
         }
 
@@ -302,7 +295,7 @@ namespace GW2EIEvtcParser.EncounterLogic
         {
             base.ComputePlayerCombatReplayActors(p, log, replay);
             // Fixation
-            IEnumerable<AbstractBuffEvent> fixations = log.CombatData.GetBuffData(FixatedOldLionsCourt).Where(buff => buff.To == p.AgentItem);
+            IEnumerable<AbstractBuffEvent> fixations = log.CombatData.GetBuffDataByIDByDst(FixatedOldLionsCourt, p.AgentItem);
             IEnumerable<AbstractBuffEvent> fixatedVermillion = fixations.Where(bae => bae.CreditedBy.IsAnySpecies(new List<ArcDPSEnums.TargetID> { TargetID.PrototypeVermilion, TargetID.PrototypeVermilionCM }));
             IEnumerable<AbstractBuffEvent> fixatedArsenite = fixations.Where(bae => bae.CreditedBy.IsAnySpecies(new List<ArcDPSEnums.TargetID> { TargetID.PrototypeArsenite, TargetID.PrototypeArseniteCM }));
             IEnumerable<AbstractBuffEvent> fixatedIndigo = fixations.Where(bae => bae.CreditedBy.IsAnySpecies(new List<ArcDPSEnums.TargetID> { TargetID.PrototypeIndigo, TargetID.PrototypeIndigoCM }));
@@ -314,7 +307,7 @@ namespace GW2EIEvtcParser.EncounterLogic
 
         internal override void ComputeNPCCombatReplayActors(NPC target, ParsedEvtcLog log, CombatReplay replay)
         {
-            switch(target.ID)
+            switch (target.ID)
             {
                 case (int)TargetID.PrototypeVermilion:
                     replay.AddHideByBuff(target, log, Determined762);

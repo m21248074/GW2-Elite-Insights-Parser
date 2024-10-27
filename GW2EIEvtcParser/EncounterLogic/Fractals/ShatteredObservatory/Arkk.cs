@@ -1,18 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.Exceptions;
+using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
-using static GW2EIEvtcParser.SkillIDs;
-using static GW2EIEvtcParser.ParserHelper;
-using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.ArcDPSEnums;
+using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicPhaseUtils;
 using static GW2EIEvtcParser.EncounterLogic.EncounterLogicTimeUtils;
-using static GW2EIEvtcParser.EncounterLogic.EncounterImages;
-using GW2EIEvtcParser.Extensions;
-using static GW2EIEvtcParser.ArcDPSEnums;
+using static GW2EIEvtcParser.EncounterLogic.EncounterLogicUtils;
+using static GW2EIEvtcParser.ParserHelper;
+using static GW2EIEvtcParser.SkillIDs;
 
 namespace GW2EIEvtcParser.EncounterLogic
 {
@@ -63,11 +63,10 @@ namespace GW2EIEvtcParser.EncounterLogic
                             (11204, 4414, 13252, 6462)*/);
         }
 
-        protected override List<ArcDPSEnums.TrashID> GetTrashMobsIDs()
+        protected override List<TrashID> GetTrashMobsIDs()
         {
-            var trashIDs = new List<ArcDPSEnums.TrashID>
+            var trashIDs = new List<TrashID>
             {
-                TrashID.TemporalAnomalyArkk,
                 TrashID.FanaticDagger2,
                 TrashID.FanaticDagger1,
                 TrashID.FanaticBow,
@@ -93,8 +92,21 @@ namespace GW2EIEvtcParser.EncounterLogic
             {
                 (int)TargetID.Arkk,
                 (int)TrashID.Archdiviner,
-                (int)TrashID.EliteBrazenGladiator
+                (int)TrashID.EliteBrazenGladiator,
+                (int)TrashID.TemporalAnomalyArkk,
             };
+        }
+
+        internal override void EIEvtcParse(ulong gw2Build, EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData, IReadOnlyDictionary<uint, AbstractExtensionHandler> extensions)
+        {
+            base.EIEvtcParse(gw2Build, evtcVersion, fightData, agentData, combatData, extensions);
+
+            // Add number to the spawned anomalies
+            var anomalies = Targets.Where(x => x.IsSpecies(TrashID.TemporalAnomalyArkk)).ToList();
+            for (int i = 0; i < anomalies.Count; i++)
+            {
+                anomalies[i].OverrideName(anomalies[i].Character + " " + (i + 1));
+            }
         }
 
         private void GetMiniBossPhase(int targetID, ParsedEvtcLog log, string phaseName, List<PhaseData> phases)
@@ -112,12 +124,9 @@ namespace GW2EIEvtcParser.EncounterLogic
         internal override List<PhaseData> GetPhases(ParsedEvtcLog log, bool requirePhases)
         {
             List<PhaseData> phases = GetInitialPhase(log);
-            AbstractSingleActor arkk = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Arkk));
-            if (arkk == null)
-            {
-                throw new MissingKeyActorsException("Arkk not found");
-            }
+            AbstractSingleActor arkk = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Arkk)) ?? throw new MissingKeyActorsException("Arkk not found");
             phases[0].AddTarget(arkk);
+            phases[0].AddSecondaryTargets(Targets.Where(x => x.IsSpecies(TrashID.Archdiviner) || x.IsSpecies(TrashID.EliteBrazenGladiator)));
             if (!requirePhases)
             {
                 return phases;
@@ -159,15 +168,22 @@ namespace GW2EIEvtcParser.EncounterLogic
             }
             phases.AddRange(bloomPhases);
 
+            // Add anomalies as secondary target to the phases
+            foreach (PhaseData phase in phases)
+            {
+                var anomalies = Targets.Where(x => x.IsSpecies(TrashID.TemporalAnomalyArkk) && phase.IntersectsWindow(x.FirstAware, x.LastAware) && phase.CanBeSubPhase).ToList();
+                phase.AddSecondaryTargets(anomalies);
+            }
+
             return phases;
         }
 
-        internal override long GetFightOffset(int evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
+        internal override long GetFightOffset(EvtcVersionEvent evtcVersion, FightData fightData, AgentData agentData, List<CombatItem> combatData)
         {
-            CombatItem logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.LogStartNPCUpdate);
+            CombatItem logStartNPCUpdate = combatData.FirstOrDefault(x => x.IsStateChange == StateChange.LogNPCUpdate);
             if (logStartNPCUpdate != null)
             {
-                if(!agentData.TryGetFirstAgentItem(TargetID.Arkk, out AgentItem arkk))
+                if (!agentData.TryGetFirstAgentItem(TargetID.Arkk, out AgentItem arkk))
                 {
                     throw new MissingKeyActorsException("Arkk not found");
                 }
@@ -187,17 +203,13 @@ namespace GW2EIEvtcParser.EncounterLogic
             {
                 return;
             }
-            AbstractSingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Arkk));
-            if (target == null)
-            {
-                throw new MissingKeyActorsException("Arkk not found");
-            }
+            AbstractSingleActor target = Targets.FirstOrDefault(x => x.IsSpecies(TargetID.Arkk)) ?? throw new MissingKeyActorsException("Arkk not found");
             HashSet<AgentItem> adjustedPlayers = GetParticipatingPlayerAgents(target, combatData, playerAgents);
             // missing buff apply events fallback, some phases will be missing
             // removes should be present
             if (SetSuccessByBuffCount(combatData, fightData, adjustedPlayers, target, Determined762, 10))
             {
-                var invulsRemoveTarget = combatData.GetBuffData(Determined762).OfType<BuffRemoveAllEvent>().Where(x => x.To == target.AgentItem).ToList();
+                var invulsRemoveTarget = combatData.GetBuffDataByIDByDst(Determined762, target.AgentItem).OfType<BuffRemoveAllEvent>().ToList();
                 if (invulsRemoveTarget.Count == 5)
                 {
                     SetSuccessByCombatExit(new List<AbstractSingleActor> { target }, combatData, fightData, adjustedPlayers);

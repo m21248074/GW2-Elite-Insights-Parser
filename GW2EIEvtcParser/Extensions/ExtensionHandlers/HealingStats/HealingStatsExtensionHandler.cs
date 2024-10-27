@@ -28,7 +28,7 @@ namespace GW2EIEvtcParser.Extensions
             SymbolOfFaith,
             FaithfulStrike,
             SymbolOfSwiftness,
-            SymbolOfWrath,
+            SymbolOfWrath_SymbolOfResolution,
             SymbolOfProtection,
             SymbolOfSpears,
             SymbolOfLight,
@@ -294,7 +294,7 @@ namespace GW2EIEvtcParser.Extensions
                 if (isHealing)
                 {
                     _healingEvents.Add(new EXTDirectHealingEvent(c, agentData, skillData));
-                } 
+                }
                 else if (isBarrier)
                 {
                     _barrierEvents.Add(new EXTDirectBarrierEvent(c, agentData, skillData));
@@ -350,9 +350,9 @@ namespace GW2EIEvtcParser.Extensions
                 var healDataById = _healingEvents.GroupBy(x => x.SkillId).ToDictionary(x => x.Key, x => x.ToList());
                 combatData.EXTHealingCombatData = new EXTHealingCombatData(healData, healReceivedData, healDataById, GetHybridIDs(gw2Build));
                 operation.UpdateProgressWithCancellationCheck("Parsing: Attached " + _healingEvents.Count + " heal events to CombatData");
-            }          
+            }
             //
-            if (_barrierEvents.Any())
+            if (_barrierEvents.Count != 0)
             {
                 var barrierData = _barrierEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
                 foreach (KeyValuePair<AgentItem, List<EXTAbstractBarrierEvent>> pair in barrierData)
