@@ -77,20 +77,20 @@ partial class MainForm
         LblHeader.Location = new Point(14, 25);
         LblHeader.Margin = new Padding(4, 0, 4, 0);
         LblHeader.Name = "LblHeader";
-        LblHeader.Size = new Size(279, 20);
+        LblHeader.Size = new Size(184, 20);
         LblHeader.TabIndex = 4;
-        LblHeader.Text = "Drag and Drop EVTC file(s) below";
+        LblHeader.Text = "拖放 EVTC 檔案至下面";
         LblHeader.TextAlign = System.Drawing.ContentAlignment.TopCenter;
         // 
         // BtnParse
         // 
         BtnParse.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        BtnParse.Location = new Point(516, 359);
+        BtnParse.Location = new Point(527, 359);
         BtnParse.Margin = new Padding(4, 3, 4, 3);
         BtnParse.Name = "BtnParse";
         BtnParse.Size = new Size(274, 27);
         BtnParse.TabIndex = 10;
-        BtnParse.Text = "Parse All";
+        BtnParse.Text = "解析全部";
         BtnParse.UseVisualStyleBackColor = true;
         BtnParse.Click += BtnParseClick;
         // 
@@ -102,7 +102,7 @@ partial class MainForm
         BtnPopulate.Name = "BtnPopulate";
         BtnPopulate.Size = new Size(155, 27);
         BtnPopulate.TabIndex = 10;
-        BtnPopulate.Text = "Populate from directory";
+        BtnPopulate.Text = "從資料夾導入";
         BtnPopulate.UseVisualStyleBackColor = true;
         BtnPopulate.Click += BtnPopulateFromDirectory;
         // 
@@ -125,20 +125,20 @@ partial class MainForm
         LblCustomPopulateLimit.Location = new Point(149, 365);
         LblCustomPopulateLimit.Margin = new Padding(4, 0, 4, 0);
         LblCustomPopulateLimit.Name = "LblCustomPopulateLimit";
-        LblCustomPopulateLimit.Size = new Size(75, 15);
+        LblCustomPopulateLimit.Size = new Size(66, 15);
         LblCustomPopulateLimit.TabIndex = 12;
-        LblCustomPopulateLimit.Text = "Time (hours)";
-        TlpMainWindow.SetToolTip(LblCustomPopulateLimit, "Files which were created before given hours ago will be ignored. Set to 0 for infinite.");
+        LblCustomPopulateLimit.Text = "時間 (小時)";
+        TlpMainWindow.SetToolTip(LblCustomPopulateLimit, "在給定時間之前創建的檔案將被忽略。設定為0表示無限。");
         // 
         // BtnCancelAll
         // 
         BtnCancelAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        BtnCancelAll.Location = new Point(516, 387);
+        BtnCancelAll.Location = new Point(527, 387);
         BtnCancelAll.Margin = new Padding(4, 3, 4, 3);
         BtnCancelAll.Name = "BtnCancelAll";
         BtnCancelAll.Size = new Size(88, 27);
         BtnCancelAll.TabIndex = 11;
-        BtnCancelAll.Text = "Cancel All";
+        BtnCancelAll.Text = "取消全部";
         BtnCancelAll.UseVisualStyleBackColor = true;
         BtnCancelAll.Click += BtnCancelAllClick;
         // 
@@ -150,19 +150,19 @@ partial class MainForm
         BtnSettings.Name = "BtnSettings";
         BtnSettings.Size = new Size(79, 27);
         BtnSettings.TabIndex = 15;
-        BtnSettings.Text = "Settings";
+        BtnSettings.Text = "設定";
         BtnSettings.UseVisualStyleBackColor = true;
         BtnSettings.Click += BtnSettingsClick;
         // 
         // BtnClearAll
         // 
         BtnClearAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        BtnClearAll.Location = new Point(702, 387);
+        BtnClearAll.Location = new Point(713, 387);
         BtnClearAll.Margin = new Padding(4, 3, 4, 3);
         BtnClearAll.Name = "BtnClearAll";
         BtnClearAll.Size = new Size(88, 27);
         BtnClearAll.TabIndex = 16;
-        BtnClearAll.Text = "Clear All";
+        BtnClearAll.Text = "清除全部";
         BtnClearAll.UseVisualStyleBackColor = true;
         BtnClearAll.Click += BtnClearAllClick;
         // 
@@ -182,7 +182,7 @@ partial class MainForm
         DgvFiles.MultiSelect = false;
         DgvFiles.Name = "DgvFiles";
         DgvFiles.ReadOnly = true;
-        DgvFiles.Size = new Size(771, 282);
+        DgvFiles.Size = new Size(782, 282);
         DgvFiles.TabIndex = 17;
         DgvFiles.CellMouseClick += DgvFilesCellContentClick;
         DgvFiles.CellMouseDoubleClick += DgvFilesCellContentDoubleClick;
@@ -194,17 +194,17 @@ partial class MainForm
         LocationDataGridViewTextBoxColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         LocationDataGridViewTextBoxColumn.DataPropertyName = "InputFile";
         LocationDataGridViewTextBoxColumn.FillWeight = 60F;
-        LocationDataGridViewTextBoxColumn.HeaderText = "Input File";
+        LocationDataGridViewTextBoxColumn.HeaderText = "輸入檔案";
         LocationDataGridViewTextBoxColumn.Name = "LocationDataGridViewTextBoxColumn";
         LocationDataGridViewTextBoxColumn.ReadOnly = true;
-        LocationDataGridViewTextBoxColumn.ToolTipText = "Double left click to open input location";
+        LocationDataGridViewTextBoxColumn.ToolTipText = "雙擊左鍵開啟輸入位置";
         // 
         // StatusDataGridViewTextBoxColumn
         // 
         StatusDataGridViewTextBoxColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         StatusDataGridViewTextBoxColumn.DataPropertyName = "Status";
         StatusDataGridViewTextBoxColumn.FillWeight = 30F;
-        StatusDataGridViewTextBoxColumn.HeaderText = "Status";
+        StatusDataGridViewTextBoxColumn.HeaderText = "狀態";
         StatusDataGridViewTextBoxColumn.Name = "StatusDataGridViewTextBoxColumn";
         StatusDataGridViewTextBoxColumn.ReadOnly = true;
         // 
@@ -213,20 +213,20 @@ partial class MainForm
         ParseButtonState.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         ParseButtonState.DataPropertyName = "ButtonText";
         ParseButtonState.FillWeight = 10F;
-        ParseButtonState.HeaderText = "Action";
+        ParseButtonState.HeaderText = "操作";
         ParseButtonState.Name = "ParseButtonState";
         ParseButtonState.ReadOnly = true;
-        ParseButtonState.ToolTipText = "Left click open files and output location\r\nRight click to copy dps.report link to clipboard, if applicable\r\nMiddle click to only open output location";
+        ParseButtonState.ToolTipText = "左鍵開啟檔案和輸出檔案位置\r\n如果可用，右鍵複製 dps.report 連結至剪貼簿\r\n中鍵僅開啟輸出檔案位置";
         // 
         // ReParseButtonState
         // 
         ReParseButtonState.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         ReParseButtonState.DataPropertyName = "ReParseText";
         ReParseButtonState.FillWeight = 10F;
-        ReParseButtonState.HeaderText = "Re-Parse";
+        ReParseButtonState.HeaderText = "重新解析";
         ReParseButtonState.Name = "ReParseButtonState";
         ReParseButtonState.ReadOnly = true;
-        ReParseButtonState.ToolTipText = "Only useable if the file was already successfully parsed";
+        ReParseButtonState.ToolTipText = "僅適用於已成功解析的檔案";
         // 
         // OperatorBindingSource
         // 
@@ -235,13 +235,13 @@ partial class MainForm
         // BtnClearFailed
         // 
         BtnClearFailed.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        BtnClearFailed.Location = new Point(608, 387);
+        BtnClearFailed.Location = new Point(619, 387);
         BtnClearFailed.Margin = new Padding(4, 3, 4, 3);
         BtnClearFailed.Name = "BtnClearFailed";
         BtnClearFailed.Size = new Size(88, 27);
         BtnClearFailed.TabIndex = 19;
-        BtnClearFailed.Text = "Clear Failed";
-        TlpMainWindow.SetToolTip(BtnClearFailed, "Removes from the list logs that could not be parsed");
+        BtnClearFailed.Text = "清除壞檔";
+        TlpMainWindow.SetToolTip(BtnClearFailed, "從清單中刪除無法解析的日誌");
         BtnClearFailed.UseVisualStyleBackColor = true;
         BtnClearFailed.Click += BtnClearFailedClick;
         // 
@@ -253,8 +253,8 @@ partial class MainForm
         BtnDiscordBatch.Name = "BtnDiscordBatch";
         BtnDiscordBatch.Size = new Size(125, 27);
         BtnDiscordBatch.TabIndex = 20;
-        BtnDiscordBatch.Text = "Send all to Discord";
-        TlpMainWindow.SetToolTip(BtnDiscordBatch, "Send currently parsed logs with dps.report links to discord webhook in a batch");
+        BtnDiscordBatch.Text = "全部送至 Discord";
+        TlpMainWindow.SetToolTip(BtnDiscordBatch, "將目前解析的日誌與 dps.report 連結批次傳送到 Discord Webhook");
         BtnDiscordBatch.UseVisualStyleBackColor = true;
         BtnDiscordBatch.Click += BtnDiscordBatchClick;
         // 
@@ -273,7 +273,7 @@ partial class MainForm
         LblVersion.Location = new Point(15, 417);
         LblVersion.Margin = new Padding(4, 0, 4, 0);
         LblVersion.Name = "LblVersion";
-        LblVersion.Size = new Size(29, 15);
+        LblVersion.Size = new Size(32, 15);
         LblVersion.TabIndex = 17;
         LblVersion.Text = "V1.3";
         // 
@@ -284,7 +284,7 @@ partial class MainForm
         LblWatchingDir.Location = new Point(19, 340);
         LblWatchingDir.Margin = new Padding(4, 0, 4, 0);
         LblWatchingDir.Name = "LblWatchingDir";
-        LblWatchingDir.Size = new Size(478, 15);
+        LblWatchingDir.Size = new Size(489, 15);
         LblWatchingDir.TabIndex = 18;
         LblWatchingDir.Text = "Watching log dir";
         // 
@@ -295,9 +295,9 @@ partial class MainForm
         ChkApplicationTraces.Location = new Point(22, 364);
         ChkApplicationTraces.Margin = new Padding(4, 3, 4, 3);
         ChkApplicationTraces.Name = "ChkApplicationTraces";
-        ChkApplicationTraces.Size = new Size(59, 19);
+        ChkApplicationTraces.Size = new Size(74, 19);
         ChkApplicationTraces.TabIndex = 0;
-        ChkApplicationTraces.Text = "Traces";
+        ChkApplicationTraces.Text = "操作痕跡";
         ChkApplicationTraces.CheckedChanged += ChkApplicationTracesCheckedChanged;
         // 
         // ChkAutoDiscordBatch
@@ -307,9 +307,9 @@ partial class MainForm
         ChkAutoDiscordBatch.Location = new Point(383, 364);
         ChkAutoDiscordBatch.Margin = new Padding(4, 3, 4, 3);
         ChkAutoDiscordBatch.Name = "ChkAutoDiscordBatch";
-        ChkAutoDiscordBatch.Size = new Size(128, 19);
+        ChkAutoDiscordBatch.Size = new Size(147, 19);
         ChkAutoDiscordBatch.TabIndex = 0;
-        ChkAutoDiscordBatch.Text = "Auto Discord Batch";
+        ChkAutoDiscordBatch.Text = "自動 Discord 批次上傳";
         ChkAutoDiscordBatch.CheckedChanged += ChkAutoDiscordBatchCheckedChanged;
         // 
         // BtnCheckUpdates
@@ -320,7 +320,7 @@ partial class MainForm
         BtnCheckUpdates.Name = "BtnCheckUpdates";
         BtnCheckUpdates.Size = new Size(108, 27);
         BtnCheckUpdates.TabIndex = 21;
-        BtnCheckUpdates.Text = "Check EI Updates";
+        BtnCheckUpdates.Text = "檢查 EI 更新";
         BtnCheckUpdates.UseVisualStyleBackColor = true;
         BtnCheckUpdates.Click += BtnCheckUpdates_Click;
         // 
@@ -350,7 +350,7 @@ partial class MainForm
         Margin = new Padding(4, 3, 4, 3);
         MinimumSize = new Size(837, 340);
         Name = "MainForm";
-        Text = "GW2 Elite Insights Parser";
+        Text = "激戰2 Elite Insights 解析器";
         TransparencyKey = Color.OrangeRed;
         ((System.ComponentModel.ISupportInitialize)NumericCustomPopulateLimit).EndInit();
         ((System.ComponentModel.ISupportInitialize)DgvFiles).EndInit();

@@ -584,6 +584,6 @@ public sealed class ProgramHelper : IDisposable
                 operation.UpdateProgressWithCancellationCheck("Program: JSON created");
             }
         }
-        operation.UpdateProgressWithCancellationCheck($"Completed for {resultStr} {log.LogData.Logic.Extension}");
+        operation.UpdateProgressWithCancellationCheck($"已完成 {resultStr} {log.LogData.Logic.Extension}");
     }
 }

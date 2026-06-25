@@ -38,7 +38,7 @@ internal sealed class FormOperationController : OperationController
 
     public FormOperationController(string location, string status, DataGridView dgv, BindingSource bindingSource) : base(location, status)
     {
-        ButtonText = "Parse";
+        ButtonText = "解析";
         State = OperationState.Ready;
         _dgv = dgv;
         bindingSource.Add(this);
@@ -84,7 +84,7 @@ internal sealed class FormOperationController : OperationController
     private void SetReparseButtonState(bool onOff)
     {
         int rowIndex = _bdSrc.IndexOf(this);
-        ReParseText = onOff ? "Re-Parse" : "N/A";
+        ReParseText = onOff ? "重新解析" : "不適用";
         if (rowIndex >= 0)
         {
             var reparseButton = (DataGridViewDisableButtonCell)_dgv.Rows[rowIndex].Cells["ReParseButtonState"];
@@ -94,10 +94,10 @@ internal sealed class FormOperationController : OperationController
 
     public void ToRunState()
     {
-        ButtonText = "Cancel";
+        ButtonText = "取消";
         SetReparseButtonState(false);
         State = OperationState.Parsing;
-        Status = "Parsing";
+        Status = "解析中";
         InvalidateDataView();
     }
 
@@ -108,7 +108,7 @@ internal sealed class FormOperationController : OperationController
             return;
         }
         State = OperationState.Cancelling;
-        ButtonText = "Cancelling";
+        ButtonText = "取消中";
         SetReparseButtonState(false);
         _cancelTokenSource.Cancel();
         InvalidateDataView();
@@ -116,7 +116,7 @@ internal sealed class FormOperationController : OperationController
     public void ToRemovalFromQueueState()
     {
         ToCancelState();
-        Status = "Awaiting Removal from Queue";
+        Status = "等待從佇列中移除";
         InvalidateDataView();
     }
     public void ToCancelAndClearState()
@@ -127,16 +127,16 @@ internal sealed class FormOperationController : OperationController
     public void ToReadyState()
     {
         State = OperationState.Ready;
-        ButtonText = "Parse";
+        ButtonText = "解析";
         SetReparseButtonState(false);
-        Status = "Ready To Parse";
+        Status = "準備解析";
         InvalidateDataView();
     }
 
     public void ToCompleteState()
     {
         State = OperationState.Complete;
-        ButtonText = "Open";
+        ButtonText = "打開";
         SetReparseButtonState(true);
         FinalizeStatus(true);
         InvalidateDataView();
@@ -145,7 +145,7 @@ internal sealed class FormOperationController : OperationController
     public void ToUnCompleteState()
     {
         State = OperationState.UnComplete;
-        ButtonText = "Parse";
+        ButtonText = "解析";
         SetReparseButtonState(false);
         FinalizeStatus(false);
         InvalidateDataView();
@@ -154,18 +154,18 @@ internal sealed class FormOperationController : OperationController
     public void ToPendingState()
     {
         State = OperationState.Pending;
-        ButtonText = "Cancel";
+        ButtonText = "取消";
         SetReparseButtonState(false);
-        Status = "Pending";
+        Status = "等候中";
         InvalidateDataView();
     }
 
     public void ToQueuedState()
     {
         State = OperationState.Queued;
-        ButtonText = "Cancel";
+        ButtonText = "取消";
         SetReparseButtonState(false);
-        Status = "Queued";
+        Status = "佇列中";
         InvalidateDataView();
     }
 }

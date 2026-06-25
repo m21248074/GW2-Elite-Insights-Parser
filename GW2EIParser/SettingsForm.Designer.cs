@@ -145,7 +145,7 @@ partial class SettingsForm
         LblSettingsInfoMsg.Name = "LblSettingsInfoMsg";
         LblSettingsInfoMsg.Size = new Size(285, 15);
         LblSettingsInfoMsg.TabIndex = 12;
-        LblSettingsInfoMsg.Text = "*Changes will not alter files that are currently parsing";
+        LblSettingsInfoMsg.Text = "*注意* 改變設定不會影響目前正在解析的檔案";
         // 
         // ChkDefaultOutputLoc
         // 
@@ -157,7 +157,7 @@ partial class SettingsForm
         ChkDefaultOutputLoc.Name = "ChkDefaultOutputLoc";
         ChkDefaultOutputLoc.Size = new Size(208, 19);
         ChkDefaultOutputLoc.TabIndex = 14;
-        ChkDefaultOutputLoc.Text = "Save Output in same folder as evtc";
+        ChkDefaultOutputLoc.Text = "與 evtc 儲存在相同資料夾";
         ChkDefaultOutputLoc.UseVisualStyleBackColor = true;
         ChkDefaultOutputLoc.CheckedChanged += ChkDefaultOutputLocationCheckedChanged;
         // 
@@ -192,7 +192,7 @@ partial class SettingsForm
         LblCustomTooShort.Name = "LblCustomTooShort";
         LblCustomTooShort.Size = new Size(164, 15);
         LblCustomTooShort.TabIndex = 17;
-        LblCustomTooShort.Text = "Skip logs shorter than (in ms):";
+        LblCustomTooShort.Text = "略過短於此時間的日誌(毫秒):";
         // 
         // NumericCustomTooBig
         // 
@@ -215,7 +215,7 @@ partial class SettingsForm
         LblCustomTooBig.Name = "LblCustomTooBig";
         LblCustomTooBig.Size = new Size(247, 15);
         LblCustomTooBig.TabIndex = 17;
-        LblCustomTooBig.Text = "Skip logs bigger than (in mb, uncompressed):";
+        LblCustomTooBig.Text = "略過長於此大小的日誌(未壓縮，MB):";
         // 
         // NumericMemoryLimit
         // 
@@ -237,8 +237,8 @@ partial class SettingsForm
         LblMemoryLimit.Name = "LblMemoryLimit";
         LblMemoryLimit.Size = new Size(232, 15);
         LblMemoryLimit.TabIndex = 17;
-        LblMemoryLimit.Text = "Kill Application if using more than (in MB):";
-        TlpSettings.SetToolTip(LblMemoryLimit, "Keep default value if unsure (0, will default to 90% of total RAM). Use negative values for no limit.");
+        LblMemoryLimit.Text = "記憶體超過此大小時關閉程式(MB):";
+        TlpSettings.SetToolTip(LblMemoryLimit, "若不確定請保持預設值(0，將預設為總記憶體的 90%)。使用負值則不設限制。");
         // 
         // BtnCustomSaveLocSelect
         // 
@@ -247,7 +247,7 @@ partial class SettingsForm
         BtnCustomSaveLocSelect.Name = "BtnCustomSaveLocSelect";
         BtnCustomSaveLocSelect.Size = new Size(52, 23);
         BtnCustomSaveLocSelect.TabIndex = 16;
-        BtnCustomSaveLocSelect.Text = "Select";
+        BtnCustomSaveLocSelect.Text = "選擇";
         BtnCustomSaveLocSelect.UseVisualStyleBackColor = true;
         BtnCustomSaveLocSelect.Click += BtnCustomSaveLocationSelectClick;
         // 
@@ -259,7 +259,7 @@ partial class SettingsForm
         LblCustomSaveLoc.Name = "LblCustomSaveLoc";
         LblCustomSaveLoc.Size = new Size(113, 15);
         LblCustomSaveLoc.TabIndex = 17;
-        LblCustomSaveLoc.Text = "Other output folder:";
+        LblCustomSaveLoc.Text = "其他輸出資料夾:";
         // 
         // BtnResetMapList
         // 
@@ -268,7 +268,7 @@ partial class SettingsForm
         BtnResetMapList.Name = "BtnResetMapList";
         BtnResetMapList.Size = new Size(168, 27);
         BtnResetMapList.TabIndex = 24;
-        BtnResetMapList.Text = "Reset Map List ";
+        BtnResetMapList.Text = "重置地圖清單 ";
         BtnResetMapList.UseVisualStyleBackColor = true;
         BtnResetMapList.Click += BtnResetMapListClick;
         // 
@@ -279,7 +279,7 @@ partial class SettingsForm
         BtnResetSkillList.Name = "BtnResetSkillList";
         BtnResetSkillList.Size = new Size(168, 27);
         BtnResetSkillList.TabIndex = 24;
-        BtnResetSkillList.Text = "Reset Skill List ";
+        BtnResetSkillList.Text = "重置技能清單 ";
         BtnResetSkillList.UseVisualStyleBackColor = true;
         BtnResetSkillList.Click += BtnResetSkillListClick;
         // 
@@ -290,7 +290,7 @@ partial class SettingsForm
         BtnResetTraitList.Name = "BtnResetTraitList";
         BtnResetTraitList.Size = new Size(168, 27);
         BtnResetTraitList.TabIndex = 24;
-        BtnResetTraitList.Text = "Reset Trait List ";
+        BtnResetTraitList.Text = "重置特性清單 ";
         BtnResetTraitList.UseVisualStyleBackColor = true;
         BtnResetTraitList.Click += BtnResetTraitListClick;
         // 
@@ -301,7 +301,7 @@ partial class SettingsForm
         BtnResetSpecList.Name = "BtnResetSpecList";
         BtnResetSpecList.Size = new Size(168, 27);
         BtnResetSpecList.TabIndex = 25;
-        BtnResetSpecList.Text = "Reset Spec List";
+        BtnResetSpecList.Text = "重置特化清單";
         BtnResetSpecList.UseVisualStyleBackColor = true;
         BtnResetSpecList.Click += BtnResetSpecListClick;
         // 
@@ -315,7 +315,7 @@ partial class SettingsForm
         ChkOutputHtml.Name = "ChkOutputHtml";
         ChkOutputHtml.Size = new Size(114, 19);
         ChkOutputHtml.TabIndex = 26;
-        ChkOutputHtml.Text = "Output as HTML";
+        ChkOutputHtml.Text = "輸出為 HTML";
         ChkOutputHtml.UseVisualStyleBackColor = true;
         ChkOutputHtml.CheckedChanged += ChkOuputHTMLCheckedChanged;
         // 
@@ -327,7 +327,7 @@ partial class SettingsForm
         ChkOutputCsv.Name = "ChkOutputCsv";
         ChkOutputCsv.Size = new Size(102, 19);
         ChkOutputCsv.TabIndex = 27;
-        ChkOutputCsv.Text = "Output as CSV";
+        ChkOutputCsv.Text = "輸出為 CSV";
         ChkOutputCsv.UseVisualStyleBackColor = true;
         ChkOutputCsv.CheckedChanged += ChkOutputCsvCheckedChanged;
         // 
@@ -341,7 +341,7 @@ partial class SettingsForm
         ChkComputeParsing.Name = "ChkComputeParsing";
         ChkComputeParsing.Size = new Size(115, 19);
         ChkComputeParsing.TabIndex = 30;
-        ChkComputeParsing.Text = "Compute Phases";
+        ChkComputeParsing.Text = "計算各階段";
         ChkComputeParsing.UseVisualStyleBackColor = true;
         ChkComputeParsing.CheckedChanged += ChkComputePhaseCheckedChanged;
         // 
@@ -353,8 +353,8 @@ partial class SettingsForm
         ChkSingleThreaded.Name = "ChkSingleThreaded";
         ChkSingleThreaded.Size = new Size(237, 19);
         ChkSingleThreaded.TabIndex = 29;
-        ChkSingleThreaded.Text = "Use a single thread when log processing";
-        TlpSettings.SetToolTip(ChkSingleThreaded, "Keep default value if unsure (Unchecked).");
+        ChkSingleThreaded.Text = "計算日誌時使用單線程";
+        TlpSettings.SetToolTip(ChkSingleThreaded, "如果不確定，請保留預設值(不選取)。");
         ChkSingleThreaded.UseVisualStyleBackColor = true;
         ChkSingleThreaded.CheckedChanged += ChkSingleThreadedCheckedChanged;
         // 
@@ -368,7 +368,7 @@ partial class SettingsForm
         ChkCombatReplay.Name = "ChkCombatReplay";
         ChkCombatReplay.Size = new Size(160, 19);
         ChkCombatReplay.TabIndex = 40;
-        ChkCombatReplay.Text = "Compute Combat Replay";
+        ChkCombatReplay.Text = "計算戰鬥回放";
         ChkCombatReplay.UseVisualStyleBackColor = true;
         ChkCombatReplay.CheckedChanged += ChkCombatReplayCheckedChanged;
         // 
@@ -380,7 +380,7 @@ partial class SettingsForm
         ChkUploadDPSReports.Name = "ChkUploadDPSReports";
         ChkUploadDPSReports.Size = new Size(211, 19);
         ChkUploadDPSReports.TabIndex = 43;
-        ChkUploadDPSReports.Text = "Upload to DPSReports Elite Insights";
+        ChkUploadDPSReports.Text = "上傳至 DPSReports Elite Insights";
         ChkUploadDPSReports.UseVisualStyleBackColor = true;
         ChkUploadDPSReports.CheckedChanged += ChkUploadDPSReportsCheckedChanged;
         // 
@@ -392,7 +392,7 @@ partial class SettingsForm
         ChkUploadWingman.Name = "ChkUploadWingman";
         ChkUploadWingman.Size = new Size(244, 19);
         ChkUploadWingman.TabIndex = 45;
-        ChkUploadWingman.Text = "Upload to Wingman via uploadProcessed";
+        ChkUploadWingman.Text = "透過 uploadProcessed 上傳到 Wingman";
         ChkUploadWingman.UseVisualStyleBackColor = true;
         ChkUploadWingman.CheckedChanged += ChkUploadWingmanCheckedChanged;
         // 
@@ -404,7 +404,7 @@ partial class SettingsForm
         ChkUploadMistWarrior.Name = "ChkUploadMistWarrior";
         ChkUploadMistWarrior.Size = new Size(170, 19);
         ChkUploadMistWarrior.TabIndex = 47;
-        ChkUploadMistWarrior.Text = "Upload to MistWarrior.com";
+        ChkUploadMistWarrior.Text = "上傳至 MistWarrior.com";
         ChkUploadMistWarrior.UseVisualStyleBackColor = true;
         ChkUploadMistWarrior.CheckedChanged += ChkUploadMistWarriorCheckedChanged;
         // 
@@ -436,7 +436,7 @@ partial class SettingsForm
         ChkUploadWebhook.Name = "ChkUploadWebhook";
         ChkUploadWebhook.Size = new Size(201, 19);
         ChkUploadWebhook.TabIndex = 45;
-        ChkUploadWebhook.Text = "Send Embed to Discord webhook";
+        ChkUploadWebhook.Text = "傳送 Embed 到 Discord Webhook";
         ChkUploadWebhook.UseVisualStyleBackColor = true;
         ChkUploadWebhook.CheckedChanged += ChkUploadWebhookCheckedChanged;
         // 
@@ -448,7 +448,7 @@ partial class SettingsForm
         ChkUploadSimpleMessageWebhook.Name = "ChkUploadSimpleMessageWebhook";
         ChkUploadSimpleMessageWebhook.Size = new Size(100, 19);
         ChkUploadSimpleMessageWebhook.TabIndex = 45;
-        ChkUploadSimpleMessageWebhook.Text = "Send link only";
+        ChkUploadSimpleMessageWebhook.Text = "僅傳送連結";
         ChkUploadSimpleMessageWebhook.UseVisualStyleBackColor = true;
         ChkUploadSimpleMessageWebhook.CheckedChanged += ChkUploadSimpleMessageWebhookCheckedChanged;
         // 
@@ -470,7 +470,7 @@ partial class SettingsForm
         ChkOutputJson.Name = "ChkOutputJson";
         ChkOutputJson.Size = new Size(109, 19);
         ChkOutputJson.TabIndex = 43;
-        ChkOutputJson.Text = "Output as JSON";
+        ChkOutputJson.Text = "輸出為 JSON";
         ChkOutputJson.UseVisualStyleBackColor = true;
         ChkOutputJson.CheckedChanged += ChkOutputJSONCheckedChanged;
         // 
@@ -482,13 +482,13 @@ partial class SettingsForm
         ChkIndentJSON.Name = "ChkIndentJSON";
         ChkIndentJSON.Size = new Size(91, 19);
         ChkIndentJSON.TabIndex = 44;
-        ChkIndentJSON.Text = "Indent JSON";
+        ChkIndentJSON.Text = "縮排的JSON";
         ChkIndentJSON.UseVisualStyleBackColor = true;
         ChkIndentJSON.CheckedChanged += ChkIndentJSONCheckedChanged;
         // 
         // TlpSettings
         // 
-        TlpSettings.ToolTipTitle = "Setting description";
+        TlpSettings.ToolTipTitle = "設定描述";
         // 
         // GroupWebhookSettings
         // 
@@ -503,8 +503,8 @@ partial class SettingsForm
         GroupWebhookSettings.Size = new Size(471, 106);
         GroupWebhookSettings.TabIndex = 45;
         GroupWebhookSettings.TabStop = false;
-        GroupWebhookSettings.Text = "Webhook Settings";
-        TlpSettings.SetToolTip(GroupWebhookSettings, "Disabled when not uploading to dps.reports");
+        GroupWebhookSettings.Text = "Webhook 設定";
+        TlpSettings.SetToolTip(GroupWebhookSettings, "不上傳到 dps.reports 時停用");
         // 
         // LblWebhookUrl
         // 
@@ -514,7 +514,7 @@ partial class SettingsForm
         LblWebhookUrl.Name = "LblWebhookUrl";
         LblWebhookUrl.Size = new Size(79, 15);
         LblWebhookUrl.TabIndex = 47;
-        LblWebhookUrl.Text = "Webhook Url:";
+        LblWebhookUrl.Text = "Webhook 網址:";
         // 
         // ChkMultiLogs
         // 
@@ -524,8 +524,8 @@ partial class SettingsForm
         ChkMultiLogs.Name = "ChkMultiLogs";
         ChkMultiLogs.Size = new Size(217, 19);
         ChkMultiLogs.TabIndex = 20;
-        ChkMultiLogs.Text = "Parse Multiple logs at the same time";
-        TlpSettings.SetToolTip(ChkMultiLogs, "Keep default value if unsure.");
+        ChkMultiLogs.Text = "同時解析多個日誌";
+        TlpSettings.SetToolTip(ChkMultiLogs, "如果不確定，請保留預設值。");
         ChkMultiLogs.UseVisualStyleBackColor = true;
         ChkMultiLogs.CheckedChanged += ChkMultiLogsCheckedChanged;
         // 
@@ -537,8 +537,8 @@ partial class SettingsForm
         ChkAnonymous.Name = "ChkAnonymous";
         ChkAnonymous.Size = new Size(131, 19);
         ChkAnonymous.TabIndex = 20;
-        ChkAnonymous.Text = "Anonymous Players";
-        TlpSettings.SetToolTip(ChkAnonymous, "Replaces Players' account names and character names by generic names");
+        ChkAnonymous.Text = "玩家匿名";
+        TlpSettings.SetToolTip(ChkAnonymous, "用通用名稱取代玩家的帳號名稱和角色名稱");
         ChkAnonymous.UseVisualStyleBackColor = true;
         ChkAnonymous.CheckedChanged += ChkAnonymousCheckedChanged;
         // 
@@ -550,8 +550,8 @@ partial class SettingsForm
         ChkHtmlExternalScripts.Name = "ChkHtmlExternalScripts";
         ChkHtmlExternalScripts.Size = new Size(105, 19);
         ChkHtmlExternalScripts.TabIndex = 46;
-        ChkHtmlExternalScripts.Text = "External Scripts";
-        TlpSettings.SetToolTip(ChkHtmlExternalScripts, "Writes static css and js scripts in own files, which are shared between all logs. Log file size decreases, but the script files have to be kept along with the html if you dont set a CDN Path");
+        ChkHtmlExternalScripts.Text = "外部腳本";
+        TlpSettings.SetToolTip(ChkHtmlExternalScripts, "將靜態 CSS 和 JS 指令碼寫入獨立的檔案中，並由所有日誌共享。雖然這樣能縮小日誌檔案的體積，但如果您沒有設定 CDN 路徑，就必須將這些指令碼檔案與 HTML 檔案保存在一起。");
         ChkHtmlExternalScripts.UseVisualStyleBackColor = true;
         ChkHtmlExternalScripts.CheckedChanged += ChkHtmlExternalScriptsCheckedChanged;
         // 
@@ -563,8 +563,8 @@ partial class SettingsForm
         ChkHtmlCompressJson.Name = "ChkHtmlCompressJson";
         ChkHtmlCompressJson.Size = new Size(105, 19);
         ChkHtmlCompressJson.TabIndex = 46;
-        ChkHtmlCompressJson.Text = "Compress Json";
-        TlpSettings.SetToolTip(ChkHtmlCompressJson, "Put the json inside the html file in a compressed state.");
+        ChkHtmlCompressJson.Text = "壓縮的JSON";
+        TlpSettings.SetToolTip(ChkHtmlCompressJson, "將 JSON 以壓縮狀態放入 HTML 檔案中。");
         ChkHtmlCompressJson.UseVisualStyleBackColor = true;
         ChkHtmlCompressJson.CheckedChanged += ChkHtmlCompressCheckedChanged;
         // 
@@ -576,8 +576,8 @@ partial class SettingsForm
         ChkDetailledWvW.Name = "ChkDetailledWvW";
         ChkDetailledWvW.Size = new Size(142, 19);
         ChkDetailledWvW.TabIndex = 41;
-        ChkDetailledWvW.Text = "Detailed WvW Parsing";
-        TlpSettings.SetToolTip(ChkDetailledWvW, "Keep default value if unsure. Enabling this will make parsing significantly slower and the generated files bigger");
+        ChkDetailledWvW.Text = "詳細的 WvW(世界之戰) 解析";
+        TlpSettings.SetToolTip(ChkDetailledWvW, "如果不確定，請保留預設值。 啟用此功能將使解析速度明顯變慢且產生的檔案更大");
         ChkDetailledWvW.UseVisualStyleBackColor = true;
         ChkDetailledWvW.CheckedChanged += ChkDetailledWvWCheckedChange;
         // 
@@ -600,8 +600,8 @@ partial class SettingsForm
         LblHtmlExternalScriptsPath.Name = "LblHtmlExternalScriptsPath";
         LblHtmlExternalScriptsPath.Size = new Size(87, 15);
         LblHtmlExternalScriptsPath.TabIndex = 55;
-        LblHtmlExternalScriptsPath.Text = "Absolute Path: ";
-        TlpSettings.SetToolTip(LblHtmlExternalScriptsPath, "Fill in an absolute path of a directory here to place the external scripts at a different location then the report file.");
+        LblHtmlExternalScriptsPath.Text = "絕對路徑: ";
+        TlpSettings.SetToolTip(LblHtmlExternalScriptsPath, "此處填寫資料夾的絕對路徑，用以將外部腳本放置在與輸出檔案不同的位置。");
         // 
         // TxtHtmlExternalScriptsCdn
         // 
@@ -629,7 +629,7 @@ partial class SettingsForm
         ChkSaveOutTrace.Name = "ChkSaveOutTrace";
         ChkSaveOutTrace.Size = new Size(109, 19);
         ChkSaveOutTrace.TabIndex = 40;
-        ChkSaveOutTrace.Text = "Save Log Traces";
+        ChkSaveOutTrace.Text = "保存日誌操作痕跡";
         ChkSaveOutTrace.UseVisualStyleBackColor = true;
         ChkSaveOutTrace.CheckedChanged += ChkSaveOutTraceCheckedChanged;
         // 
@@ -643,7 +643,7 @@ partial class SettingsForm
         ChkDamageMods.Name = "ChkDamageMods";
         ChkDamageMods.Size = new Size(176, 19);
         ChkDamageMods.TabIndex = 20;
-        ChkDamageMods.Text = "Compute Damage Modifiers";
+        ChkDamageMods.Text = "計算傷害修正";
         ChkDamageMods.UseVisualStyleBackColor = true;
         ChkDamageMods.CheckedChanged += ChkComputeDamageModsCheckedChanged;
         // 
@@ -657,7 +657,7 @@ partial class SettingsForm
         ChkExtensions.Name = "ChkExtensions";
         ChkExtensions.Size = new Size(112, 19);
         ChkExtensions.TabIndex = 20;
-        ChkExtensions.Text = "Parse Extensions";
+        ChkExtensions.Text = "解析擴展插件";
         ChkExtensions.UseVisualStyleBackColor = true;
         ChkExtensions.CheckedChanged += ChkParseExtensionsCheckedChanged;
         // 
@@ -671,7 +671,7 @@ partial class SettingsForm
         ChkMechanics.Name = "ChkMechanics";
         ChkMechanics.Size = new Size(136, 19);
         ChkMechanics.TabIndex = 20;
-        ChkMechanics.Text = "Compute Mechanics";
+        ChkMechanics.Text = "計算機制";
         ChkMechanics.UseVisualStyleBackColor = true;
         ChkMechanics.CheckedChanged += ChkComputeMechanicsCheckedChanged;
         // 
@@ -685,7 +685,7 @@ partial class SettingsForm
         ChkDamage.Name = "ChkDamage";
         ChkDamage.Size = new Size(123, 19);
         ChkDamage.TabIndex = 20;
-        ChkDamage.Text = "Compute Damage";
+        ChkDamage.Text = "計算傷害";
         ChkDamage.UseVisualStyleBackColor = true;
         ChkDamage.CheckedChanged += ChkComputeDamageCheckedChanged;
         // 
@@ -699,7 +699,7 @@ partial class SettingsForm
         ChkCast.Name = "ChkCast";
         ChkCast.Size = new Size(102, 19);
         ChkCast.TabIndex = 20;
-        ChkCast.Text = "Compute Cast";
+        ChkCast.Text = "計算施法";
         ChkCast.UseVisualStyleBackColor = true;
         ChkCast.CheckedChanged += ChkComputeCastCheckedChanged;
         // 
@@ -713,7 +713,7 @@ partial class SettingsForm
         ChkBuff.Name = "ChkBuff";
         ChkBuff.Size = new Size(101, 19);
         ChkBuff.TabIndex = 20;
-        ChkBuff.Text = "Compute Buff";
+        ChkBuff.Text = "計算增益";
         ChkBuff.UseVisualStyleBackColor = true;
         ChkBuff.CheckedChanged += ChkComputeBuffCheckedChanged;
         // 
@@ -725,7 +725,7 @@ partial class SettingsForm
         ChkRawTimelineArrays.Name = "ChkRawTimelineArrays";
         ChkRawTimelineArrays.Size = new Size(133, 19);
         ChkRawTimelineArrays.TabIndex = 20;
-        ChkRawTimelineArrays.Text = "Add Timeline Arrays";
+        ChkRawTimelineArrays.Text = "增加時間軸陣列";
         ChkRawTimelineArrays.UseVisualStyleBackColor = true;
         ChkRawTimelineArrays.CheckedChanged += ChkRawTimelineArraysCheckedChanged;
         // 
@@ -760,7 +760,7 @@ partial class SettingsForm
         TabGeneral.Padding = new Padding(4, 3, 4, 3);
         TabGeneral.Size = new Size(551, 467);
         TabGeneral.TabIndex = 0;
-        TabGeneral.Text = "General";
+        TabGeneral.Text = "一般";
         TabGeneral.UseVisualStyleBackColor = true;
         // 
         // GroupParsing
@@ -781,7 +781,7 @@ partial class SettingsForm
         GroupParsing.Size = new Size(320, 267);
         GroupParsing.TabIndex = 41;
         GroupParsing.TabStop = false;
-        GroupParsing.Text = "Parsing";
+        GroupParsing.Text = "解析";
         // 
         // ChkAutoParse
         // 
@@ -791,7 +791,7 @@ partial class SettingsForm
         ChkAutoParse.Name = "ChkAutoParse";
         ChkAutoParse.Size = new Size(191, 19);
         ChkAutoParse.TabIndex = 39;
-        ChkAutoParse.Text = "Automatically parse added files";
+        ChkAutoParse.Text = "自動解析新增的檔案";
         ChkAutoParse.UseVisualStyleBackColor = true;
         ChkAutoParse.CheckedChanged += ChkAutoParseCheckedChanged;
         // 
@@ -803,7 +803,7 @@ partial class SettingsForm
         ChkAutoAdd.Name = "ChkAutoAdd";
         ChkAutoAdd.Size = new Size(173, 19);
         ChkAutoAdd.TabIndex = 40;
-        ChkAutoAdd.Text = "Automatically add new logs";
+        ChkAutoAdd.Text = "自動加入新日誌";
         ChkAutoAdd.UseVisualStyleBackColor = true;
         ChkAutoAdd.CheckedChanged += ChkAutoAddCheckedChanged;
         // 
@@ -815,7 +815,7 @@ partial class SettingsForm
         ChkSkipFailedTries.Name = "ChkSkipFailedTries";
         ChkSkipFailedTries.Size = new Size(170, 19);
         ChkSkipFailedTries.TabIndex = 38;
-        ChkSkipFailedTries.Text = "Skip log generation if failed";
+        ChkSkipFailedTries.Text = "如果敗戰則跳過日誌產生";
         ChkSkipFailedTries.UseVisualStyleBackColor = true;
         ChkSkipFailedTries.CheckedChanged += ChkSkipFailedTriesCheckedChanged;
         // 
@@ -836,7 +836,7 @@ partial class SettingsForm
         GroupOutput.Size = new Size(518, 149);
         GroupOutput.TabIndex = 37;
         GroupOutput.TabStop = false;
-        GroupOutput.Text = "Output";
+        GroupOutput.Text = "輸出";
         // 
         // ChkAddDuration
         // 
@@ -846,7 +846,7 @@ partial class SettingsForm
         ChkAddDuration.Name = "ChkAddDuration";
         ChkAddDuration.Size = new Size(182, 19);
         ChkAddDuration.TabIndex = 19;
-        ChkAddDuration.Text = "Add log duration to file name";
+        ChkAddDuration.Text = "在檔案名稱中新增日誌持續時間";
         ChkAddDuration.UseVisualStyleBackColor = true;
         ChkAddDuration.CheckedChanged += ChkAddDurationCheckedChanged;
         // 
@@ -858,7 +858,7 @@ partial class SettingsForm
         ChkAddPoVProf.Name = "ChkAddPoVProf";
         ChkAddPoVProf.Size = new Size(196, 19);
         ChkAddPoVProf.TabIndex = 18;
-        ChkAddPoVProf.Text = "Add PoV profession to file name";
+        ChkAddPoVProf.Text = "在檔案名稱中新增所使用職業";
         ChkAddPoVProf.UseVisualStyleBackColor = true;
         ChkAddPoVProf.CheckedChanged += ChkAddPoVProfCheckedChanged;
         // 
@@ -880,7 +880,7 @@ partial class SettingsForm
         GroupLog.Size = new Size(190, 267);
         GroupLog.TabIndex = 36;
         GroupLog.TabStop = false;
-        GroupLog.Text = "Log";
+        GroupLog.Text = "日誌";
         // 
         // TabHTML
         // 
@@ -929,7 +929,7 @@ partial class SettingsForm
         BtnHtmlExternalScriptPathSelect.Name = "BtnHtmlExternalScriptPathSelect";
         BtnHtmlExternalScriptPathSelect.Size = new Size(52, 25);
         BtnHtmlExternalScriptPathSelect.TabIndex = 58;
-        BtnHtmlExternalScriptPathSelect.Text = "Select";
+        BtnHtmlExternalScriptPathSelect.Text = "選擇";
         BtnHtmlExternalScriptPathSelect.UseVisualStyleBackColor = true;
         BtnHtmlExternalScriptPathSelect.Click += BtnHtmlExternalScriptPathSelectClick;
         // 
@@ -952,7 +952,7 @@ partial class SettingsForm
         RadioThemeLight.Size = new Size(92, 19);
         RadioThemeLight.TabIndex = 47;
         RadioThemeLight.TabStop = true;
-        RadioThemeLight.Text = "Light Theme";
+        RadioThemeLight.Text = "淺色主題";
         RadioThemeLight.UseVisualStyleBackColor = true;
         RadioThemeLight.CheckedChanged += RadioThemeLightCheckedChanged;
         // 
@@ -965,7 +965,7 @@ partial class SettingsForm
         RadioThemeDark.Size = new Size(89, 19);
         RadioThemeDark.TabIndex = 48;
         RadioThemeDark.TabStop = true;
-        RadioThemeDark.Text = "Dark Theme";
+        RadioThemeDark.Text = "深色主題";
         RadioThemeDark.UseVisualStyleBackColor = true;
         RadioThemeDark.CheckedChanged += RadioThemeDarkCheckedChanged;
         // 
@@ -990,7 +990,7 @@ partial class SettingsForm
         TabRaw.Name = "TabRaw";
         TabRaw.Size = new Size(551, 434);
         TabRaw.TabIndex = 3;
-        TabRaw.Text = "Raw formats";
+        TabRaw.Text = "原始格式";
         TabRaw.UseVisualStyleBackColor = true;
         // 
         // PanelJson
@@ -1013,7 +1013,7 @@ partial class SettingsForm
         GroupRawSettings.Size = new Size(175, 78);
         GroupRawSettings.TabIndex = 45;
         GroupRawSettings.TabStop = false;
-        GroupRawSettings.Text = "Raw Format Settings";
+        GroupRawSettings.Text = "原始格式設定";
         // 
         // ChkCompressRaw
         // 
@@ -1023,7 +1023,7 @@ partial class SettingsForm
         ChkCompressRaw.Name = "ChkCompressRaw";
         ChkCompressRaw.Size = new Size(128, 19);
         ChkCompressRaw.TabIndex = 18;
-        ChkCompressRaw.Text = "Compress Raw files";
+        ChkCompressRaw.Text = "壓縮原始檔案";
         ChkCompressRaw.UseVisualStyleBackColor = true;
         ChkCompressRaw.CheckedChanged += ChkCompressRawCheckedChanged;
         // 
@@ -1042,7 +1042,7 @@ partial class SettingsForm
         TabUpload.Name = "TabUpload";
         TabUpload.Size = new Size(551, 434);
         TabUpload.TabIndex = 4;
-        TabUpload.Text = "Upload";
+        TabUpload.Text = "上傳";
         TabUpload.UseVisualStyleBackColor = true;
         // 
         // DPSReportUserTokenLabel
@@ -1053,7 +1053,7 @@ partial class SettingsForm
         DPSReportUserTokenLabel.Name = "DPSReportUserTokenLabel";
         DPSReportUserTokenLabel.Size = new Size(68, 15);
         DPSReportUserTokenLabel.TabIndex = 46;
-        DPSReportUserTokenLabel.Text = "User Token:";
+        DPSReportUserTokenLabel.Text = "使用者令牌:";
         // 
         // MistWarriorUserTokenLabel
         // 
@@ -1063,7 +1063,7 @@ partial class SettingsForm
         MistWarriorUserTokenLabel.Name = "MistWarriorUserTokenLabel";
         MistWarriorUserTokenLabel.Size = new Size(68, 15);
         MistWarriorUserTokenLabel.TabIndex = 49;
-        MistWarriorUserTokenLabel.Text = "User Token:";
+        MistWarriorUserTokenLabel.Text = "使用者令牌:";
         // 
         // TabAPI
         // 
@@ -1080,7 +1080,7 @@ partial class SettingsForm
         TabAPI.Name = "TabAPI";
         TabAPI.Size = new Size(551, 434);
         TabAPI.TabIndex = 5;
-        TabAPI.Text = "Maintenance";
+        TabAPI.Text = "維護";
         TabAPI.UseVisualStyleBackColor = true;
         // 
         // LblResetMap
@@ -1091,7 +1091,7 @@ partial class SettingsForm
         LblResetMap.Name = "LblResetMap";
         LblResetMap.Size = new Size(332, 15);
         LblResetMap.TabIndex = 29;
-        LblResetMap.Text = "Resets the local map list and loads all maps from the GW2 API";
+        LblResetMap.Text = "重置本機地圖清單並從激戰2 API 載入所有地圖";
         // 
         // LblResetSkill
         // 
@@ -1101,7 +1101,7 @@ partial class SettingsForm
         LblResetSkill.Name = "LblResetSkill";
         LblResetSkill.Size = new Size(324, 15);
         LblResetSkill.TabIndex = 27;
-        LblResetSkill.Text = "Resets the local skill list and loads all skills from the GW2 API";
+        LblResetSkill.Text = "重置本機技能清單並從激戰2 API 載入所有技能";
         // 
         // LblResetTrait
         // 
@@ -1111,7 +1111,7 @@ partial class SettingsForm
         LblResetTrait.Name = "LblResetTrait";
         LblResetTrait.Size = new Size(321, 15);
         LblResetTrait.TabIndex = 28;
-        LblResetTrait.Text = "Resets the local trait list and loads all trait from the GW2 API";
+        LblResetTrait.Text = "重置本機特性清單並從激戰2 API 載入所有特性";
         // 
         // LblResetSpec
         // 
@@ -1121,7 +1121,7 @@ partial class SettingsForm
         LblResetSpec.Name = "LblResetSpec";
         LblResetSpec.Size = new Size(332, 15);
         LblResetSpec.TabIndex = 26;
-        LblResetSpec.Text = "Resets the local spec list and loads all specs from the GW2 API";
+        LblResetSpec.Text = "重置本機特化清單並從激戰2 API 載入所有特化";
         // 
         // BtnClose
         // 
@@ -1131,7 +1131,7 @@ partial class SettingsForm
         BtnClose.Name = "BtnClose";
         BtnClose.Size = new Size(98, 28);
         BtnClose.TabIndex = 48;
-        BtnClose.Text = "Close";
+        BtnClose.Text = "關閉";
         BtnClose.UseVisualStyleBackColor = true;
         BtnClose.Click += BtnCloseClick;
         // 
@@ -1143,7 +1143,7 @@ partial class SettingsForm
         BtnDumpSettings.Name = "BtnDumpSettings";
         BtnDumpSettings.Size = new Size(98, 28);
         BtnDumpSettings.TabIndex = 49;
-        BtnDumpSettings.Text = "Save Settings";
+        BtnDumpSettings.Text = "儲存設定";
         BtnDumpSettings.UseVisualStyleBackColor = true;
         BtnDumpSettings.Click += BtnDumpSettingsClicked;
         // 
@@ -1155,7 +1155,7 @@ partial class SettingsForm
         BtnLoadSettings.Name = "BtnLoadSettings";
         BtnLoadSettings.Size = new Size(98, 28);
         BtnLoadSettings.TabIndex = 50;
-        BtnLoadSettings.Text = "Load Settings";
+        BtnLoadSettings.Text = "載入設定";
         BtnLoadSettings.UseVisualStyleBackColor = true;
         BtnLoadSettings.Click += BtnLoadSettingsClicked;
         // 
@@ -1175,7 +1175,7 @@ partial class SettingsForm
         Margin = new Padding(4, 3, 4, 3);
         MaximizeBox = false;
         Name = "SettingsForm";
-        Text = "Parse settings";
+        Text = "解析設定";
         FormClosing += SettingsFormFormClosing;
         VisibleChanged += SettingsFormLoad;
         ((System.ComponentModel.ISupportInitialize)NumericCustomTooShort).EndInit();

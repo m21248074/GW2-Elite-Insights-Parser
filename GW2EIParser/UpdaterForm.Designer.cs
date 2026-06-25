@@ -50,7 +50,7 @@ partial class UpdaterForm
         lblHeader.Name = "lblHeader";
         lblHeader.Size = new Size(179, 15);
         lblHeader.TabIndex = 0;
-        lblHeader.Text = "New Elite Insights version found:";
+        lblHeader.Text = "發現新的 Elite Insights 版本:";
         // 
         // gridVersions
         // 
@@ -77,13 +77,13 @@ partial class UpdaterForm
         // 
         // dataGridViewTextBoxColumn1
         // 
-        dataGridViewTextBoxColumn1.HeaderText = "Current";
+        dataGridViewTextBoxColumn1.HeaderText = "目前版本";
         dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
         dataGridViewTextBoxColumn1.ReadOnly = true;
         // 
         // dataGridViewTextBoxColumn2
         // 
-        dataGridViewTextBoxColumn2.HeaderText = "Latest";
+        dataGridViewTextBoxColumn2.HeaderText = "最新版本";
         dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
         dataGridViewTextBoxColumn2.ReadOnly = true;
         // 
@@ -93,7 +93,7 @@ partial class UpdaterForm
         btnUpdate.Name = "btnUpdate";
         btnUpdate.Size = new Size(75, 23);
         btnUpdate.TabIndex = 2;
-        btnUpdate.Text = "Update";
+        btnUpdate.Text = "更新";
         btnUpdate.UseVisualStyleBackColor = true;
         btnUpdate.Click += buttonUpdate_Click;
         // 
@@ -103,7 +103,7 @@ partial class UpdaterForm
         btnDismiss.Name = "btnDismiss";
         btnDismiss.Size = new Size(75, 23);
         btnDismiss.TabIndex = 3;
-        btnDismiss.Text = "Dismiss";
+        btnDismiss.Text = "忽略";
         btnDismiss.UseVisualStyleBackColor = true;
         btnDismiss.Click += buttonDismiss_Click;
         // 
@@ -115,7 +115,7 @@ partial class UpdaterForm
         linkLblReleaseNotes.Size = new Size(80, 15);
         linkLblReleaseNotes.TabIndex = 4;
         linkLblReleaseNotes.TabStop = true;
-        linkLblReleaseNotes.Text = "Release Notes";
+        linkLblReleaseNotes.Text = "更新日誌";
         // 
         // lblDwnlSize
         // 
@@ -124,7 +124,7 @@ partial class UpdaterForm
         lblDwnlSize.Name = "lblDwnlSize";
         lblDwnlSize.Size = new Size(87, 15);
         lblDwnlSize.TabIndex = 5;
-        lblDwnlSize.Text = "Download Size:";
+        lblDwnlSize.Text = "下載大小:";
         // 
         // UpdaterForm
         // 
@@ -142,7 +142,7 @@ partial class UpdaterForm
         MaximizeBox = false;
         MinimizeBox = false;
         Name = "UpdaterForm";
-        Text = "GW2 Elite Insights Updater";
+        Text = "激戰2 Elite Insights 更新器";
         ((System.ComponentModel.ISupportInitialize)gridVersions).EndInit();
         ResumeLayout(false);
         PerformLayout();

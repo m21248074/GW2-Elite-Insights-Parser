@@ -117,7 +117,7 @@ internal sealed partial class MainForm : Form
             _logsFiles.Add(file);
             AddTraceMessage("UI: Added " + file);
 
-            var operation = new FormOperationController(file, "Ready to parse", DgvFiles, OperatorBindingSource);
+            var operation = new FormOperationController(file, "準備解析", DgvFiles, OperatorBindingSource);
 
             if (Settings.Default.AutoParse)
             {
