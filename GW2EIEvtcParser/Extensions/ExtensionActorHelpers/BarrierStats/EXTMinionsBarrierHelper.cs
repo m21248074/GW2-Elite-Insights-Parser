@@ -1,70 +1,52 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser.EIData;
+﻿using GW2EIEvtcParser.EIData;
+using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.Extensions
+namespace GW2EIEvtcParser.Extensions;
+
+public class EXTMinionsBarrierHelper : EXTActorBarrierHelper
 {
-    public class EXTMinionsBarrierHelper : EXTActorBarrierHelper
+    private readonly Minions _minions;
+    private IReadOnlyList<NPC> _minionList => _minions.MinionList;
+    private SingleActor Master => _minions.Master;
+
+    internal EXTMinionsBarrierHelper(Minions minions) : base()
     {
-        private readonly Minions _minions;
-        private IReadOnlyList<NPC> _minionList => _minions.MinionList;
+        _minions = minions;
+    }
 
-        internal EXTMinionsBarrierHelper(Minions minions) : base()
+    protected override AgentItem GetAgentItemForCachingSrc()
+    {
+        return Master.AgentItem;
+    }
+
+
+    protected override void InitBarrierEvents(ParsedEvtcLog log)
+    {
+        if (BarrierEventsByDst == null)
         {
-            _minions = minions;
+            var barrierEvents = new List<EXTBarrierEvent>(_minionList.Count); //TODO_PERF(Rennorb): find average complexity
+            foreach (NPC minion in _minionList)
+            {
+                barrierEvents.AddRange(minion.EXTBarrier.GetOutgoingBarrierEvents(null, log, Master.FirstAware, Master.LastAware));
+            }
+            barrierEvents.SortByTime();
+            BarrierEventsByDst = barrierEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
+            BarrierEventsByDst[ParserHelper._nullAgent] = barrierEvents;
         }
+    }
 
-
-        public override IReadOnlyList<EXTAbstractBarrierEvent> GetOutgoingBarrierEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
+    protected override void InitIncomingBarrierEvents(ParsedEvtcLog log)
+    {
+        if (BarrierReceivedEventsBySrc == null)
         {
-            if (BarrierEvents == null)
+            var barrierReceivedEvents = new List<EXTBarrierEvent>(_minionList.Count); //TODO_PERF(Rennorb): find average complexity
+            foreach (NPC minion in _minionList)
             {
-                BarrierEvents = new List<EXTAbstractBarrierEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    BarrierEvents.AddRange(minion.EXTBarrier.GetOutgoingBarrierEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                BarrierEvents = BarrierEvents.OrderBy(x => x.Time).ToList();
-                BarrierEventsByDst = BarrierEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
+                barrierReceivedEvents.AddRange(minion.EXTBarrier.GetIncomingBarrierEvents(null, log, Master.FirstAware, Master.LastAware));
             }
-            if (target != null)
-            {
-                if (BarrierEventsByDst.TryGetValue(target.AgentItem, out List<EXTAbstractBarrierEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<EXTAbstractBarrierEvent>();
-                }
-            }
-            return BarrierEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-
-        public override IReadOnlyList<EXTAbstractBarrierEvent> GetIncomingBarrierEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (BarrierReceivedEvents == null)
-            {
-                BarrierReceivedEvents = new List<EXTAbstractBarrierEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    BarrierReceivedEvents.AddRange(minion.EXTBarrier.GetIncomingBarrierEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                BarrierReceivedEvents = BarrierReceivedEvents.OrderBy(x => x.Time).ToList();
-                BarrierReceivedEventsBySrc = BarrierReceivedEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (BarrierReceivedEventsBySrc.TryGetValue(target.AgentItem, out List<EXTAbstractBarrierEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<EXTAbstractBarrierEvent>();
-                }
-            }
-            return BarrierReceivedEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
+            barrierReceivedEvents.SortByTime();
+            BarrierReceivedEventsBySrc = barrierReceivedEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
+            BarrierReceivedEventsBySrc[ParserHelper._nullAgent] = barrierReceivedEvents;
         }
     }
 }

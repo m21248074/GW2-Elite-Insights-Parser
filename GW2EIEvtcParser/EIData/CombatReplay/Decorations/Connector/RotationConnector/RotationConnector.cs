@@ -1,13 +1,12 @@
-﻿namespace GW2EIEvtcParser.EIData
-{
-    internal abstract class RotationConnector : Connector
-    {
-        public abstract class RotationConnectorDescriptor
-        {
+﻿namespace GW2EIEvtcParser.EIData;
 
-            public RotationConnectorDescriptor(RotationConnector connector, CombatReplayMap map)
-            {
-            }
+internal abstract class RotationConnector : Connector
+{
+    public abstract class RotationConnectorDescriptor
+    {
+
+        protected RotationConnectorDescriptor(RotationConnector connector, CombatReplayMap map)
+        {
         }
     }
 }

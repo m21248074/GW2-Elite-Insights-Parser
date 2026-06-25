@@ -1,61 +1,68 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+
+internal abstract class SkillMechanic<T> : IDBasedMechanic<T> where T : SkillEvent
 {
 
-    internal abstract class SkillMechanic : IDBasedMechanic<AbstractHealthDamageEvent>
+
+    public delegate IEnumerable<T> CombatEventsGetter(ParsedEvtcLog log, long id);
+
+    private readonly CombatEventsGetter _getter;
+    protected bool Minions { get; private set; } = false;
+
+     public SkillMechanic(long[] mechanicIDs, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown, CombatEventsGetter getter) : base(mechanicIDs, plotlySetting, shortName, description, fullName, internalCoolDown)
     {
+        _getter = getter;
+    }
 
-        protected bool Minions { get; private set; } = false;
+    public SkillMechanic<T> WithMinions()
+    {
+        Minions = true;
+        return this;
+    }
 
-        public SkillMechanic(long mechanicID, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(mechanicID, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
+
+
+    internal SkillMechanic<T> UsingBuffChecker(long buffID, bool isPresent)
+    {
+        if (isPresent)
         {
+            return (SkillMechanic<T>)UsingChecker((evt, log) => GetAgentItem(evt).HasBuff(log, buffID, evt.Time - ParserHelper.ServerDelayConstant));
         }
-
-        public SkillMechanic(long[] mechanicIDs, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(mechanicIDs, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
+        else
         {
+            return (SkillMechanic<T>)UsingChecker((evt, log) => !GetAgentItem(evt).HasBuff(log, buffID, evt.Time - ParserHelper.ServerDelayConstant));
         }
+    }
 
-        public SkillMechanic WithMinions(bool withMinions)
+    protected abstract AgentItem GetAgentItem(T evt);
+
+    protected AgentItem GetCreditedAgentItem(T evt)
+    {
+        AgentItem agentItem = GetAgentItem(evt);
+        if (Minions)
         {
-            Minions = withMinions;
-            return this;
+            agentItem = agentItem.GetFinalMaster();
         }
+        return agentItem;
+    }
+    protected abstract bool TryGetActor(ParsedEvtcLog log, AgentItem agentItem, Dictionary<int, SingleActor> regroupedMobs, [NotNullWhen(true)] out SingleActor? actor);
 
-        protected abstract AgentItem GetAgentItem(AbstractHealthDamageEvent ahde);
-
-        protected AgentItem GetCreditedAgentItem(AbstractHealthDamageEvent ahde)
+    internal override void CheckMechanic(ParsedEvtcLog log, Dictionary<Mechanic, List<MechanicEvent>> mechanicLogs, Dictionary<int, SingleActor> regroupedMobs)
+    {
+        foreach (long skillID in MechanicIDs)
         {
-            AgentItem agentItem = GetAgentItem(ahde);
-            if (Minions && agentItem != null)
+            foreach (T evt in _getter(log, skillID))
             {
-                agentItem = agentItem.GetFinalMaster();
-            }
-            return agentItem;
-        }
-
-        protected abstract AbstractSingleActor GetActor(ParsedEvtcLog log, AgentItem agentItem, Dictionary<int, AbstractSingleActor> regroupedMobs);
-
-        internal override void CheckMechanic(ParsedEvtcLog log, Dictionary<Mechanic, List<MechanicEvent>> mechanicLogs, Dictionary<int, AbstractSingleActor> regroupedMobs)
-        {
-            foreach (long skillID in MechanicIDs)
-            {
-                foreach (AbstractHealthDamageEvent ahde in log.CombatData.GetDamageData(skillID))
+                if (TryGetActor(log, GetCreditedAgentItem(evt), regroupedMobs, out var amp) && Keep(evt, log))
                 {
-                    AbstractSingleActor amp = null;
-                    if (Keep(ahde, log))
-                    {
-                        amp = GetActor(log, GetCreditedAgentItem(ahde), regroupedMobs);
-                    }
-                    if (amp != null)
-                    {
-                        InsertMechanic(log, mechanicLogs, ahde.Time, amp);
-                    }
+                    InsertMechanic(log, mechanicLogs, evt.Time, amp, evt.GetValue());
                 }
             }
         }
-
     }
+
 }

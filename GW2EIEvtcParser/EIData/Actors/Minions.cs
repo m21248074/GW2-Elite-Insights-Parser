@@ -1,292 +1,219 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser.Extensions;
+﻿using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+public class Minions : Actor
 {
-    public class Minions : AbstractActor
+    private readonly List<NPC> _minionList;
+    public AgentItem ReferenceAgentItem => AgentItem;
+
+    public IReadOnlyList<NPC> MinionList => _minionList;
+    public readonly SingleActor Master;
+    public readonly EXTMinionsHealingHelper EXTHealing;
+    public readonly EXTMinionsBarrierHelper EXTBarrier;
+
+    internal Minions(SingleActor master, NPC firstMinion) : base(firstMinion.AgentItem)
     {
-        private List<NPC> _minionList { get; }
-        public AgentItem ReferenceAgentItem => AgentItem;
-
-        public IReadOnlyList<NPC> MinionList => _minionList;
-        public AbstractSingleActor Master { get; }
-        public EXTMinionsHealingHelper EXTHealing { get; }
-        public EXTMinionsBarrierHelper EXTBarrier { get; }
-
-        internal Minions(AbstractSingleActor master, NPC firstMinion) : base(firstMinion.AgentItem)
-        {
-            _minionList = new List<NPC> { firstMinion };
-            Master = master;
-            EXTHealing = new EXTMinionsHealingHelper(this);
-            EXTBarrier = new EXTMinionsBarrierHelper(this);
-            Character = firstMinion.Character;
+        _minionList = [firstMinion];
+        Master = master;
+        EXTHealing = new EXTMinionsHealingHelper(this);
+        EXTBarrier = new EXTMinionsBarrierHelper(this);
+        Character = firstMinion.Character;
 #if DEBUG
-            Character += " (" + ID + ")";
+        Character += " (" + ID + ")";
 #endif
-        }
+    }
 
-        internal void AddMinion(NPC minion)
+    internal void AddMinion(NPC minion)
+    {
+        _minionList.Add(minion);
+    }
+
+    public bool IsUniquePerTimeFrame => RangerHelper.IsJuvenilePet(ReferenceAgentItem) || 
+            MechanistHelper.IsJadeMech(ReferenceAgentItem) || 
+            NecromancerHelper.IsUndeadMinion(ReferenceAgentItem) || 
+            RitualistHelper.IsSpiritMinion(ReferenceAgentItem);
+
+    #region DAMAGE
+
+    protected override void InitDamageEvents(ParsedEvtcLog log)
+    {
+        if (DamageEventByDst == null)
         {
-            _minionList.Add(minion);
-        }
-
-        #region DAMAGE
-        public override IReadOnlyList<AbstractHealthDamageEvent> GetDamageEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (DamageEvents == null)
-            {
-                DamageEvents = new List<AbstractHealthDamageEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    DamageEvents.AddRange(minion.GetDamageEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                DamageEvents = DamageEvents.OrderBy(x => x.Time).ToList();
-                DamageEventByDst = DamageEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (DamageEventByDst.TryGetValue(target.AgentItem, out List<AbstractHealthDamageEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<AbstractHealthDamageEvent>();
-                }
-            }
-            return DamageEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-        public override IReadOnlyList<AbstractHealthDamageEvent> GetDamageTakenEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (DamageTakenEvents == null)
-            {
-                DamageTakenEvents = new List<AbstractHealthDamageEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    DamageTakenEvents.AddRange(minion.GetDamageTakenEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                DamageTakenEvents = DamageTakenEvents.OrderBy(x => x.Time).ToList();
-                DamageTakenEventsBySrc = DamageTakenEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (DamageTakenEventsBySrc.TryGetValue(target.AgentItem, out List<AbstractHealthDamageEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<AbstractHealthDamageEvent>();
-                }
-            }
-            return DamageTakenEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-        #endregion DAMAGE
-
-        #region BREAKBAR DAMAGE
-
-        public override IReadOnlyList<BreakbarDamageEvent> GetBreakbarDamageEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (BreakbarDamageEvents == null)
-            {
-                BreakbarDamageEvents = new List<BreakbarDamageEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    BreakbarDamageEvents.AddRange(minion.GetBreakbarDamageEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                BreakbarDamageEvents = BreakbarDamageEvents.OrderBy(x => x.Time).ToList();
-                BreakbarDamageEventsByDst = BreakbarDamageEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (BreakbarDamageEventsByDst.TryGetValue(target.AgentItem, out List<BreakbarDamageEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<BreakbarDamageEvent>();
-                }
-            }
-
-            return BreakbarDamageEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-
-        public override IReadOnlyList<BreakbarDamageEvent> GetBreakbarDamageTakenEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (BreakbarDamageTakenEvents == null)
-            {
-                BreakbarDamageTakenEvents = new List<BreakbarDamageEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    BreakbarDamageTakenEvents.AddRange(minion.GetBreakbarDamageTakenEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                BreakbarDamageTakenEvents = BreakbarDamageTakenEvents.OrderBy(x => x.Time).ToList();
-                BreakbarDamageTakenEventsBySrc = BreakbarDamageTakenEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (BreakbarDamageTakenEventsBySrc.TryGetValue(target.AgentItem, out List<BreakbarDamageEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<BreakbarDamageEvent>();
-                }
-            }
-            return BreakbarDamageTakenEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-        #endregion BREAKBAR DAMAGE
-
-
-        #region CROWD CONTROL
-
-        public override IReadOnlyList<CrowdControlEvent> GetOutgoingCrowdControlEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (OutgoingCrowdControlEvents == null)
-            {
-                OutgoingCrowdControlEvents = new List<CrowdControlEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    OutgoingCrowdControlEvents.AddRange(minion.GetOutgoingCrowdControlEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                OutgoingCrowdControlEvents = OutgoingCrowdControlEvents.OrderBy(x => x.Time).ToList();
-                OutgoingCrowdControlEventsByDst = OutgoingCrowdControlEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (OutgoingCrowdControlEventsByDst.TryGetValue(target.AgentItem, out List<CrowdControlEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<CrowdControlEvent>();
-                }
-            }
-
-            return OutgoingCrowdControlEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-
-        public override IReadOnlyList<CrowdControlEvent> GetIncomingCrowdControlEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (IncomingCrowdControlEvents == null)
-            {
-                IncomingCrowdControlEvents = new List<CrowdControlEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    IncomingCrowdControlEvents.AddRange(minion.GetIncomingCrowdControlEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                IncomingCrowdControlEvents = IncomingCrowdControlEvents.OrderBy(x => x.Time).ToList();
-                IncomingCrowdControlEventsBySrc = IncomingCrowdControlEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (IncomingCrowdControlEventsBySrc.TryGetValue(target.AgentItem, out List<CrowdControlEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<CrowdControlEvent>();
-                }
-            }
-            return IncomingCrowdControlEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-        #endregion CROWD CONTROL
-
-        #region CAST
-        private void InitCastEvents(ParsedEvtcLog log)
-        {
-            CastEvents = new List<AbstractCastEvent>();
+            var damageEvents = new List<HealthDamageEvent>(_minionList.Count); //TODO_PERF(Rennorb) @find average complexity
             foreach (NPC minion in _minionList)
             {
-                CastEvents.AddRange(minion.GetCastEvents(log, log.FightData.FightStart, log.FightData.FightEnd));
+                damageEvents.AddRange(minion.GetDamageEvents(null, log, Master.FirstAware, Master.LastAware));
             }
-            CastEvents = CastEvents.OrderBy(x => x.Time).ThenBy(x => x.Skill.IsSwap).ToList();
+            damageEvents.SortByTime();
+            DamageEventByDst = damageEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
+            DamageEventByDst[ParserHelper._nullAgent] = damageEvents;
         }
-
-        public override IReadOnlyList<AbstractCastEvent> GetCastEvents(ParsedEvtcLog log, long start, long end)
+    }
+    protected override void InitDamageTakenEvents(ParsedEvtcLog log)
+    {
+        if (DamageTakenEventsBySrc == null)
         {
-            if (CastEvents == null)
-            {
-                InitCastEvents(log);
-            }
-            return CastEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-
-        public override IReadOnlyList<AbstractCastEvent> GetIntersectingCastEvents(ParsedEvtcLog log, long start, long end)
-        {
-            if (CastEvents == null)
-            {
-                InitCastEvents(log);
-            }
-            return CastEvents.Where(x => KeepIntersectingCastLog(x, start, end)).ToList();
-        }
-        #endregion CAST
-
-        internal bool IsActive(ParsedEvtcLog log)
-        {
-            if (log.CombatData.HasEXTHealing && EXTHealing.GetOutgoingHealEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd).Any())
-            {
-                return true;
-            }
-            if (ParserHelper.IsKnownMinionID(ReferenceAgentItem, Master.Spec))
-            {
-                return true;
-            }
-            if (log.CombatData.HasEXTBarrier && EXTBarrier.GetOutgoingBarrierEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd).Any())
-            {
-                return true;
-            }
-            if (GetDamageEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd).Any())
-            {
-                return true;
-            }
-            if (GetCastEvents(log, log.FightData.FightStart, log.FightData.FightEnd).Any(x => x.SkillId != SkillIDs.WeaponSwap && x.SkillId != SkillIDs.MirageCloakDodge))
-            {
-                return true;
-            }
-            /*if (_minionList[0] is NPC && _minionList.Any(x => log.CombatData.GetMovementData(x.AgentItem).Any()))
-            {
-                return true;
-            }*/
-            return false;
-        }
-
-        internal IReadOnlyList<IReadOnlyList<Segment>> GetLifeSpanSegments(ParsedEvtcLog log)
-        {
-            var minionsSegments = new List<List<Segment>>();
-            long fightEnd = log.FightData.FightEnd;
+            var damageTakenEvents = new List<HealthDamageEvent>(_minionList.Count); //TODO_PERF(Rennorb) @find average complexity
             foreach (NPC minion in _minionList)
             {
-                var minionSegments = new List<Segment>();
-                long start = Math.Max(minion.FirstAware, 0);
-                // Find end
-                long end = minion.LastAware;
-                DeadEvent dead = log.CombatData.GetDeadEvents(minion.AgentItem).LastOrDefault();
-                if (dead != null)
-                {
-                    end = Math.Min(dead.Time, end);
-                }
-                DespawnEvent despawn = log.CombatData.GetDespawnEvents(minion.AgentItem).LastOrDefault();
-                if (despawn != null)
-                {
-                    end = Math.Min(despawn.Time, end);
-                }
-                //
-                end = Math.Min(end, fightEnd);
-                minionSegments.Add(new Segment(log.FightData.FightStart, start, 0));
-                minionSegments.Add(new Segment(start, end, 1));
-                minionSegments.Add(new Segment(end, fightEnd, 0));
-                minionSegments.RemoveAll(x => x.Start > x.End);
-                minionsSegments.Add(minionSegments);
+                damageTakenEvents.AddRange(minion.GetDamageTakenEvents(null, log, Master.FirstAware, Master.LastAware));
             }
-            return minionsSegments;
+            damageTakenEvents.SortByTime();
+            DamageTakenEventsBySrc = damageTakenEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
+            DamageTakenEventsBySrc[ParserHelper._nullAgent] = damageTakenEvents;
         }
+    }
+    #endregion DAMAGE
+
+    #region BREAKBAR DAMAGE
+
+    protected override void InitBreakbarDamageEvents(ParsedEvtcLog log)
+    {
+        if (BreakbarDamageEventsByDst == null)
+        {
+            var breakbarDamageEvents = new List<BreakbarDamageEvent>(_minionList.Count); //TODO_PERF(Rennorb) @find average complexity
+            foreach (NPC minion in _minionList)
+            {
+                breakbarDamageEvents.AddRange(minion.GetBreakbarDamageEvents(null, log, Master.FirstAware, Master.LastAware));
+            }
+            breakbarDamageEvents.SortByTime();
+            BreakbarDamageEventsByDst = breakbarDamageEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
+            BreakbarDamageEventsByDst[ParserHelper._nullAgent] = breakbarDamageEvents;
+        }
+    }
+
+    protected override void InitBreakbarDamageTakenEvents(ParsedEvtcLog log)
+    {
+        if (BreakbarDamageTakenEventsBySrc == null)
+        {
+            var breakbarDamageTakenEvents = new List<BreakbarDamageEvent>(_minionList.Count); //TODO_PERF(Rennorb) @find average complexity
+            foreach (NPC minion in _minionList)
+            {
+                breakbarDamageTakenEvents.AddRange(minion.GetBreakbarDamageTakenEvents(null, log, Master.FirstAware, Master.LastAware));
+            }
+            breakbarDamageTakenEvents.SortByTime();
+            BreakbarDamageTakenEventsBySrc = breakbarDamageTakenEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
+            BreakbarDamageTakenEventsBySrc[ParserHelper._nullAgent] = breakbarDamageTakenEvents;
+        }
+    }
+    #endregion BREAKBAR DAMAGE
+
+
+    #region CROWD CONTROL
+
+    protected override void InitOutgoingCrowdControlEvents(ParsedEvtcLog log)
+    {
+        if (OutgoingCrowdControlEventsByDst == null)
+        {
+            var outgoingCrowdControlEvents = new List<CrowdControlEvent>(_minionList.Count); //TODO_PERF(Rennorb) @find average complexity
+            foreach (NPC minion in _minionList)
+            {
+                outgoingCrowdControlEvents.AddRange(minion.GetOutgoingCrowdControlEvents(null, log, Master.FirstAware, Master.LastAware));
+            }
+            outgoingCrowdControlEvents.SortByTime();
+            OutgoingCrowdControlEventsByDst = outgoingCrowdControlEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
+            OutgoingCrowdControlEventsByDst[ParserHelper._nullAgent] = outgoingCrowdControlEvents;
+        }
+    }
+    protected override void InitIncomingCrowdControlEvents(ParsedEvtcLog log)
+    {
+        if (IncomingCrowdControlEventsBySrc == null)
+        {
+            var incomingCrowdControlEvents = new List<CrowdControlEvent>(_minionList.Count); //TODO_PERF(Rennorb) @find average complexity
+            foreach (NPC minion in _minionList)
+            {
+                incomingCrowdControlEvents.AddRange(minion.GetIncomingCrowdControlEvents(null, log, Master.FirstAware, Master.LastAware));
+            }
+            incomingCrowdControlEvents.SortByTime();
+            IncomingCrowdControlEventsBySrc = incomingCrowdControlEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
+            IncomingCrowdControlEventsBySrc[ParserHelper._nullAgent] = incomingCrowdControlEvents;
+        }
+    }
+    #endregion CROWD CONTROL
+
+    #region CAST
+    protected override void InitCastEvents(ParsedEvtcLog log)
+    {
+        CastEvents = new List<CastEvent>(_minionList.Count); //TODO_PERF(Rennorb) @find average complexity
+        foreach (NPC minion in _minionList)
+        {
+            CastEvents.AddRange(minion.GetCastEvents(log, Master.FirstAware, Master.LastAware));
+        }
+        CastEvents.SortByTimeThenSwap();
+    }
+
+    private CachingCollection<long>? _intersectingCastTimeCache;
+    public long GetIntersectingCastTime(ParsedEvtcLog log, long start, long end)
+    {
+        _intersectingCastTimeCache ??= new(log);
+        if (!_intersectingCastTimeCache.TryGetValue(start, end, out var time))
+        {
+            time = GetIntersectingCastEvents(log).Sum(cl => Math.Min(cl.EndTime, end) - Math.Max(cl.Time, start));
+            _intersectingCastTimeCache.Set(start, end, time);
+        }
+        return time;
+    }
+    #endregion CAST
+
+    internal bool IsActive(ParsedEvtcLog log)
+    {
+        if (ParserHelper.IsKnownMinionID(ReferenceAgentItem, Master.Spec))
+        {
+            return true;
+        }
+        if (log.CombatData.HasEXTHealing && EXTHealing.GetOutgoingHealEvents(null, log).Any())
+        {
+            return true;
+        }
+        if (log.CombatData.HasEXTBarrier && EXTBarrier.GetOutgoingBarrierEvents(null, log).Any())
+        {
+            return true;
+        }
+        if (GetDamageEvents(null, log).Any())
+        {
+            return true;
+        }
+        if (GetCastEvents(log).Any(x => x.SkillID != SkillIDs.WeaponStow && x.SkillID != SkillIDs.WeaponDraw && x.SkillID != SkillIDs.WeaponSwap && x.SkillID != SkillIDs.MirageCloakDodge))
+        {
+            return true;
+        }
+        /*if (_minionList[0] is NPC && _minionList.Any(x => log.CombatData.GetMovementData(x.AgentItem).Any()))
+        {
+            return true;
+        }*/
+        return false;
+    }
+
+    internal IReadOnlyList<IReadOnlyList<Segment>> GetLifeSpanSegments(ParsedEvtcLog log)
+    {
+        List<List<Segment>> minionsSegments = [];
+        long logEnd = log.LogData.LogEnd;
+        foreach (NPC minion in _minionList)
+        {
+            List<Segment> minionSegments = [];
+            long start = Math.Max(Math.Max(minion.FirstAware, Master.FirstAware), 0);
+            // Find end
+            long end = Math.Min(minion.LastAware, Master.LastAware);
+            DeadEvent? dead = log.CombatData.GetDeadEvents(minion.AgentItem).LastOrDefault();
+            if (dead != null)
+            {
+                end = Math.Min(dead.Time, end);
+            }
+            DespawnEvent? despawn = log.CombatData.GetDespawnEvents(minion.AgentItem).LastOrDefault();
+            if (despawn != null)
+            {
+                end = Math.Min(despawn.Time, end);
+            }
+            //
+            end = Math.Min(end, logEnd);
+            minionSegments.Add(new Segment(log.LogData.LogStart, start, 0));
+            minionSegments.Add(new Segment(start, end, 1));
+            minionSegments.Add(new Segment(end, logEnd, 0));
+            minionSegments.RemoveAll(x => x.Start > x.End);
+            minionsSegments.Add(minionSegments);
+        }
+        return minionsSegments;
     }
 }

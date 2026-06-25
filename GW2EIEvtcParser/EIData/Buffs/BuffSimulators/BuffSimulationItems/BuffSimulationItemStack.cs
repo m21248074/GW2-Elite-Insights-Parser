@@ -1,53 +1,73 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser.ParsedData;
+﻿using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.EIData.BuffSimulators
+namespace GW2EIEvtcParser.EIData.BuffSimulators;
+
+internal abstract class BuffSimulationItemStack : BuffSimulationItem
 {
-    internal abstract class BuffSimulationItemStack : BuffSimulationItem
-    {
-        protected readonly BuffSimulationItemBase[] Stacks;
-        private readonly AgentItem[] _sources;
-        private Dictionary<AgentItem, int> _stacksPerSource { get; set; }
+    protected AgentItem[]? Sources;
+    protected Dictionary<AgentItem, int>? StacksPerSource;
 
-        public BuffSimulationItemStack(IReadOnlyList<BuffStackItem> stacks) : base(stacks.First().Start, stacks.First().Duration)
+    protected static BuffSimulationItemBase[] GetStacks(IReadOnlyList<BuffStackItem> iStacks)
+    {
+        int count = iStacks.Count;
+        BuffSimulationItemBase[] stacks;
+        if (count > 0)
         {
-            int count = stacks.Count;
-            _sources = new AgentItem[count];
-            Stacks = new BuffSimulationItemBase[count];
+            stacks = new BuffSimulationItemBase[count];
             for (int i = 0; i < count; i++)
             {
-                BuffStackItem stackItem = stacks[i];
-                Stacks[i] = new BuffSimulationItemBase(stackItem);
-                _sources[i] = stackItem.Src;
+                var stack = iStacks[i];
+                var hasSeed = !stack.SeedSrc.Is(stack.Src);
+                var isExtension = stack.IsExtension;
+                stacks[i] = hasSeed ?
+                        (
+                        isExtension ?
+                            stack.Src.IsEnglobingAgent ?
+                                stack.SeedSrc.IsEnglobingAgent ?
+                                    new BuffSimulationItemBaseEnglobingWithExtensionWithSeedEnglobing(stack)
+                                    :
+                                    new BuffSimulationItemBaseEnglobingWithExtensionWithSeed(stack)
+                                :
+                                stack.SeedSrc.IsEnglobingAgent ?
+                                    new BuffSimulationItemBaseWithExtensionWithSeedEnglobing(stack)
+                                    :
+                                    new BuffSimulationItemBaseWithExtensionWithSeed(stack)
+                            :
+                            stack.Src.IsEnglobingAgent ?
+                                stack.SeedSrc.IsEnglobingAgent ?
+                                    new BuffSimulationItemBaseEnglobingWithSeedEnglobing(stack)
+                                    :
+                                    new BuffSimulationItemBaseEnglobingWithSeed(stack)
+                                :
+                                stack.SeedSrc.IsEnglobingAgent ?
+                                    new BuffSimulationItemBaseWithSeedEnglobing(stack)
+                                    :
+                                    new BuffSimulationItemBaseWithSeed(stack)
+                    )
+                    :
+                    (
+                        isExtension ?
+                            stack.Src.IsEnglobingAgent ? 
+                                new BuffSimulationItemBaseEnglobingWithExtension(stack) 
+                                : 
+                                new BuffSimulationItemBaseWithExtension(stack)
+                            :
+                            stack.Src.IsEnglobingAgent ? 
+                                new BuffSimulationItemBaseEnglobing(stack) 
+                                : 
+                                new BuffSimulationItemBase(stack)
+                    )
+                    ;
             }
         }
-        public override int GetStacks()
+        else
         {
-            return Stacks.Length;
+            stacks = []; // this is array.empty, reused object
         }
+        return stacks;
+    }
 
-        public override int GetStacks(AbstractSingleActor actor)
-        {
-            if (_stacksPerSource == null)
-            {
-                _stacksPerSource = _sources.GroupBy(x => x).ToDictionary(x => x.Key, x => x.Count());
-            }
-            if (_stacksPerSource.TryGetValue(actor.AgentItem, out var stacks))
-            {
-                return stacks;
-            }
-            return 0;
-        }
-
-        public override IReadOnlyList<long> GetActualDurationPerStack()
-        {
-            return new List<long>(Stacks.Select(x => x.GetActualDuration()));
-        }
-
-        public override IReadOnlyList<AgentItem> GetSources()
-        {
-            return _sources;
-        }
+    public BuffSimulationItemStack(IReadOnlyList<BuffStackItem> stacks) : base(stacks[0].Start, stacks[0].Start + stacks[0].Duration)
+    {
     }
 }

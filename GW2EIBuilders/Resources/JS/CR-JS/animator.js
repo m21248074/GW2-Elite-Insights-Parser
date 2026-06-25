@@ -15,8 +15,12 @@ const deadIcon = new Image();
 deadIcon.onload = function () {
     animateCanvas(noUpdateTime);
 };
-const downIcon = new Image();
-downIcon.onload = function () {
+const downEnemyIcon = new Image();
+downEnemyIcon.onload = function () {
+    animateCanvas(noUpdateTime);
+};
+const downAllyIcon = new Image();
+downAllyIcon.onload = function () {
     animateCanvas(noUpdateTime);
 };
 const dcIcon = new Image();
@@ -44,6 +48,36 @@ let overheadAnimationIncrement = 1;
 const uint32 = new Uint32Array(1);
 const uint32ToUint8 = new Uint8Array(uint32.buffer);
 
+
+// Define the type of the decoration. Must match ordering of the enum in CombatReplayDescription.cs
+const Types = {
+    ActorOrientation: 0,
+    BackgroundIcon: 1,
+    Circle: 2,
+    Doughnut: 3,
+    Friendly: 4,
+    FriendlyPlayer: 5,
+    Icon: 6,
+    IconOverhead: 7,
+    Line: 8,
+    Mob: 9,
+    MovingPlatform: 10,
+    Pie: 11,
+    Player: 12,
+    ProgressBar: 13,
+    ProgressBarOverhead: 14,
+    Rectangle: 15,
+    SquadMarker: 16,
+    SquadMarkerOverhead: 17,
+    Target: 18,
+    TargetPlayer: 19,
+    Text: 20,
+    RegularPolygon: 21,
+    TextOverhead: 22,
+    Arena: 23,
+    CustomPolygon: 24,
+};
+
 function getDefaultCombatReplayTime() {
     var time = EIUrlParams.get("crTime");
     if (!time) {
@@ -52,12 +86,24 @@ function getDefaultCombatReplayTime() {
     return Math.max(parseFloat(time), 0.0) * 1000;
 }
 
-var animator = null;
+let animator = null;
+let animationControlComponent = null;
 // reactive structures
 const reactiveAnimationData = {
     time: getDefaultCombatReplayTime(),
     selectedActorID: null,
-    animated: false
+    animated: false,
+    range: {
+        min: 0,
+        max: 1e12
+    },
+    selectedExtraDecorations: false,
+    selectedMechanic: {
+        actorId: null,
+        actorName: null,
+        name: null,
+        times: [],
+    }
 };
 
 var sliderDelimiter = {
@@ -70,7 +116,158 @@ var sliderDelimiter = {
 let InchToPixel = 10;
 let PollingRate = 150;
 
+// Scenegraph
+
+function standardDraw(drawable) {
+    drawable.draw();
+}
+
+function selectableDraw(drawable) {
+    if (!drawable.isSelected()) {
+        drawable.draw();
+        animator._drawActorOrientation(drawable.id);
+    }
+}
+
+function selectablePickingDraw(drawable) {
+    if (!drawable.isSelected()) {
+        drawable.drawPicking();
+    }
+}
+
+class RenderablesBranch {
+    constructor(start, end) {
+        this.start = start;
+        this.end = end;
+        this.halfPoint = (end - start) * 0.5 + start;
+        this.left = null;
+        this.right = null;
+        this.renderables = [];
+        this.leaf = true;
+        // Won't allow leaf below this
+        this.finalLeaf = this.end - this.start < 10000;
+    }
+
+    add(item) {
+        if (this.leaf) {
+            this.renderables.push(item);
+            // If too many renderables, remove leaf and redistribute
+            if (this.renderables.length > 50 && !this.finalLeaf) {
+                this.leaf = false;
+                const renderablesToRedistribute = this.renderables;
+                this.renderables = [];
+                for (let i = 0; i < renderablesToRedistribute.length; i++) {
+                    this.add(renderablesToRedistribute[i]);
+                }
+            }
+            return;
+        }
+        if (item.end <= this.halfPoint) {
+            if (!this.left) {
+                this.left = new RenderablesBranch(this.start, this.halfPoint);
+            }
+            this.left.add(item);
+        } else if (item.start > this.halfPoint && item.end <= this.end) {
+            if (!this.right) {
+                this.right = new RenderablesBranch(this.halfPoint, this.end);
+            }
+            this.right.add(item);
+        } else {
+            this.renderables.push(item);
+        }
+    }
+
+    forEach(cb) {  
+        for (let i = 0; i < this.renderables.length; i++) {
+            cb(this.renderables[i]);
+        }
+        if (this.left) {
+            this.left.forEach(cb);
+        }
+        if (this.right) {
+            this.right.forEach(cb);
+        }
+    }
+
+    draw(drawFunction) {
+        var time = animator.reactiveDataStatus.time;
+        if (this.start > time || this.end < time) {
+            return;
+        }
+        for (let i = 0; i < this.renderables.length; i++) {
+            drawFunction(this.renderables[i]);
+        }
+        if (this.left) {
+            this.left.draw(drawFunction);
+        }
+        if (this.right) {
+            this.right.draw(drawFunction);
+        }
+    }
+
+    any()  {
+        return this.renderables.length > 0 || this.left || this.right;
+    }
+}
+
+class RenderablesRoot extends RenderablesBranch{
+    constructor(start, end) {
+        super(start, end);
+        this._allRenderables = [];
+    }
+
+    add(item) {
+        super.add(item);
+        this._allRenderables.push(item);
+    }
+}
+
+class MappedRenderablesRoot extends RenderablesRoot {
+    constructor(start, end) {
+        super(start, end);
+        this.map = new Map();
+    }
+
+    add(item) {
+        super.add(item);
+        this.map.set(item.id, item);
+    }
+
+    get(id) {
+        return this.map.get(id);
+    }
+    
+    has(id) {
+        return this.map.has(id);
+    }
+}
+
 //
+
+class RangeControl {
+    constructor(radius) {
+        this.enabled = false;
+        this.radius = radius;
+    }
+}
+
+class RangeControls {
+    constructor() {
+        this.ranges = [];
+    }
+
+    addRangeControl(radius) {
+        this.ranges.push(new RangeControl(radius));
+    }
+}
+
+class ConeControl {
+    constructor(openingAngle, radius) {
+        this.enabled = false;
+        this.openingAngle = openingAngle;
+        this.radius = radius;
+    }
+}
 
 class Animator {
     constructor(options) {
@@ -80,10 +277,11 @@ class Animator {
         // time
         this.prevTime = 0;
         this.times = [];
+        this.defaultViewpoints = [];
         // simulation params
         this.speed = 1;
         this.backwards = false;
-        this.rangeControl = [{ enabled: false, radius: 180 }, { enabled: false, radius: 360 }, { enabled: false, radius: 720 }];
+        this.extraDecorationMap = new Map();
         this.displaySettings = {
             highlightSelectedGroup: true,
             displayAllMinions: false,
@@ -96,27 +294,31 @@ class Animator {
             useActorHitboxWidth: false,
             followSelected: false
         };
-        this.coneControl = {
-            enabled: false,
-            openingAngle: 90,
-            radius: 360,
-        };
+        this.selectedExtraDecorations = null;
         // actors
-        this.targetData = new Map();
-        this.playerData = new Map();
-        this.trashMobData = new Map();
-        this.friendlyMobData = new Map();
+        const start = logData.phases[0].start * 1000;
+        const end = logData.phases[0].end * 1000;
+        this.targetData = new MappedRenderablesRoot(start, end);
+        this.targetPlayerData = new MappedRenderablesRoot(start, end);
+        this.playerData = new MappedRenderablesRoot(start, end);
+        this.trashMobData = new MappedRenderablesRoot(start, end);
+        this.friendlyMobData = new MappedRenderablesRoot(start, end);
+        this.friendlyPlayerData = new MappedRenderablesRoot(start, end);
         this.decorationMetadata = new Map();
-        this.overheadActorData = [];
-        this.mechanicActorData = [];
-        this.skillMechanicActorData = [];
+        this.overheadActorData = new RenderablesRoot(start, end);
+        this.squadMarkerData = new RenderablesRoot(start, end);
+        this.overheadSquadMarkerData = new RenderablesRoot(start, end);
+        this.mechanicActorData = new RenderablesRoot(start, end);
+        this.skillMechanicActorData = new RenderablesRoot(start, end);
         this.actorOrientationData = new Map();
         this.backgroundActorData = [];
-        this.backgroundImages = [];
+        this.screenSpaceActorData = new RenderablesRoot(start, end);
+        this.agentDataPerParentID = new Map();
         this.selectedActor = null;
+        // maps
+        this.backgroundImages = new RenderablesRoot(start, end);
         // animation
         this.needBGUpdate = false;
-        this.prevBGImage = null;
         this.animation = null;
         // manipulation
         this.mouseDown = null;
@@ -130,30 +332,39 @@ class Animator {
             if (options.pollingRate) {
                 PollingRate = options.pollingRate;
             }
-            if (options.maps) {
-                for (var i = 0; i < options.maps.length; i++) {
-                    var mapData = options.maps[i];
-                    var image = new Image();
-                    image.onload = function () {
-                        _this.needBGUpdate = true;
-                        animateCanvas(noUpdateTime);
-                    };
-                    image.src = mapData.link;
-                    this.backgroundImages.push({
-                        image: image,
-                        start: mapData.start,
-                        end: mapData.end
-                    });
-                }
-            }
             if (options.actors) {
                 this._initActors(options.actors, options.decorationRenderings, options.decorationMetadata);
             }
-            downIcon.src = "https://wiki.guildwars2.com/images/c/c6/Downed_enemy.png";
-            dcIcon.src = "https://wiki.guildwars2.com/images/f/f5/Talk_end_option_tango.png";
-            deadIcon.src = "https://wiki.guildwars2.com/images/4/4a/Ally_death_%28interface%29.png";
-            facingIcon.src = "https://i.imgur.com/tZTmTRn.png";
+            if (options.defaultViewpoints) {
+                for (let i = 0; i < options.defaultViewpoints.length; i++) {
+                    this.defaultViewpoints.push({
+                        tx: options.defaultViewpoints[i][0],
+                        ty: options.defaultViewpoints[i][1],
+                        s: options.defaultViewpoints[i][2],
+                        eiid: options.defaultViewpoints[i][3]
+                    });
+                }
+            }
+            if (!replaceImgur) {
+                downEnemyIcon.crossOrigin = "Anonymous";
+                downAllyIcon.crossOrigin = "Anonymous";
+                dcIcon.crossOrigin = "Anonymous";
+                deadIcon.crossOrigin = "Anonymous";
+            }
+            downEnemyIcon.src = UIIcons.DownedEnemy;
+            downAllyIcon.src = UIIcons.DownedAlly;
+            dcIcon.src = UIIcons.Disconnected;
+            deadIcon.src = UIIcons.Dead;
+            facingIcon.src = UIIcons.Facing;
         }
+        let cur = start;
+        while (cur < end) {
+            this.times.push(cur);
+            cur += PollingRate;
+        }
+        this.reactiveDataStatus.time = start;
+        this.reactiveDataStatus.range.min = this.times[0];
+        this.reactiveDataStatus.range.max = this.times[this.times.length - 1];
     }
 
     attachDOM(mainCanvasID, bgCanvasID, pickCanvasID, timeRangeID, timeRangeDisplayID) {
@@ -200,49 +411,60 @@ class Animator {
     }
 
     _initActors(actors, decorationRenderings, decorationMetadata) {
-        this.playerData.clear();
-        this.targetData.clear();
-        this.trashMobData.clear();
-        this.friendlyMobData.clear();
-        this.actorOrientationData.clear();
-        this.decorationMetadata.clear();
-        this.overheadActorData = [];
-        this.mechanicActorData = [];
-        this.squadMarkerData = [];
-        this.overheadSquadMarkerData = [];
         for (let i = 0; i < decorationMetadata.length; i++) {
             const metadata = decorationMetadata[i];
             let MetadataClass = null;
             switch (metadata.type) {
-                case "ActorOrientation":
-                    MetadataClass = ActorOrientationDecorationMetadata;
+                case Types.ActorOrientation:
+                    MetadataClass = ActorOrientationMetadata;
                     break;
-                case "Circle":
-                    MetadataClass = CircleDecorationMetadata;
+                case Types.Circle:
+                    MetadataClass = CircleMetadata;
                     break;
-                case "Doughnut":
-                    MetadataClass = DoughnutDecorationMetadata;
+                case Types.RegularPolygon:
+                    MetadataClass = RegularPolygonMetadata;
                     break;
-                case "Line":
-                    MetadataClass = LineDecorationMetadata;
+                case Types.CustomPolygon:
+                    MetadataClass = CustomPolygonMetadata;
                     break;
-                case "Pie":
-                    MetadataClass = PieDecorationMetadata;
+                case Types.Doughnut:
+                    MetadataClass = DoughnutMetadata;
                     break;
-                case "Rectangle":
-                    MetadataClass = RectangleDecorationMetadata;
+                case Types.Line:
+                    MetadataClass = LineMetadata;
                     break;
-                case "BackgroundIconDecoration":
-                    MetadataClass = IconDecorationMetadata;
+                case Types.Pie:
+                    MetadataClass = PieMetadata;
                     break;
-                case "IconDecoration":
-                    MetadataClass = IconDecorationMetadata;
+                case Types.Rectangle:
+                    MetadataClass = RectangleMetadata;
                     break;
-                case "IconOverheadDecoration":
-                    MetadataClass = IconOverheadDecorationMetadata;
+                case Types.ProgressBar:
+                    MetadataClass = ProgressBarMetadata;
                     break;
-                case "MovingPlatform":
-                    MetadataClass = MovingPlatformDecorationMetadata;
+                case Types.BackgroundIcon:
+                    MetadataClass = IconMetadata;
+                    break;
+                case Types.Icon:
+                    MetadataClass = IconMetadata;
+                    break;
+                case Types.IconOverhead:
+                    MetadataClass = IconOverheadMetadata;
+                    break;
+                case Types.ProgressBarOverhead:
+                    MetadataClass = OverheadProgressBarMetadata;
+                    break;
+                case Types.MovingPlatform:
+                    MetadataClass = MovingPlatformMetadata;
+                    break;
+                case Types.Text:
+                    MetadataClass = TextMetadata;
+                    break;
+                case Types.TextOverhead:
+                    MetadataClass = TextOverheadMetadata;
+                    break;
+                case Types.Arena:
+                    MetadataClass = ArenaMetadata;
                     break;
                 default:
                     throw "Unknown decoration type " + metadata.type;
@@ -255,37 +477,46 @@ class Animator {
             let actorSize = 0;
             let mapToFill;
             switch (actor.type) {
-                case "Player":
-                    ActorClass = SquadIconDrawable;
+                case Types.Player:
+                    ActorClass = PlayerIconDrawable;
                     actorSize = 22;
                     mapToFill = this.playerData;
-                    if (this.times.length === 0) {
-                        for (let j = 0; j < actor.positions.length / 2; j++) {
-                            this.times.push(j * PollingRate);
-                        }
-                        reactiveAnimationData.time = Math.min(reactiveAnimationData.time, this.times[this.times.length - 1]);
-                    }
                     break;
-                case "Target":
-                case "TargetPlayer":
-                    ActorClass = NonSquadIconDrawable;
+                case Types.Target:
+                    ActorClass = NPCIconDrawable;
                     actorSize = 30;
                     mapToFill = this.targetData;
                     break;
-                case "Mob":
-                    ActorClass = NonSquadIconDrawable;
+                case Types.TargetPlayer:
+                    ActorClass = EnemyPlayerDrawable;
+                    actorSize = 22;
+                    mapToFill = this.targetPlayerData;
+                    break;
+                case Types.Mob:
+                    ActorClass = NPCIconDrawable;
                     actorSize = 25;
                     mapToFill = this.trashMobData;
                     break;
-                case "Friendly":
-                    ActorClass = NonSquadIconDrawable;
-                    actorSize = 20;
+                case Types.Friendly:
+                    ActorClass = NPCIconDrawable;
+                    actorSize = 22;
                     mapToFill = this.friendlyMobData;
+                    break;
+                case Types.FriendlyPlayer:
+                    ActorClass = FriendlyPlayerDrawable;
+                    actorSize = 22;
+                    mapToFill = this.friendlyPlayerData;
                     break;
                 default:
                     throw "Unknown decoration type " + actor.type;
             }
-            mapToFill.set(actor.id, new ActorClass(actor, actorSize));
+            const renderable = new ActorClass(actor, actorSize);
+            mapToFill.add(renderable);
+            if (renderable.parentID >= 0) {
+                let array = this.agentDataPerParentID.get(renderable.parentID) ?? [];
+                array.push(renderable);
+                this.agentDataPerParentID.set(renderable.parentID, array);
+            }
         }
         for (let i = 0; i < decorationRenderings.length; i++) {
             const decorationRendering = {};
@@ -293,14 +524,31 @@ class Animator {
             Object.assign(decorationRendering, decorationRenderings[i]);
             if (!decorationRendering.isMechanicOrSkill) {
                 switch (decorationRendering.type) {
-                    case "ActorOrientation":
-                        this.actorOrientationData.set(decorationRendering.connectedTo.masterId, new FacingMechanicDrawable(decorationRendering));
+                    case Types.ActorOrientation:
+                        let orientationID = decorationRendering.connectedTo.masterID;
+                        var orientationDrawable = new ActorOrientationDrawable(decorationRendering);
+                        if (this.agentDataPerParentID.has(orientationID)) {
+                            let halfTime = (orientationDrawable.start + orientationDrawable.end) / 2;
+                            let agents = this.agentDataPerParentID.get(orientationID);
+                            for (let i = 0; i < agents.length; i++) {
+                                let agent = agents[i];
+                                if (agent.start <= halfTime && agent.end >= halfTime) {
+                                    this.actorOrientationData.set(agents[i].id, orientationDrawable);
+                                    break;
+                                }
+                            }
+                        } else {
+                            this.actorOrientationData.set(orientationID, orientationDrawable);
+                        }
                         break;
-                    case "MovingPlatform":
+                    case Types.MovingPlatform:
                         this.backgroundActorData.push(new MovingPlatformDrawable(decorationRendering));
                         break;
-                    case "BackgroundIconDecoration":
+                    case Types.BackgroundIcon:
                         this.backgroundActorData.push(new BackgroundIconMechanicDrawable(decorationRendering));
+                        break;
+                    case Types.Arena:
+                        this.backgroundImages.add(new ArenaDrawable(decorationRendering));
                         break;
                     default:
                         throw "Unknown decoration type " + decorationRendering.type;
@@ -308,44 +556,74 @@ class Animator {
             } else {
                 let DecorationClass;
                 switch (decorationRendering.type) {
-                    case "Circle":
+                    case Types.Text:
+                        if (decorationRendering.connectedTo.isScreenSpace) {
+                            this.screenSpaceActorData.add(new TextDrawable(decorationRendering));
+                            continue;
+                        }
+                        DecorationClass = TextDrawable;
+                        break;
+                    case Types.Circle:
                         DecorationClass = CircleMechanicDrawable;
                         break;
-                    case "Rectangle":
+                    case Types.RegularPolygon:
+                        DecorationClass = RegularPolygonMechanicDrawable;
+                        break;
+                    case Types.CustomPolygon:
+                        DecorationClass = CustomPolygonMechanicDrawable;
+                        break;
+                    case Types.Rectangle:
                         DecorationClass = RectangleMechanicDrawable;
                         break;
-                    case "Doughnut":
+                    case Types.ProgressBar:
+                        DecorationClass = ProgressBarMechanicDrawable;
+                        break;
+                    case Types.Doughnut:
                         DecorationClass = DoughnutMechanicDrawable;
                         break;
-                    case "Pie":
+                    case Types.Pie:
                         DecorationClass = PieMechanicDrawable;
                         break;
-                    case "Line":
+                    case Types.Line:
                         DecorationClass = LineMechanicDrawable;
                         break;
-                    case "IconDecoration":
+                    case Types.Icon:
                         DecorationClass = IconMechanicDrawable;
                         break;
-                    case "IconOverheadDecoration":
-                        this.overheadActorData.push(new IconOverheadMechanicDrawable(decorationRendering));
+                    // Special cases
+                    case Types.TextOverhead:
+                        this.overheadActorData.add(new TextOverheadDrawable(decorationRendering));
                         continue;
-                    case "SquadMarkerDecoration":
-                        this.squadMarkerData.push(new IconMechanicDrawable(decorationRendering));
+                    case Types.IconOverhead:
+                        this.overheadActorData.add(new IconOverheadMechanicDrawable(decorationRendering));
                         continue;
-                    case "OverheadSquadMarkerDecoration":
-                        this.overheadSquadMarkerData.push(new IconOverheadMechanicDrawable(decorationRendering));
+                    case Types.ProgressBarOverhead:
+                        this.overheadActorData.add(new OverheadProgressBarMechanicDrawable(decorationRendering));
+                        continue;
+                    case Types.SquadMarker:
+                        this.squadMarkerData.add(new IconMechanicDrawable(decorationRendering));
+                        continue;
+                    case Types.SquadMarkerOverhead:
+                        this.overheadSquadMarkerData.add(new IconOverheadMechanicDrawable(decorationRendering));
                         continue;
                     default:
                         throw "Unknown decoration type " + decorationRendering.type;
                 }
                 const decoration = new DecorationClass(decorationRendering);
                 if (decorationRendering.skillMode) {
-                    this.skillMechanicActorData.push(decoration);
+                    this.skillMechanicActorData.add(decoration);
                 } else {
-                    this.mechanicActorData.push(decoration);
+                    this.mechanicActorData.add(decoration);
                 }
             }
         }
+    }
+
+    updateRange(phase) {
+        let min = Math.max(this.times[0], phase.start * 1000);
+        let max = Math.min(this.times[this.times.length - 1], phase.end * 1000);
+        this.reactiveDataStatus.range.min = min;
+        this.reactiveDataStatus.range.max = max;
     }
 
     updateTime(value) {
@@ -356,7 +634,7 @@ class Animator {
     }
 
     updateTextInput() {
-        this.timeSliderDisplay.value = (this.reactiveDataStatus.time / 1000.0).toFixed(3);
+        this.timeSliderDisplay.value = ((this.reactiveDataStatus.time - this.reactiveDataStatus.range.min) / 1000.0).toFixed(3);
     }
 
     updateInputTime(value) {
@@ -367,7 +645,9 @@ class Animator {
                 return;
             }
             const ms = Math.round(parsedTime * 1000.0);
-            this.reactiveDataStatus.time = Math.min(Math.max(ms, 0), this.times[this.times.length - 1]);
+            const min = this.reactiveDataStatus.range.min;
+            const max = this.reactiveDataStatus.range.max;
+            this.reactiveDataStatus.time = Math.min(Math.max(ms, min), max);
             animateCanvas(updateText);
         } catch (error) {
             console.error(error);
@@ -382,8 +662,10 @@ class Animator {
 
     startAnimate(updateReactiveStatus) {
         if (this.animation === null && this.times.length > 0) {
-            if (this.reactiveDataStatus.time >= this.times[this.times.length - 1] && !this.backwards) {
-                this.reactiveDataStatus.time = 0;
+            const max = this.reactiveDataStatus.range.max;
+            const min = this.reactiveDataStatus.range.min;
+            if (this.reactiveDataStatus.time >= max && !this.backwards) {
+                this.reactiveDataStatus.time = min;
             }
             this.prevTime = new Date().getTime();
             this.animation = requestAnimationFrame(animateCanvas);
@@ -408,28 +690,109 @@ class Animator {
     }
 
     restartAnimate() {
-        this.reactiveDataStatus.time = 0;
+        this.reactiveDataStatus.time = this.reactiveDataStatus.range.min;
         if (this.animation === null) {
             animateCanvas(noUpdateTime);
         }
     }
 
+    _hideExtraDecorations() {   
+        this.selectedExtraDecorations = null;
+        $('#circle1Text').val(180);
+        $('#circle1Check').prop('checked', false);
+        $('#circle2Text').val(360);
+        $('#circle2Check').prop('checked', false);
+        $('#circle3Text').val(720);
+        $('#circle3Check').prop('checked', false);
+        $('#coneRadiusText').val(360);
+        $('#coneAngleText').val(90);
+        $('#coneCheck').prop('checked', false);
+        this.reactiveDataStatus.selectedExtraDecorations = false;
+    }
+
+    _setCurrentExtraDecorations() {
+        this.selectedExtraDecorations = this.extraDecorationMap.get(this.reactiveDataStatus.selectedActorID);
+        if (!this.selectedExtraDecorations) {
+            this.selectedExtraDecorations = {
+                rangeControls: new RangeControls(),
+                coneControl: new ConeControl(90, 360),
+            };
+            this.selectedExtraDecorations.rangeControls.addRangeControl(180);
+            this.selectedExtraDecorations.rangeControls.addRangeControl(360);
+            this.selectedExtraDecorations.rangeControls.addRangeControl(720);
+            this.extraDecorationMap.set(this.reactiveDataStatus.selectedActorID, this.selectedExtraDecorations);
+        }
+        $('#circle1Text').val(this.selectedExtraDecorations.rangeControls.ranges[0].radius);
+        $('#circle1Check').prop('checked', this.selectedExtraDecorations.rangeControls.ranges[0].enabled);
+        $('#circle2Text').val(this.selectedExtraDecorations.rangeControls.ranges[1].radius);
+        $('#circle2Check').prop('checked', this.selectedExtraDecorations.rangeControls.ranges[1].enabled);
+        $('#circle3Text').val(this.selectedExtraDecorations.rangeControls.ranges[2].radius);
+        $('#circle3Check').prop('checked', this.selectedExtraDecorations.rangeControls.ranges[2].enabled);
+        $('#coneRadiusText').val(this.selectedExtraDecorations.coneControl.radius);
+        $('#coneAngleText').val(this.selectedExtraDecorations.coneControl.openingAngle);
+        $('#coneCheck').prop('checked', this.selectedExtraDecorations.coneControl.enabled);
+        this.reactiveDataStatus.selectedExtraDecorations = true;
+    }
+
     selectActor(actorId, keepIfEqual = false) {
+        if (DEBUG) {
+            const inLogActor = logData.players.filter(x => x.uniqueID === actorId)[0] || logData.targets.filter(x => x.uniqueID === actorId)[0];
+            if (inLogActor) {
+                alert(actorId + " " + inLogActor.name)
+            } else {
+                alert(actorId);
+            }
+        }
         let actor = this.getActorData(actorId);
         if (!actor || (!keepIfEqual && this.selectedActor === actor)) {
             this.selectedActor = null;
             this.reactiveDataStatus.selectedActorID = null;
+            this._hideExtraDecorations();
         } else {
             this.selectedActor = actor;
             this.reactiveDataStatus.selectedActorID = actorId;
+            this._setCurrentExtraDecorations();
         }
         if (this.animation === null) {
             animateCanvas(noUpdateTime);
         }
     }
+    
+    _reselectIfEnglobed() {     
+        if (this.selectedActor && this.selectedActor.parentID >= 0) {
+            const perParentArray = this.agentDataPerParentID.get(this.selectedActor.parentID);
+            if (perParentArray) {
+                let actor = perParentArray.filter(x => x.getPosition() != null)[0];
+                if (!actor) {
+                    const time = this.reactiveDataStatus.time;
+                    // check for first in interval
+                    let candidates = perParentArray.filter(x => x.start <= time && x.end >= time);
+                    if (candidates.length) {
+                        actor = candidates[0];
+                    } else {
+                        // first
+                        candidates = perParentArray.filter(x => x.start >= time);
+                        if (candidates.length) {
+                            actor = candidates[0];
+                        } else {
+                            // last
+                            candidates = perParentArray.filter(x => x.end <= time);
+                            if (candidates.length) {
+                                actor = candidates[candidates.length - 1];
+                            }
+                        }
+                    }
+                }
+                this.selectedActor = actor || this.selectedActor;
+                this.reactiveDataStatus.selectedActorID = this.selectedActor.id;             
+            }
+        }
+    }
 
     getSelectableActorData(actorId) {
-        return animator.targetData.get(actorId) || animator.playerData.get(actorId) || animator.friendlyMobData.get(actorId);
+        return animator.targetData.get(actorId) || animator.playerData.get(actorId) || 
+                animator.friendlyMobData.get(actorId) || animator.friendlyPlayerData.get(actorId) || 
+                animator.targetPlayerData.get(actorId);
     }
 
     getActorData(actorId) {
@@ -438,12 +801,12 @@ class Animator {
 
     getActiveActorMarkers(actorID) {
         let res = [];
-        for (let i = 0; i < this.overheadSquadMarkerData.length; i++) {
-            var marker = this.overheadSquadMarkerData[i];
-            if (marker.canDraw() && marker.getPosition() && marker.master === this.getActorData(actorID)) {
+        const _this = this;
+        this.overheadSquadMarkerData.forEach((marker) => {
+            if (marker.canDraw() && marker.getPosition() && marker.master === _this.getActorData(actorID)) {
                 res.push(marker);
             }
-        }
+        });
         return res;
     }
 
@@ -501,48 +864,90 @@ class Animator {
         animateCanvas(noUpdateTime);
     }
 
-    toggleConeDisplay() {
-        this.coneControl.enabled = !this.coneControl.enabled;
+    toggleConeDisplay(iOnOff) {
+        if (!this.selectedExtraDecorations) {
+            return;
+        }
+        this.selectedExtraDecorations.coneControl.enabled = iOnOff;
         animateCanvas(noUpdateTime);
     }
 
     setConeRadius(value) {
-        this.coneControl.radius = value;
+        if (!this.selectedExtraDecorations) {
+            return;
+        }
+        this.selectedExtraDecorations.coneControl.radius = value;
         animateCanvas(noUpdateTime);
     }
 
     setConeAngle(value) {
-        this.coneControl.openingAngle = value;
+        if (!this.selectedExtraDecorations) {
+            return;
+        }
+        this.selectedExtraDecorations.openingAngle.radius = value;
         animateCanvas(noUpdateTime);
     }
 
-    resetViewpoint() {
+    resetViewpoint(eiid = 0) {
         var canvas = this.mainCanvas;
         var ctx = this.mainContext;
         var bgCtx = this.bgContext;
 
-        this.lastX = canvas.width / 2;
-        this.lastY = canvas.height / 2;
         this.mouseDown = null;
         this.dragged = false;
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        let defaultViewpoint = this.defaultViewpoints.filter(x => x.eiid === eiid)[0];
+        this.lastX = canvas.width / 2;
+        this.lastY = canvas.height / 2;
+        if (defaultViewpoint) {
+            var x = -canvas.width * defaultViewpoint.tx / 100;
+            var y = -canvas.height * defaultViewpoint.ty / 100;
+            
+            ctx.setTransform(1, 0, 0, 1, x, y);
+            bgCtx.setTransform(1, 0, 0, 1, x, y);
+        } else {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            bgCtx.setTransform(1, 0, 0, 1, 0, 0);
+        }
         ctx.scale(resolutionMultiplier, resolutionMultiplier);
-        bgCtx.setTransform(1, 0, 0, 1, 0, 0);
         bgCtx.scale(resolutionMultiplier, resolutionMultiplier);
+        if (defaultViewpoint) {
+            this._setScaleOnPoint(defaultViewpoint.s, 0, 0);
+        }
         this.needBGUpdate = true;
         if (this.animation === null) {
             animateCanvas(noUpdateTime);
         }
     }
+    _setScaleOnPoint(factor, ptX, ptY) {
+        const ctx = this.mainContext;
+        const bgCtx = this.bgContext;
 
+        const pt = ctx.transformedPoint(ptX, ptY);
+        ctx.translate(pt.x, pt.y);
+        bgCtx.translate(pt.x, pt.y);
+        ctx.scale(factor, factor);
+        if ((50 / (InchToPixel * this.scale) < 10)) {
+            ctx.scale(1.0 / factor, 1.0 / factor);
+            factor = 1.0;
+        }
+        ctx.translate(-pt.x, -pt.y);
+        bgCtx.scale(factor, factor);
+        bgCtx.translate(-pt.x, -pt.y);
+        this.needBGUpdate = true;
+        if (this.animation === null) {
+            animateCanvas(noUpdateTime);
+        }
+    }
     _initMouseEvents() {
-        var _this = this;
-        var canvas = this.mainCanvas;
-        var ctx = this.mainContext;
-        var bgCtx = this.bgContext;
-        var pickCtx = this.pickContext;
+        const _this = this;
+        const canvas = this.mainCanvas;
+        const ctx = this.mainContext;
+        const bgCtx = this.bgContext;
+        const pickCtx = this.pickContext;
 
         canvas.addEventListener('mousedown', function (evt) {
+            evt.preventDefault();
             _this.lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
             _this.lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
             _this.mouseDown = {
@@ -553,12 +958,13 @@ class Animator {
         }, false);
 
         canvas.addEventListener('mousemove', function (evt) {
+            evt.preventDefault();
             _this.lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
             _this.lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
             _this.dragged = true;
             if (_this.mouseDown) {
-                var pt = ctx.transformedPoint(_this.lastX, _this.lastY);
-                var downPt = _this.mouseDown.pt;
+                const pt = ctx.transformedPoint(_this.lastX, _this.lastY);
+                const downPt = _this.mouseDown.pt;
                 ctx.translate(pt.x - downPt.x, pt.y - downPt.y);
                 bgCtx.translate(pt.x - downPt.x, pt.y - downPt.y);
                 _this.needBGUpdate = true;
@@ -571,38 +977,28 @@ class Animator {
         document.body.addEventListener('mouseup', function (evt) {
             if (_this.mouseDown && Date.now() - _this.mouseDown.time < 150) {
                 _this._drawPickCanvas();
-                var downPt = {
+                const downPt = {
                     x: Math.round(_this.lastX * resolutionMultiplier),
                     y: Math.round(_this.lastY * resolutionMultiplier)
                 };
-                var pickedColor = pickCtx.getImageData(downPt.x, downPt.y, 1, 1).data;
+                const pickedColor = pickCtx.getImageData(downPt.x, downPt.y, 1, 1).data;
                 uint32ToUint8[0] = pickedColor[0];
                 uint32ToUint8[1] = pickedColor[1];
                 uint32ToUint8[2] = pickedColor[2];
                 uint32ToUint8[3] = 0;
-                var actorID = uint32[0];
+                const actorID = uint32[0];
                 _this.selectActor(actorID, true);
             }
             _this.mouseDown = null;
         }, false);
 
         var zoom = function (evt) {
-            var delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0;
+            evt.preventDefault();
+            const delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0;
             if (delta) {
-                var pt = ctx.transformedPoint(_this.lastX, _this.lastY);
-                ctx.translate(pt.x, pt.y);
-                bgCtx.translate(pt.x, pt.y);
-                var factor = Math.pow(1.1, delta);
-                ctx.scale(factor, factor);
-                ctx.translate(-pt.x, -pt.y);
-                bgCtx.scale(factor, factor);
-                bgCtx.translate(-pt.x, -pt.y);
-                _this.needBGUpdate = true;
-                if (_this.animation === null) {
-                    animateCanvas(noUpdateTime);
-                }
+                const factor = Math.pow(1.1, delta);
+                _this._setScaleOnPoint(factor, _this.lastX, _this.lastY);
             }
-            return evt.preventDefault() && false;
         };
 
         canvas.addEventListener('DOMMouseScroll', zoom, false);
@@ -629,13 +1025,19 @@ class Animator {
         return this.backwards;
     }
 
-    toggleRange(index) {
-        this.rangeControl[index].enabled = !this.rangeControl[index].enabled;
+    toggleRange(index, iOnOff) {
+        if (!this.selectedExtraDecorations) {
+            return;
+        }
+        this.selectedExtraDecorations.rangeControls.ranges[index].enabled = iOnOff;
         animateCanvas(noUpdateTime);
     }
 
     setRangeRadius(index, value) {
-        this.rangeControl[index].radius = value;
+        if (!this.selectedExtraDecorations) {
+            return;
+        }
+        this.selectedExtraDecorations.rangeControls.ranges[index].radius = value;
         animateCanvas(noUpdateTime);
     }
 
@@ -646,6 +1048,15 @@ class Animator {
         ctx.getTransform = function () {
             return xform;
         };
+
+        var drawImage = ctx.drawImage;
+        ctx.drawImage = function() {
+            const image = arguments[0];
+            if (!image || !image.complete || image.naturalWidth === 0) {
+                return;
+            }
+            return drawImage.call(ctx, ...arguments);
+        }
 
         var savedTransforms = [];
         var save = ctx.save;
@@ -663,12 +1074,13 @@ class Animator {
         var scale = ctx.scale;
         var _this = this;
         ctx.scale = function (sx, sy) {
-            xform = xform.scaleNonUniform(sx, sy);
+            xform = xform.scale(sx, sy);
             var xAxis = Math.sqrt(xform.a * xform.a + xform.b * xform.b);
             var yAxis = Math.sqrt(xform.c * xform.c + xform.d * xform.d);
             _this.scale = Math.max(xAxis, yAxis) / resolutionMultiplier;
             return scale.call(ctx, sx, sy);
         };
+        
 
         var rotate = ctx.rotate;
         ctx.rotate = function (radians) {
@@ -714,22 +1126,17 @@ class Animator {
         };
     }
     // animation
-    _getBackgroundImage() {
-        var time = this.reactiveDataStatus.time;
-        for (var i = 0; i < this.backgroundImages.length; i++) {
-            var imageData = this.backgroundImages[i];
-            if (imageData.start <= time && imageData.end >= time) {
-                return imageData.image;
-            }
-        }
-        return null;
-    }
-
     _drawBGCanvas() {
-        var imgToDraw = this._getBackgroundImage();
-        if ((imgToDraw !== null && imgToDraw !== this.prevBGImage) || this.needBGUpdate || this._mustMoveToSelected()) {
+        const _this = this;
+        if (!this.needBGUpdate) {
+            this.backgroundImages.forEach(x => {
+                if (x.needsUpdate()) {
+                    _this.needBGUpdate = true;
+                }
+            });
+        }
+        if (this.needBGUpdate || this._mustMoveToSelected()) {
             this.needBGUpdate = false;
-            this.prevBGImage = imgToDraw;
             var ctx = this.bgContext;
             var canvas = this.bgCanvas;
             var p1 = ctx.transformedPoint(0, 0);
@@ -747,9 +1154,7 @@ class Animator {
             {
 
                 this._moveToSelected(ctx);
-
-                ctx.drawImage(imgToDraw, 0, 0, canvas.width / resolutionMultiplier, canvas.height / resolutionMultiplier);
-
+                this.backgroundImages.draw(standardDraw);
                 //ctx.globalCompositeOperation = "color-burn";
                 ctx.save();
                 {
@@ -816,39 +1221,23 @@ class Animator {
         {
             ctx.setTransform(mainTransform.a, mainTransform.b, mainTransform.c, mainTransform.d, mainTransform.e, mainTransform.f);
 
-            this.friendlyMobData.forEach(function (value, key, map) {
-                if (!value.isSelected()) {
-                    value.drawPicking();
-                }
-            });
 
             if (!this.displaySettings.useActorHitboxWidth) {
-                this.playerData.forEach(function (value, key, map) {
-                    if (!value.isSelected()) {
-                        value.drawPicking();
-                    }
-                });
+                this.friendlyMobData.draw(selectablePickingDraw);
+                this.friendlyPlayerData.draw(selectablePickingDraw);
+                this.playerData.draw(selectablePickingDraw);
             }
 
             if (this.displaySettings.displayTrashMobs) {
-                this.trashMobData.forEach(function (value, key, map) {
-                    if (!value.isSelected()) {
-                        value.drawPicking();
-                    }
-                });
+                this.trashMobData.draw(selectablePickingDraw);
             }
 
-            this.targetData.forEach(function (value, key, map) {
-                if (!value.isSelected()) {
-                    value.drawPicking();
-                }
-            });
+            this.targetData.draw(selectablePickingDraw);
+            this.targetPlayerData.draw(selectablePickingDraw);
             if (this.displaySettings.useActorHitboxWidth) {
-                this.playerData.forEach(function (value, key, map) {
-                    if (!value.isSelected()) {
-                        value.drawPicking();
-                    }
-                });
+                this.friendlyMobData.draw(selectablePickingDraw);
+                this.friendlyPlayerData.draw(selectablePickingDraw);
+                this.playerData.draw(selectablePickingDraw);
             }
             if (this.selectedActor !== null) {
                 this.selectedActor.drawPicking();
@@ -882,73 +1271,49 @@ class Animator {
                 animator.backgroundActorData[i].draw();
             }
             if (this.displaySettings.displayMechanics) {
-                for (let i = 0; i < this.mechanicActorData.length; i++) {
-                    this.mechanicActorData[i].draw();
-                }
+                this.mechanicActorData.draw(standardDraw);
             }
 
             if (this.displaySettings.displaySkillMechanics) {
-                for (let i = 0; i < this.skillMechanicActorData.length; i++) {
-                    this.skillMechanicActorData[i].draw();
-                }
+                this.skillMechanicActorData.draw(standardDraw);
             }
 
-            this.friendlyMobData.forEach(function (value, key, map) {
-                if (!value.isSelected()) {
-                    value.draw();
-                    _this._drawActorOrientation(key);
-                }
-            });
 
             if (!this.displaySettings.useActorHitboxWidth) {
-                this.playerData.forEach(function (value, key, map) {
-                    if (!value.isSelected()) {
-                        value.draw();
-                        _this._drawActorOrientation(key);
-                    }
-                });
+                this.friendlyMobData.draw(selectableDraw);
+                this.friendlyPlayerData.draw(selectableDraw);
+                this.playerData.draw(selectableDraw);
             }
 
             if (this.displaySettings.displayTrashMobs) {
-                this.trashMobData.forEach(function (value, key, map) {
-                    if (!value.isSelected()) {
-                        value.draw();
-                        _this._drawActorOrientation(key);
-                    }
-                });
+                this.trashMobData.draw(selectableDraw);
             }
 
-            this.targetData.forEach(function (value, key, map) {
-                if (!value.isSelected()) {
-                    value.draw();
-                    _this._drawActorOrientation(key);
-                }
-            });
+            this.targetData.draw(selectableDraw);
+            this.targetPlayerData.draw(selectableDraw);
             if (this.displaySettings.useActorHitboxWidth) {
-                this.playerData.forEach(function (value, key, map) {
-                    if (!value.isSelected()) {
-                        value.draw();
-                        _this._drawActorOrientation(key);
-                    }
-                });
+                this.friendlyMobData.draw(selectableDraw);
+                this.friendlyPlayerData.draw(selectableDraw);
+                this.playerData.draw(selectableDraw);
             }
             if (this.selectedActor !== null) {
                 this.selectedActor.draw();
-                this._drawActorOrientation(this.reactiveDataStatus.selectedActorID);
+                this._drawActorOrientation(this.selectedActor.id);
             }
             if (this.displaySettings.displayMechanics) {
-                for (let i = 0; i < this.overheadActorData.length; i++) {
-                    this.overheadActorData[i].draw();
-                }
+                this.overheadActorData.draw(standardDraw);
             }
             if (this.displaySettings.displaySquadMarkers) {
-                for (let i = 0; i < this.squadMarkerData.length; i++) {
-                    this.squadMarkerData[i].draw();
-                }
-                for (let i = 0; i < this.overheadSquadMarkerData.length; i++) {
-                    this.overheadSquadMarkerData[i].draw();
-                }
+                this.squadMarkerData.draw(standardDraw);
+                this.overheadSquadMarkerData.draw(standardDraw);
             }
+            ctx.save();
+            {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                // Screen space actors
+                this.screenSpaceActorData.draw(standardDraw);
+            }
+            ctx.restore()
         }
         //ctx.restore();  
     }
@@ -969,11 +1334,11 @@ class Animator {
             }
         }
     }
-
     draw() {
         if (!this.mainCanvas) {
             return;
-        }
+        }    
+        this._reselectIfEnglobed();
         //
         //this._drawPickCanvas();
         this._drawBGCanvas();
@@ -989,17 +1354,18 @@ function animateCanvas(noRequest) {
     if (animator == null) {
         return;
     }
-    let lastTime = animator.times[animator.times.length - 1];
+    let lastTime = animator.reactiveDataStatus.range.max;
+    let firstTime = animator.reactiveDataStatus.range.min;
     if (noRequest > noUpdateTime && animator.animation !== null) {
         let curTime = new Date().getTime();
         let timeOffset = curTime - animator.prevTime;
         animator.prevTime = curTime;
         animator.reactiveDataStatus.time = Math.round(Math.max(Math.min(animator.reactiveDataStatus.time + animator.getSpeed() * timeOffset, lastTime), 0));
     }
-    if ((animator.reactiveDataStatus.time === lastTime && !animator.backwards) || (animator.reactiveDataStatus.time === 0 && animator.backwards)) {
+    if ((animator.reactiveDataStatus.time === lastTime && !animator.backwards) || (animator.reactiveDataStatus.time === firstTime && animator.backwards)) {
         animator.stopAnimate(true);
     }
-    animator.timeSlider.value = animator.reactiveDataStatus.time.toString();
+    animator.timeSlider.value = (animator.reactiveDataStatus.time - animator.reactiveDataStatus.range.min).toString()
     if (noRequest > updateText) {
         animator.updateTextInput();
     }

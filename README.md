@@ -21,7 +21,7 @@ The key for verifying the release's signature can be found on [openpgp](https://
 
 ## Logging
 
-We suggest following [this guide](https://snowcrows.com/guides/getting-started/arc-dps) written by Snow Crows on how to setup your ArcDPS installation and generate encounter logs.
+We suggest following [this guide](https://snowcrows.com/guides/arcdps/arcdps) written by Snow Crows on how to setup your ArcDPS installation and generate logs.
 
 ## Set Up
 
@@ -29,7 +29,7 @@ We suggest following [this guide](https://snowcrows.com/guides/getting-started/a
 
 2. Extract all files anywhere you like.
 
-3. Launch GW2EI.exe (UI or console).
+3. Launch GuildWars2EliteInsights.exe (ui, windows only) or GuildWars2EliteInsights-CLI.exe (console).
 
 NOTE: ArcDPS EVTC log files are located by default at "C:\Users\\\<USERNAME>\\Documents\Guild Wars 2\addons\arcdps\arcdps.cbtlogs".
 
@@ -48,23 +48,48 @@ You can change the settings at any time using the Settings window.
 
 ![how to](https://user-images.githubusercontent.com/30677999/40148954-6ec9215a-5936-11e8-94ad-d2520e7c4539.PNG)
 
-If you want your logs parsed without the GUI, pass the file location of each EVTC file as a string.
+Settings can be configured using .conf files (see Settings/sample.conf for an example). You can then use it with -c.
 
-Settings can be configured using .conf files (see Settings/sample.conf for an example). You can then use it with -c:
+### For console
 
+You can refresh the API caches using the -cache option.
+
+You can update EI to its latest version using the -update option. 
 ```
-GuildWars2EliteInsights.exe -c [config path] [logs]
-```
-
-To disable windows-specific commandline magic you can use -p:
-
-```
-GuildWars2EliteInsights.exe -p [logs]
+GuildWars2EliteInsights-CLI.exe -c [config path] [logs]
 ```
 
-You can also start the application in GUI mode using -ui option:
+For every input, CLI will consistently output a JSON like object, preceded by "Processed - ". The object will contain the following attributes:
+
+-__fileName__: string, name of the file that was parsed.
+
+-__parsed__: boolean, set to true if parsing was successful.
+
+-__status__: string, as displayed on the application on UI mode once processing is done.
+
+-__generatedFiles__: array of string, full name of all created files.
+
+-__dpsReportUploadTentative__: boolean, if true, the application tried to upload to dps.report.
+
+-__dpsReportUploadFailed__: boolean, if true, the application could not upload to dps.report.
+
+-__dpsReportLink__: string, dps.report URL of the log, if applicable.
+
+-__wingmanUploadTentative__: boolean, if true, the application tried to upload to wingman.
+
+-__wingmanUploadRefused__: boolean, if true, wingman refused to accept the file.
+
+-__wingmanUploadFailed__: boolean, if true, wingman accepted the file but the upload failed.
+
+-__mistWarriorUploadTentative__: boolean, if true, the application tried to upload to mist warrior.
+
+-__mistWarriorUploadFailed__: boolean, if true, the application could not upload to mist warrior.
+
+
+### For UI
+
 ```
-GuildWars2EliteInsights.exe -c [config path] -ui [logs]
+GuildWars2EliteInsight.exe -c [config path] [logs]
 ```
 
 Note it may take some time for each file to parse and they will not be ready to open the moment they are created.
@@ -91,9 +116,9 @@ Note it may take some time for each file to parse and they will not be ready to 
 
 -__ParseMultipleLogs__: if true, multiple logs will be parsed in parallel.
 
--__SkipFailedTries__: if true, failed encounters will not be parsed.
+-__SkipFailedTries__: if true, failed logs will not be parsed.
 
--__CustomTooShort__: Customize encounter duration in ms below which logs will not be parsed.
+-__CustomTooShort__: Customize log duration in ms below which logs will not be parsed.
 
 ### GUI only Parser Settings
 
@@ -103,13 +128,23 @@ Note it may take some time for each file to parse and they will not be ready to 
 
 -__AutoParse__: if true, every added log file will be automatically processed.
 
-### Encounter Settings
+### Log Settings
 
 -__ParsePhases__: if true, phases will be parsed.
 
 -__ParseCombatReplay__: if true, combat replay will be computed.
 
--__ComputeDamageModifiers__: if true, damage modifiers will be computed.
+-__ComputeBuff__: if true, buff related stats will be computed.
+
+-__ComputeDamage__: if true, damage related stats will be computed.
+
+-__ComputeCast__: if true, skill cast related stats will be computed.
+
+-__ComputeMechanics__: if true,mechanics will be computed.
+
+-__ComputeDamageModifiers__: if true, damage modifiers will be computed. This also requires all three ComputeBuff, ComputeDamage and ComputeCast to be true.
+
+-__ParseExtensions__: if true, extension events present in the evtc will be processed.
 
 -__DetailledWvW__: if true, enemy players will not be merged into one in WvW logs and they'll appear as standard targets. Warning: the generated files and the generation time will grow exponentially, use it only on organized sorties (Guild zergs, GvG, ...).
 
@@ -153,6 +188,10 @@ Note it may take some time for each file to parse and they will not be ready to 
 
 -__UploadToWingman__: if true, the log will be uploaded to Wingman via the "uploadProcessed" endpoint.
 
+-__UploadToMistWarrior__: if true, the log will be uploaded to Mist Warrior, user token is mandatory.
+
+-__MistWarriorUserToken__: Mist Warrior user token.
+
 -__WebhookURL__: Webhook URL to send an embed or simple message to.
 
 -__SendEmbedToWebhook__: if true, the Webhook URL will receive a small embed containing meta data + dps.reports link.
@@ -165,7 +204,7 @@ Note it may take some time for each file to parse and they will not be ready to 
 
 ## HTML Overview
 
-For a more detailed look, please check [this guide](https://snowcrows.com/en/guides/starting-to-raid/reading-logs) written by Snow Crows.
+For a more detailed look, please check [this guide](https://snowcrows.com/guides/arcdps/reading-logs) written by Snow Crows.
 
 ### Header
 
@@ -177,7 +216,7 @@ The header shows you the status of the fight and lets you swap themes and module
 
 <img src="./docs/Images/footer.PNG" width="60%" height="60%">
 
-On the footer you'll find meta data regarding the encounter and the parser.
+On the footer you'll find meta data regarding the log and the parser.
 
 ### Statistics
 #### Navigation
@@ -286,7 +325,7 @@ Displays damage/DPS in real time. The picture says it all.
 Allows to display or remove specific information from the Combat Replay such as:
 - Group highlights
 - Secondary NPCs
-- Encounter Mechanics
+- Mechanics
 - Player Skills
 - Use in-game hitbox sizes
 - Show all minions

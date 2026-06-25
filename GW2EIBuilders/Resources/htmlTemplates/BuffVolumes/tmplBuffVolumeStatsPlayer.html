@@ -3,11 +3,11 @@
         <div :key="'activedurationplayer'" class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 0" :class="{active: activeduration === 0}">Phase
-                        duration</a>
+                    <a class="nav-link" @click="activeduration = 0" data-original-title="Buffs volumes applied by each player to the selected player based on currently selected phase."
+                       :class="{active: activeduration === 0}">Phase duration</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 1" data-original-title="Removed dead time and dc time"
+                    <a class="nav-link" @click="activeduration = 1" data-original-title="Buffs volumes applied by each player to the selected player based on currently selected phase. Removed dead and disconnected times."
                         :class="{active: activeduration === 1 }">Phase active duration</a>
                 </li>
             </ul>
@@ -21,37 +21,35 @@
 
 <script>
     Vue.component("buff-volume-stats-player-component", {
-        props: ['phaseindex', 'playerindex'],
-        mixins: [buffComponent],
+        props: ['playerindex'],
+        mixins: [buffComponent, encounterPhaseComponent],
         template: `${template}`,
         data: function () {
             return {
-                activeduration: 0,
+                activeduration: 1,
                 cacheBoon: new Map(),
                 cacheBoonSums: new Map(),
             };
         },
         computed: {
-            phase: function() {
-                return logData.phases[this.phaseindex];
-            },
             player: function() {
                 return logData.players[this.playerindex];
             },
             boonData: function () {
-                const id = this.phaseindex + '-' + this.activeduration;
+                const id = this.encounterPhase.id + '-' + this.phaseindex + '-' + this.activeduration;
                 if (this.cacheBoon.has(id)) {
                     return this.cacheBoon.get(id);
                 }
                 const res = [];
                 const activeTimes = this.phase.playerActiveTimes;
-                const activeduration = this.activeduration;
-                for (let i = 0; i < logData.players.length; i++) {
-                    if (activeduration && activeTimes[i] < 1e-6) {
+                const activeduration = this.activeduration;        
+                const players = getActiveNonFakePlayersForPhase(this.encounterPhase);
+                for (let i = 0; i < players.length; i++) {
+                    if (!players[i] || (activeduration && activeTimes[i] < 1e-6)) {
                         continue;
                     }
                     res.push({
-                        player: logData.players[i],
+                        player: players[i],
                         data: activeduration ? this.buffVolumesStatContainer.boonVolumeActiveDictionaries[this.playerindex][i] : this.buffVolumesStatContainer.boonVolumeDictionaries[this.playerindex][i]
                     });
                 }

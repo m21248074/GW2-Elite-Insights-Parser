@@ -1,27 +1,26 @@
-﻿using System.Linq;
-using GW2EIEvtcParser.ParsedData;
+﻿using GW2EIEvtcParser.ParsedData;
+using static GW2EIEvtcParser.SpeciesIDs;
 
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+
+internal abstract class SrcEffectMechanic : EffectMechanic
 {
 
-    internal abstract class SrcEffectMechanic : EffectMechanic
+    protected override AgentItem GetAgentItem(EffectEvent effectEvt, AgentData agentData)
     {
-
-        protected override AgentItem GetAgentItem(EffectEvent effectEvt, AgentData agentData)
+        if (effectEvt.Src.IsUnamedSpecies())
         {
-            if (effectEvt.Src.IsUnamedSpecies())
-            {
-                return agentData.GetNPCsByID(ArcDPSEnums.TrashID.Environment).FirstOrDefault();
-            }
-            return effectEvt.Src;
+            return agentData.GetStableSpeciesByID(TargetID.Environment).First();
         }
+        return effectEvt.Src;
+    }
 
-        public SrcEffectMechanic(string effectGUID, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : this(new string[] { effectGUID }, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
-        {
-        }
+    public SrcEffectMechanic(GUID effect, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : this([ effect ], plotlySetting, shortName, description, fullName, internalCoolDown)
+    {
+    }
 
-        public SrcEffectMechanic(string[] effectGUIDs, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(effectGUIDs, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
-        {
-        }
+    public SrcEffectMechanic(ReadOnlySpan<GUID> effects, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(effects, plotlySetting, shortName, description, fullName, internalCoolDown)
+    {
     }
 }

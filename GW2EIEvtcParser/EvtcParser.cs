@@ -1,1100 +1,1467 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
+﻿using System.IO.Compression;
 using System.Text;
-using System.Threading.Tasks;
 using GW2EIEvtcParser.EIData;
-using GW2EIEvtcParser.EncounterLogic;
 using GW2EIEvtcParser.Exceptions;
 using GW2EIEvtcParser.Extensions;
 using GW2EIEvtcParser.ParsedData;
 using GW2EIEvtcParser.ParserHelpers;
 using GW2EIGW2API;
+using Tracing;
+using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.ParserHelper;
+using static GW2EIEvtcParser.SpeciesIDs;
 
 [assembly: CLSCompliant(false)]
-namespace GW2EIEvtcParser
+namespace GW2EIEvtcParser;
+
+public class EvtcParser
 {
-    public class EvtcParser
+
+    //Main data storage after binary parse
+    private LogData _logData;
+    private AgentData _agentData;
+    private readonly List<AgentItem> _allAgentsList;
+    private SkillData _skillData;
+    private readonly List<CombatItem> _combatItems;
+    private readonly Dictionary<ulong, ulong> ArcDPSAgentRedirection = [];
+    private List<Player> _playerList;
+    private byte _revision;
+    private ushort _id;
+    private long _logStartOffset;
+    private long _logEndTime;
+    private EvtcVersionEvent _evtcVersion;
+    private ulong _gw2Build;
+    private int _mapID = -1;
+    private readonly EvtcParserSettings _parserSettings;
+    private readonly GW2APIController _apiController;
+    private readonly Dictionary<uint, ExtensionHandler> _enabledExtensions;
+
+    public EvtcParser(EvtcParserSettings parserSettings, GW2APIController apiController)
     {
+        _apiController = apiController;
+        _parserSettings = parserSettings;
+        _allAgentsList = [];
+        _combatItems = [];
+        _playerList = [];
+        _logStartOffset = long.MinValue;
+        _logEndTime = 0;
+        _enabledExtensions = [];
+    }
 
-        //Main data storage after binary parse
-        private FightData _fightData;
-        private AgentData _agentData;
-        private readonly List<AgentItem> _allAgentsList;
-        private SkillData _skillData;
-        private readonly List<CombatItem> _combatItems;
-        private List<Player> _playerList;
-        private byte _revision;
-        private ushort _id;
-        private long _logStartTime;
-        private long _logEndTime;
-        private EvtcVersionEvent _evtcVersion;
-        private ulong _gw2Build;
-        private readonly EvtcParserSettings _parserSettings;
-        private readonly GW2APIController _apiController;
-        private readonly Dictionary<uint, AbstractExtensionHandler> _enabledExtensions;
+    #region Main Parse Method
 
-        public EvtcParser(EvtcParserSettings parserSettings, GW2APIController apiController)
+    /// <summary>
+    /// Parses the given log. <br></br>
+    /// On parsing failure, <see cref="ParsingFailureReason"/> will be filled with the reason of the failure and the method will return <see langword="null"/>.
+    /// </summary>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <param name="evtc">The path to the log to parse.</param>
+    /// <param name="parsingFailureReason">The reason why the parsing failed, if applicable.</param>
+    /// <param name="multiThreadAcceleration">Will preprocess buff simulation using multi threading.</param>
+    /// <returns>The <see cref="ParsedEvtcLog"/> log.</returns>
+    /// <exception cref="EvtcFileException"></exception>
+    public ParsedEvtcLog? ParseLog(ParserController operation, FileInfo evtc, out ParsingFailureReason? parsingFailureReason, bool multiThreadAcceleration = false)
+    {
+        parsingFailureReason = null;
+        try
         {
-            _apiController = apiController;
-            _parserSettings = parserSettings;
-            _allAgentsList = new List<AgentItem>();
-            _combatItems = new List<CombatItem>();
-            _playerList = new List<Player>();
-            _logStartTime = 0;
-            _logEndTime = 0;
-            _enabledExtensions = new Dictionary<uint, AbstractExtensionHandler>();
-        }
-
-        #region Main Parse Method
-
-        /// <summary>
-        /// Parses the given log. <br></br>
-        /// On parsing failure, <see cref="ParsingFailureReason"/> will be filled with the reason of the failure and the method will return <see langword="null"/>.
-        /// </summary>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <param name="evtc">The path to the log to parse.</param>
-        /// <param name="parsingFailureReason">The reason why the parsing failed, if applicable.</param>
-        /// <param name="multiThreadAccelerationForBuffs">Will preprocess buff simulation using multi threading.</param>
-        /// <returns>The <see cref="ParsedEvtcLog"/> log.</returns>
-        /// <exception cref="EvtcFileException"></exception>
-        public ParsedEvtcLog ParseLog(ParserController operation, FileInfo evtc, out ParsingFailureReason parsingFailureReason, bool multiThreadAccelerationForBuffs = false)
-        {
-            parsingFailureReason = null;
-            try
+            if (!evtc.Exists)
             {
-                if (!evtc.Exists)
-                {
-                    throw new EvtcFileException("檔案 " + evtc.FullName + " 不存在");
-                }
-                if (!SupportedFileFormats.IsSupportedFormat(evtc.Name))
-                {
-                    throw new EvtcFileException("不是EVTC檔案");
-                }
-                ParsedEvtcLog evtcLog;
-                using (var fs = new FileStream(evtc.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    if (SupportedFileFormats.IsCompressedFormat(evtc.Name))
-                    {
-                        using (var arch = new ZipArchive(fs, ZipArchiveMode.Read))
-                        {
-                            if (arch.Entries.Count != 1)
-                            {
-                                throw new EvtcFileException("Invalid Archive");
-                            }
-                            using (Stream data = arch.Entries[0].Open())
-                            {
-                                using (var ms = new MemoryStream())
-                                {
-                                    data.CopyTo(ms);
-                                    ms.Position = 0;
-                                    evtcLog = ParseLog(operation, ms, out parsingFailureReason, multiThreadAccelerationForBuffs);
-                                };
-                            }
-                        }
-                    }
-                    else
-                    {
-                        evtcLog = ParseLog(operation, fs, out parsingFailureReason, multiThreadAccelerationForBuffs);
-                    }
-                }
-                return evtcLog;
+                throw new EvtcFileException("檔案 " + evtc.FullName + " 不存在");
             }
-            catch (Exception ex)
-            {
-                parsingFailureReason = new ParsingFailureReason(ex);
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Parses the given log. <br></br>
-        /// On parsing failure, <see cref="ParsingFailureReason"/> will be filled with the reason of the failure and the method will return <see langword="null"/>.
-        /// </summary>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <param name="evtcStream">The stream of the log.</param>
-        /// <param name="parsingFailureReason">The reason why the parsing failed, if applicable.</param>
-        /// <param name="multiThreadAccelerationForBuffs">Will preprocess buff simulation using multi threading.</param>
-        /// <returns>The <see cref="ParsedEvtcLog"/> log.</returns>
-        public ParsedEvtcLog ParseLog(ParserController operation, Stream evtcStream, out ParsingFailureReason parsingFailureReason, bool multiThreadAccelerationForBuffs = false)
-        {
-            parsingFailureReason = null;
-            try
-            {
-                using (BinaryReader reader = CreateReader(evtcStream))
-                {
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Reading Binary");
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Parsing fight data");
-                    ParseFightData(reader, operation);
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Parsing agent data");
-                    ParseAgentData(reader, operation);
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Parsing skill data");
-                    ParseSkillData(reader, operation);
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Parsing combat list");
-                    ParseCombatList(reader, operation);
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Linking agents to combat list");
-                    CompleteAgents(operation);
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Preparing data for log generation");
-                    PreProcessEvtcData(operation);
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Data parsed");
-                    var log = new ParsedEvtcLog(_evtcVersion, _fightData, _agentData, _skillData, _combatItems, _playerList, _enabledExtensions, _parserSettings, operation);
-                    //
-                    if (multiThreadAccelerationForBuffs)
-                    {
-                        IReadOnlyList<PhaseData> phases = log.FightData.GetPhases(log);
-                        operation.UpdateProgressWithCancellationCheck("Parsing: Multi threading");
-                        var friendliesAndTargets = new List<AbstractSingleActor>(log.Friendlies);
-                        friendliesAndTargets.AddRange(log.FightData.Logic.Targets);
-                        var friendliesAndTargetsAndMobs = new List<AbstractSingleActor>(log.FightData.Logic.TrashMobs);
-                        friendliesAndTargetsAndMobs.AddRange(friendliesAndTargets);
-                        foreach (AbstractSingleActor actor in friendliesAndTargetsAndMobs)
-                        {
-                            // that part can't be // due to buff extensions
-                            actor.GetTrackedBuffs(log);
-                            actor.GetMinions(log);
-                        }
-                        Parallel.ForEach(friendliesAndTargets, actor => actor.GetStatus(log));
-                        /*if (log.CombatData.HasMovementData)
-                        {
-                            // init all positions
-                            Parallel.ForEach(friendliesAndTargetsAndMobs, actor => actor.GetCombatReplayPolledPositions(log));
-                        }*/
-                        Parallel.ForEach(friendliesAndTargetsAndMobs, actor => actor.GetBuffGraphs(log));
-                        Parallel.ForEach(friendliesAndTargets, actor =>
-                        {
-                            foreach (PhaseData phase in phases)
-                            {
-                                actor.GetBuffDistribution(log, phase.Start, phase.End);
-                            }
-                        });
-                        Parallel.ForEach(friendliesAndTargets, actor =>
-                        {
-                            foreach (PhaseData phase in phases)
-                            {
-                                actor.GetBuffPresence(log, phase.Start, phase.End);
-                            }
-                        });
-                        //
-                        //Parallel.ForEach(log.PlayerList, player => player.GetDamageModifierStats(log, null));
-                        Parallel.ForEach(log.Friendlies, actor =>
-                        {
-                            foreach (PhaseData phase in phases)
-                            {
-                                actor.GetBuffs(BuffEnum.Self, log, phase.Start, phase.End);
-                            }
-                        });
-                        Parallel.ForEach(log.PlayerList, actor =>
-                        {
-                            foreach (PhaseData phase in phases)
-                            {
-                                actor.GetBuffs(BuffEnum.Group, log, phase.Start, phase.End);
-                            }
-                        });
-                        Parallel.ForEach(log.PlayerList, actor =>
-                        {
-                            foreach (PhaseData phase in phases)
-                            {
-                                actor.GetBuffs(BuffEnum.OffGroup, log, phase.Start, phase.End);
-                            }
-                        });
-                        Parallel.ForEach(log.PlayerList, actor =>
-                        {
-                            foreach (PhaseData phase in phases)
-                            {
-                                actor.GetBuffs(BuffEnum.Squad, log, phase.Start, phase.End);
-                            }
-                        });
-                        Parallel.ForEach(log.FightData.Logic.Targets, actor =>
-                        {
-                            foreach (PhaseData phase in phases)
-                            {
-                                actor.GetBuffs(BuffEnum.Self, log, phase.Start, phase.End);
-                            }
-                        });
-                    }
-                    //
-                    return log;
-                }
-            }
-            catch (Exception ex)
-            {
-                parsingFailureReason = new ParsingFailureReason(ex);
-                return null;
-            }
-        }
-
-        #endregion Main Parse Method
-
-        #region Sub Parse Methods
-
-        /// <summary>
-        /// Parses fight related data.
-        /// </summary>
-        /// <param name="reader">Reads binary values from the evtc.</param>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <exception cref="EvtcFileException"></exception>
-        private void ParseFightData(BinaryReader reader, ParserController operation)
-        {
-            // 12 bytes: arc build version
-            string evtcVersion = GetString(reader, 12);
-            if (!evtcVersion.StartsWith("EVTC") || !int.TryParse(new string(evtcVersion.Where(char.IsDigit).ToArray()), out int headerVersion))
+            if (!SupportedFileFormats.IsSupportedFormat(evtc.Name))
             {
                 throw new EvtcFileException("Not EVTC");
             }
-            _evtcVersion = new EvtcVersionEvent(headerVersion);
-            operation.UpdateProgressWithCancellationCheck("Parsing: ArcDPS Build " + evtcVersion);
-
-            // 1 byte: revision
-            _revision = reader.ReadByte();
-            operation.UpdateProgressWithCancellationCheck("Parsing: ArcDPS Combat Item Revision " + _revision);
-
-            // 2 bytes: fight instance ID
-            _id = reader.ReadUInt16();
-            operation.UpdateProgressWithCancellationCheck("Parsing: Fight Instance " + _id);
-            // 1 byte: skip
-            _ = reader.ReadByte();
-        }
-
-        /// <summary>
-        /// Get the Agent Profession as <see cref="string"/>.
-        /// </summary>
-        /// <param name="prof"></param>
-        /// <param name="elite"></param>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <returns></returns>
-        /// <exception cref="EvtcAgentException"></exception>
-        private string GetAgentProfString(uint prof, uint elite, ParserController operation)
-        {
-            string spec = _apiController.GetSpec(prof, elite);
-            if (spec == "Unknow")
+            ParsedEvtcLog? evtcLog;
+            using var fs = new FileStream(evtc.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (SupportedFileFormats.IsCompressedFormat(evtc.Name))
             {
-                operation.UpdateProgressWithCancellationCheck("Parsing: Missing or outdated GW2 API Cache or unknown player spec");
-            }
-            return spec;
-        }
-
-        /// <summary>
-        /// Parses agent related data.
-        /// </summary>
-        /// <param name="reader">Reads binary values from the evtc.</param>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        private void ParseAgentData(BinaryReader reader, ParserController operation)
-        {
-            // 4 bytes: player count
-            uint agentCount = reader.ReadUInt32();
-
-            operation.UpdateProgressWithCancellationCheck("Parsing: Agent Count " + agentCount);
-            // 96 bytes: each player
-            for (int i = 0; i < agentCount; i++)
-            {
-                // 8 bytes: agent
-                ulong agent = reader.ReadUInt64();
-
-                // 4 bytes: profession
-                uint prof = reader.ReadUInt32();
-
-                // 4 bytes: is_elite
-                uint isElite = reader.ReadUInt32();
-
-                // 2 bytes: toughness
-                ushort toughness = reader.ReadUInt16();
-                // 2 bytes: healing
-                ushort concentration = reader.ReadUInt16();
-                // 2 bytes: healing
-                ushort healing = reader.ReadUInt16();
-                // 2 bytes: hitbox width
-                uint hbWidth = (uint)(2 * reader.ReadUInt16());
-                // 2 bytes: condition
-                ushort condition = reader.ReadUInt16();
-                // 2 bytes: hitbox height
-                uint hbHeight = (uint)(2 * reader.ReadUInt16());
-                // 68 bytes: name
-                string name = GetString(reader, 68, false);
-                //Save
-                Spec agentProf = ProfToSpec(GetAgentProfString(prof, isElite, operation));
-                AgentItem.AgentType type;
-                ushort ID = 0;
-                switch (agentProf)
+                using var arch = new ZipArchive(fs, ZipArchiveMode.Read);
+                if (arch.Entries.Count != 1)
                 {
-                    case Spec.NPC:
-                        // NPC
-                        if (!ushort.TryParse(prof.ToString().PadLeft(5, '0'), out ID))
-                        {
-                            ID = 0;
-                        }
-                        type = AgentItem.AgentType.NPC;
-                        break;
-                    case Spec.Gadget:
-                        // Gadget
-                        if (!ushort.TryParse((prof & 0x0000ffff).ToString().PadLeft(5, '0'), out ID))
-                        {
-                            ID = 0;
-                        }
-                        type = AgentItem.AgentType.Gadget;
-                        break;
-                    // Filter unknowns out
-                    case Spec.Unknown:
-                        continue;
-                    default:
-                        // Player
-                        type = AgentItem.AgentType.Player;
-                        break;
+                    throw new EvtcFileException("Invalid Archive");
                 }
-                _allAgentsList.Add(new AgentItem(agent, name, agentProf, ID, type, toughness, healing, condition, concentration, hbWidth, hbHeight));
-            }
-        }
 
-        /// <summary>
-        /// Parses skill related data
-        /// </summary>
-        /// <param name="reader">Reads binary values from the evtc.</param>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        private void ParseSkillData(BinaryReader reader, ParserController operation)
-        {
-            _skillData = new SkillData(_apiController, _evtcVersion);
-            // 4 bytes: player count
-            uint skillCount = reader.ReadUInt32();
-            operation.UpdateProgressWithCancellationCheck("Parsing: Skill Count " + skillCount);
-            //TempData["Debug"] += "Skill Count:" + skill_count.ToString();
-            // 68 bytes: each skill
-            for (int i = 0; i < skillCount; i++)
-            {
-                // 4 bytes: skill ID
-                int skillId = reader.ReadInt32();
-                // 64 bytes: name
-                string name = GetString(reader, 64);
-                //Save
-                _skillData.Add(skillId, name);
-            }
-        }
-
-        /// <summary>
-        /// Reads the <see cref="CombatItem"/> binary.<br></br>
-        /// Old version when header[12] == 0.
-        /// </summary>
-        /// <param name="reader">Reads binary values from the evtc.</param>
-        /// <returns><see cref="CombatItem"/></returns>
-        private static CombatItem ReadCombatItem(BinaryReader reader)
-        {
-            // 8 bytes: time
-            long time = reader.ReadInt64();
-
-            // 8 bytes: src_agent
-            ulong srcAgent = reader.ReadUInt64();
-
-            // 8 bytes: dst_agent
-            ulong dstAgent = reader.ReadUInt64();
-
-            // 4 bytes: value
-            int value = reader.ReadInt32();
-
-            // 4 bytes: buff_dmg
-            int buffDmg = reader.ReadInt32();
-
-            // 2 bytes: overstack_value
-            ushort overstackValue = reader.ReadUInt16();
-
-            // 2 bytes: skill_id
-            ushort skillId = reader.ReadUInt16();
-
-            // 2 bytes: src_instid
-            ushort srcInstid = reader.ReadUInt16();
-
-            // 2 bytes: dst_instid
-            ushort dstInstid = reader.ReadUInt16();
-
-            // 2 bytes: src_master_instid
-            ushort srcMasterInstid = reader.ReadUInt16();
-
-            // 9 bytes: garbage
-            _ = reader.ReadBytes(9);
-
-            // 1 byte: iff
-            byte iff = reader.ReadByte();
-
-            // 1 byte: buff
-            byte buff = reader.ReadByte();
-
-            // 1 byte: result
-            byte result = reader.ReadByte();
-
-            // 1 byte: is_activation
-            byte isActivation = reader.ReadByte();
-
-            // 1 byte: is_buffremove
-            byte isBuffRemove = reader.ReadByte();
-
-            // 1 byte: is_ninety
-            byte isNinety = reader.ReadByte();
-
-            // 1 byte: is_fifty
-            byte isFifty = reader.ReadByte();
-
-            // 1 byte: is_moving
-            byte isMoving = reader.ReadByte();
-
-            // 1 byte: is_statechange
-            byte isStateChange = reader.ReadByte();
-
-            // 1 byte: is_flanking
-            byte isFlanking = reader.ReadByte();
-
-            // 1 byte: is_flanking
-            byte isShields = reader.ReadByte();
-            // 1 byte: is_flanking
-            byte isOffcycle = reader.ReadByte();
-            // 1 bytes: garbage
-            _ = reader.ReadByte();
-
-            //save
-            // Add combat
-            return new CombatItem(time, srcAgent, dstAgent, value, buffDmg, overstackValue, skillId,
-                srcInstid, dstInstid, srcMasterInstid, 0, iff, buff, result, isActivation, isBuffRemove,
-                isNinety, isFifty, isMoving, isStateChange, isFlanking, isShields, isOffcycle, 0);
-        }
-
-        /// <summary>
-        /// Reads the <see cref="CombatItem"/> binary.<br></br>
-        /// Current version when header[12] == 1.
-        /// </summary>
-        /// <param name="reader">Reads binary values from the evtc.</param>
-        /// <returns><see cref="CombatItem"/></returns>
-        private static CombatItem ReadCombatItemRev1(BinaryReader reader)
-        {
-            // 8 bytes: time
-            long time = reader.ReadInt64();
-
-            // 8 bytes: src_agent
-            ulong srcAgent = reader.ReadUInt64();
-
-            // 8 bytes: dst_agent
-            ulong dstAgent = reader.ReadUInt64();
-
-            // 4 bytes: value
-            int value = reader.ReadInt32();
-
-            // 4 bytes: buff_dmg
-            int buffDmg = reader.ReadInt32();
-
-            // 4 bytes: overstack_value
-            uint overstackValue = reader.ReadUInt32();
-
-            // 4 bytes: skill_id
-            uint skillId = reader.ReadUInt32();
-
-            // 2 bytes: src_instid
-            ushort srcInstid = reader.ReadUInt16();
-
-            // 2 bytes: dst_instid
-            ushort dstInstid = reader.ReadUInt16();
-
-            // 2 bytes: src_master_instid
-            ushort srcMasterInstid = reader.ReadUInt16();
-            // 2 bytes: dst_master_instid
-            ushort dstmasterInstid = reader.ReadUInt16();
-
-            // 1 byte: iff
-            byte iff = reader.ReadByte();
-
-            // 1 byte: buff
-            byte buff = reader.ReadByte();
-
-            // 1 byte: result
-            byte result = reader.ReadByte();
-
-            // 1 byte: is_activation
-            byte isActivation = reader.ReadByte();
-
-            // 1 byte: is_buffremove
-            byte isBuffRemove = reader.ReadByte();
-
-            // 1 byte: is_ninety
-            byte isNinety = reader.ReadByte();
-
-            // 1 byte: is_fifty
-            byte isFifty = reader.ReadByte();
-
-            // 1 byte: is_moving
-            byte isMoving = reader.ReadByte();
-
-            // 1 byte: is_statechange
-            byte isStateChange = reader.ReadByte();
-
-            // 1 byte: is_flanking
-            byte isFlanking = reader.ReadByte();
-
-            // 1 byte: is_flanking
-            byte isShields = reader.ReadByte();
-            // 1 byte: is_flanking
-            byte isOffcycle = reader.ReadByte();
-            // 4 bytes: pad
-            uint pad = reader.ReadUInt32();
-
-            //save
-            // Add combat
-            return new CombatItem(time, srcAgent, dstAgent, value, buffDmg, overstackValue, skillId,
-                srcInstid, dstInstid, srcMasterInstid, dstmasterInstid, iff, buff, result, isActivation, isBuffRemove,
-                isNinety, isFifty, isMoving, isStateChange, isFlanking, isShields, isOffcycle, pad);
-        }
-
-        /// <summary>
-        /// Parses combat related data.
-        /// </summary>
-        /// <param name="reader">Reads binary values from the evtc.</param>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <exception cref="EvtcCombatEventException"></exception>
-        /// <exception cref="TooShortException"></exception>
-        /// <exception cref="TooLongException"></exception>
-        private void ParseCombatList(BinaryReader reader, ParserController operation)
-        {
-            // 64 bytes: each combat
-            long cbtItemCount = (reader.BaseStream.Length - reader.BaseStream.Position) / 64;
-            operation.UpdateProgressWithCancellationCheck("Parsing: Combat Event Count " + cbtItemCount);
-            int discardedCbtEvents = 0;
-            bool keepOnlyExtensionEvents = false;
-            for (long i = 0; i < cbtItemCount; i++)
-            {
-                CombatItem combatItem = _revision > 0 ? ReadCombatItemRev1(reader) : ReadCombatItem(reader);
-                if (!IsValid(combatItem, operation) || (keepOnlyExtensionEvents && !combatItem.IsExtension))
+                using Stream data = arch.Entries[0].Open();
+                using var ms = new MemoryStream();
+                data.CopyTo(ms);
+                operation.SetFileSize(ms.Length / (1024L * 1024L));
+                if (operation.FileSize > _parserSettings.TooBigLimit)
                 {
-                    discardedCbtEvents++;
-                    continue;
+                    throw new TooBigException(operation.FileSize, _parserSettings.TooBigLimit);
                 }
-                if (combatItem.IsStateChange == ArcDPSEnums.StateChange.ArcBuild)
-                {
-                    EvtcVersionEvent oldEvent = _evtcVersion;
-                    try
-                    {
-                        _evtcVersion = new EvtcVersionEvent(combatItem);
-                    } 
-                    catch
-                    {
-                        _evtcVersion = oldEvent;
-                    }
-                    continue;
-                }
-                if (combatItem.HasTime())
-                {
-                    if (_logStartTime == 0)
-                    {
-                        _logStartTime = combatItem.Time;
-                    }
-                    _logEndTime = combatItem.Time;
-                }
-                _combatItems.Add(combatItem);
-                if (combatItem.IsStateChange == ArcDPSEnums.StateChange.GWBuild && GW2BuildEvent.GetBuild(combatItem) != 0)
-                {
-                    _gw2Build = GW2BuildEvent.GetBuild(combatItem);
-                }
-                if (combatItem.IsStateChange == ArcDPSEnums.StateChange.SquadCombatEnd)
-                {
-                    keepOnlyExtensionEvents = true;
-                }
-            }
-            operation.UpdateProgressWithCancellationCheck("Parsing: Combat Event Discarded " + discardedCbtEvents);
-            if (_combatItems.Count == 0)
-            {
-                throw new EvtcCombatEventException("No combat events found");
-            }
-            if (_logEndTime - _logStartTime < _parserSettings.TooShortLimit)
-            {
-                throw new TooShortException(_logEndTime - _logStartTime, _parserSettings.TooShortLimit);
-            }
-            // 24 hours
-            if (_logEndTime - _logStartTime > 86400000)
-            {
-                throw new TooLongException();
-            }
-        }
-
-        /// <summary>
-        /// Checks if the <see cref="CombatItem"/> contains valid data and should be used.
-        /// </summary>
-        /// <param name="combatItem"><see cref="CombatItem"/> data to validate.</param>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <returns>Returns <see langword="true"/> if the <see cref="CombatItem"/> is valid, otherwise <see langword="false"/>.</returns>
-        private bool IsValid(CombatItem combatItem, ParserController operation)
-        {
-            if (combatItem.IsStateChange == ArcDPSEnums.StateChange.HealthUpdate && HealthUpdateEvent.GetHealthPercent(combatItem) > 200)
-            {
-                // DstAgent should be target health % times 100, values higher than 10000 are unlikely. 
-                // If it is more than 200% health ignore this record
-                return false;
-            }
-            if (combatItem.IsExtension)
-            {
-                // Generic versioning check, we expect that the first event that'll be sent by an addon will always be meta data
-                // Can't be ExtensionCombat
-                if (combatItem.Pad == 0 && combatItem.IsStateChange == ArcDPSEnums.StateChange.Extension)
-                {
-                    AbstractExtensionHandler handler = ExtensionHelper.GetExtensionHandler(combatItem);
-                    if (handler != null)
-                    {
-                        _enabledExtensions[handler.Signature] = handler;
-                        operation.UpdateProgressWithCancellationCheck("Parsing: Encountered supported extension " + handler.Name + " on " + handler.Version);
-                    }
-                    // No need to keep that event, it'll be immediately parsed by the handler
-                    return false;
-                }
-                else
-                {
-                    return _enabledExtensions.ContainsKey(combatItem.Pad);
-                }
-            }
-            if (combatItem.SrcInstid == 0 && combatItem.DstAgent == 0 && combatItem.SrcAgent == 0 && combatItem.DstInstid == 0 && combatItem.IFF == ArcDPSEnums.IFF.Unknown && !combatItem.IsEffect)
-            {
-                return false;
-            }
-            return IsSupportedStateChange(combatItem.IsStateChange);
-        }
-
-        /// <summary>
-        /// Sets an Agent InstID if not already set and updates its aware times.
-        /// </summary>
-        /// <param name="ag">Agent to update.</param>
-        /// <param name="logTime">Time to set as aware time.</param>
-        /// <param name="instid"></param>
-        /// <param name="checkInstid"></param>
-        /// <returns></returns>
-        private static bool UpdateAgentData(AgentItem ag, long logTime, ushort instid, bool checkInstid)
-        {
-            if (instid != 0)
-            {
-                if (ag.InstID == 0)
-                {
-                    ag.SetInstid(instid);
-                }
-                else if (checkInstid && ag.InstID != instid)
-                {
-                    return false;
-                }
-            }
-
-            if (ag.FirstAware == 0)
-            {
-                ag.OverrideAwareTimes(logTime, logTime);
+                ms.Position = 0;
+                evtcLog = ParseLog(operation, ms, out parsingFailureReason, multiThreadAcceleration);
             }
             else
             {
-                ag.OverrideAwareTimes(Math.Min(ag.FirstAware, logTime), Math.Max(ag.LastAware, logTime));
+                operation.SetFileSize(evtc.Length / (1024L * 1024L));
+                if (operation.FileSize > _parserSettings.TooBigLimit)
+                {
+                    throw new TooBigException(operation.FileSize, _parserSettings.TooBigLimit);
+                }
+                evtcLog = ParseLog(operation, fs, out parsingFailureReason, multiThreadAcceleration);
             }
-            return true;
+            return evtcLog;
+        }
+        catch (Exception ex)
+        {
+            parsingFailureReason = new ParsingFailureReason(ex);
+            return null;
+        }
+    }
+
+    private static void DoMultiThreadAccelerationCommon(ParsedEvtcLog log, AutoTrace _t, 
+        IReadOnlyList<(long start, long end)> intervals)
+    {
+        Parallel.ForEach(log.Friendlies, actor =>
+        {
+        foreach (var (start, end) in intervals)
+        {
+                // To create the caches
+                foreach (var p in log.PlayerList)
+                {
+                    actor.GetBuffApplyEventsOnByIDInternal(log, start, end, 0, p);
+                    actor.GetBuffRemoveAllEventsByByIDInternal(log, start, end, 0, p);
+                    actor.GetBuffRemoveAllEventsFromByIDInternal(log, start, end, 0, p);
+                }
+            }
+
+        });
+        _t.Log("Friendlies accelerator caches");
+        //
+        //Parallel.ForEach(log.PlayerList, player => player.GetDamageModifierStats(log, null));
+        Parallel.ForEach(log.Friendlies, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffs(BuffEnum.Self, log, start, end);
+            }
+
+        });
+        Parallel.ForEach(log.Friendlies, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffVolumes(BuffEnum.Self, log, start, end);
+            }
+
+        });
+        _t.Log("Friendlies GetBuffs Self");
+        Parallel.ForEach(log.PlayerList, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffs(BuffEnum.Group, log, start, end);
+            }
+
+        });
+        Parallel.ForEach(log.PlayerList, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffVolumes(BuffEnum.Group, log, start, end);
+            }
+
+        });
+        _t.Log("PlayerList GetBuffs Group");
+        Parallel.ForEach(log.PlayerList, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffs(BuffEnum.OffGroup, log, start, end);
+            }
+
+        });
+        Parallel.ForEach(log.PlayerList, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffVolumes(BuffEnum.OffGroup, log, start, end);
+            }
+
+        });
+        _t.Log("PlayerList GetBuffs OffGroup");
+        Parallel.ForEach(log.PlayerList, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffs(BuffEnum.Squad, log, start, end);
+            }
+
+        });
+        Parallel.ForEach(log.PlayerList, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffVolumes(BuffEnum.Squad, log, start, end);
+            }
+
+        });
+        _t.Log("PlayerList GetBuffs Squad");
+        Parallel.ForEach(log.LogData.Logic.Targets, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffs(BuffEnum.Self, log, start, end);
+            }
+
+        });
+        _t.Log("LogData.Logic.Targets GetBuffs Self");
+        Parallel.ForEach(log.Friendlies, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                // To initialize cache
+                actor.GetDamageEvents(null, log, start, end);
+                foreach (var target in log.LogData.Logic.Targets)
+                {
+                    actor.GetDamageEvents(target, log, start, end);
+                }
+            }
+
+        });
+        _t.Log("PlayerList GetDamageEvents");
+    }
+
+    private static void DoMultiThreadAcceleration(ParsedEvtcLog log, AutoTrace _t,
+        IReadOnlyList<SingleActor> friendliesAndTargets, IReadOnlyList<SingleActor> friendliesAndTargetsAndMobs,
+        IReadOnlyList<(long start, long end)> intervals)
+    {
+        Parallel.ForEach(friendliesAndTargetsAndMobs, actor => actor.SimulateBuffsAndComputeGraphs(log));
+        _t.Log("friendliesAndTargetsAndMobs ComputeBuffGraphs");
+
+        Parallel.ForEach(friendliesAndTargets, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffDistribution(log, start, end);
+            }
+
+        });
+        _t.Log("friendliesAndTargets GetBuffDistribution");
+
+        Parallel.ForEach(friendliesAndTargets, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffPresence(log, start, end);
+                // We need Buff Presence by other players for Buff generation statistics
+                if (actor is Player)
+                {
+                    foreach (var other in friendliesAndTargets)
+                    {
+                        if (other is Player)
+                        {
+                            actor.GetBuffPresence(log, start, end, other);
+                        }
+                    }
+
+                }
+            }
+        });
+        _t.Log("friendliesAndTargets GetBuffPresence");
+
+        DoMultiThreadAccelerationCommon(log, _t, intervals);
+    }
+
+    private static void DoMultiThreadAccelerationWithEnglobingAgents(ParsedEvtcLog log, AutoTrace _t, 
+        IReadOnlyList<SingleActor> friendliesAndTargets,
+        IReadOnlyList<SingleActor> friendliesAndTargetsAndMobsEnglobing, IReadOnlyList<SingleActor> friendliesAndTargetsAndMobsNonEnglobed,
+        IReadOnlyList<SingleActor> friendliesAndTargetsEnglobing,
+        IReadOnlyList<SingleActor> friendliesAndTargetsAndMobsEnglobed, IReadOnlyList<SingleActor> friendliesAndTargetsNonEnglobed,
+        IReadOnlyList<(long start, long end)> intervals)
+    {
+
+        Parallel.ForEach(friendliesAndTargetsAndMobsEnglobing, actor => actor.SimulateBuffsAndComputeGraphs(log));
+        Parallel.ForEach(friendliesAndTargetsAndMobsNonEnglobed, actor => actor.SimulateBuffsAndComputeGraphs(log));
+        _t.Log("friendliesAndTargetsAndMobs ComputeBuffGraphs");
+
+        Parallel.ForEach(friendliesAndTargetsEnglobing, actor =>
+        {
+            var englobeds = friendliesAndTargetsAndMobsEnglobed.Where(x => x.EnglobingAgentItem == actor.AgentItem);
+            foreach ( var (start, end) in intervals)
+            {
+                actor.GetBuffDistribution(log, start, end);
+                foreach (var englobed in englobeds)
+                {
+                    englobed.GetBuffDistribution(log, start, end);
+                }
+            }
+        });
+        Parallel.ForEach(friendliesAndTargetsNonEnglobed, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffDistribution(log, start, end);
+            }
+
+        });
+        _t.Log("friendliesAndTargets GetBuffDistribution");
+
+        Parallel.ForEach(friendliesAndTargetsEnglobing, actor =>
+        {
+            var englobeds = friendliesAndTargetsAndMobsEnglobed.Where(x => x.EnglobingAgentItem == actor.AgentItem);
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffPresence(log, start, end);
+                foreach (var englobed in englobeds)
+                {
+                    englobed.GetBuffPresence(log, start, end);
+                    // We need Buff Presence by other players for Buff generation statistics
+                    if (englobed is Player)
+                    {
+                        foreach (var other in friendliesAndTargets)
+                        {
+                            if (other is Player)
+                            {
+                                englobed.GetBuffPresence(log, start, end, other);
+                            }
+                        }
+                    }
+                }
+            }
+
+        });
+        Parallel.ForEach(friendliesAndTargetsNonEnglobed, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                actor.GetBuffPresence(log, start, end);
+                // We need Buff Presence by other players for Buff generation statistics
+                if (actor is Player)
+                {
+                    foreach (var other in friendliesAndTargets)
+                    {
+                        if (other is Player)
+                        {
+                            actor.GetBuffPresence(log, start, end, other);
+                        }
+                    }
+                }
+            }
+
+        });
+        _t.Log("friendliesAndTargets GetBuffPresence");
+
+        Parallel.ForEach(friendliesAndTargetsEnglobing, actor =>
+        {
+            foreach (var (start, end) in intervals)
+            {
+                var englobeds = friendliesAndTargetsAndMobsEnglobed.Where(x => x.EnglobingAgentItem == actor.AgentItem);
+                actor.GetBuffGraphs(log);
+                foreach (var englobed in englobeds)
+                {
+                    englobed.GetBuffGraphs(log);
+                }
+            }
+        });
+        _t.Log("friendliesAndTargetsAndMobs englobed ComputeBuffGraphs");
+        DoMultiThreadAccelerationCommon(log, _t, intervals);
+    }
+
+    /// <summary>
+    /// Parses the given log. <br></br>
+    /// On parsing failure, <see cref="ParsingFailureReason"/> will be filled with the reason of the failure and the method will return <see langword="null"/>.
+    /// </summary>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <param name="evtcStream">The stream of the log.</param>
+    /// <param name="parsingFailureReason">The reason why the parsing failed, if applicable.</param>
+    /// <param name="multiThreadAcceleration">Will preprocess buff simulation using multi threading.</param>
+    /// <returns>The <see cref="ParsedEvtcLog"/> log.</returns>
+    public ParsedEvtcLog? ParseLog(ParserController operation, Stream evtcStream, out ParsingFailureReason? parsingFailureReason, bool multiThreadAcceleration = false)
+    {
+        parsingFailureReason = null;
+        try
+        {
+            using BinaryReader reader = CreateReader(evtcStream);
+            operation.UpdateProgressWithCancellationCheck("Parsing: Reading Binary");
+            operation.UpdateProgressWithCancellationCheck("Parsing: Parsing log data");
+            ParseLogData(reader, operation);
+            operation.UpdateProgressWithCancellationCheck("Parsing: Parsing agent data");
+            ParseAgentData(reader, operation);
+            operation.UpdateProgressWithCancellationCheck("Parsing: Parsing skill data");
+            ParseSkillData(reader, operation);
+            operation.UpdateProgressWithCancellationCheck("Parsing: Parsing combat list");
+            ParseCombatList(reader, operation);
+            operation.UpdateProgressWithCancellationCheck("Parsing: Linking agents to combat list");
+            CompleteAgents(operation);
+            operation.UpdateProgressWithCancellationCheck("Parsing: Preparing data for log generation");
+            PreProcessEvtcData(operation);
+            operation.UpdateProgressWithCancellationCheck("Parsing: Data parsed");
+            var log = new ParsedEvtcLog(_evtcVersion, _logData, _agentData, _skillData, _combatItems, _playerList, _enabledExtensions, _parserSettings, _apiController, operation);
+
+            if (multiThreadAcceleration)
+            {
+                using var _t = new AutoTrace("Buffs?");
+
+                operation.UpdateProgressWithCancellationCheck("Parsing: Multi threading");
+
+                var friendliesAndTargets = new List<SingleActor>(log.Friendlies.Count + log.LogData.Logic.Targets.Count);
+                friendliesAndTargets.AddRange(log.Friendlies);
+                friendliesAndTargets.AddRange(log.LogData.Logic.Targets);
+                Trace.TrackAverageStat("friendliesAndTargets", friendliesAndTargets.Count);
+
+                var friendliesAndTargetsAndMobs = new List<SingleActor>(log.LogData.Logic.TrashMobs.Count + friendliesAndTargets.Count);
+                friendliesAndTargetsAndMobs.AddRange(log.LogData.Logic.TrashMobs);
+                friendliesAndTargetsAndMobs.AddRange(friendliesAndTargets);
+                Trace.TrackAverageStat("friendliesAndTargetsAndMobs", friendliesAndTargetsAndMobs.Count);
+
+                var hasEnglobingAgents = friendliesAndTargetsAndMobs.Any(x => x.AgentItem.IsEnglobedAgent);
+
+                _t.Log("Paralell phases");
+                foreach (SingleActor actor in friendliesAndTargetsAndMobs)
+                {
+                    _t.SetAverageTimeStart();
+                    // Init cache
+                    log.FindActor(actor.EnglobingAgentItem);
+                    _t.TrackAverageTime("Find actor cache");
+                    actor.ComputeBuffMap(log);
+                    _t.TrackAverageTime("Buff Map");
+                    actor.GetMinions(log);
+                    _t.TrackAverageTime("Minion");
+                }
+                _t.Log("friendliesAndTargetsAndMobs GetMinions");
+                Parallel.ForEach(friendliesAndTargets, actor => actor.GetStatus(log));
+                _t.Log("friendliesAndTargets GetStatus");
+                if (hasEnglobingAgents)
+                {
+                    var friendliesAndTargetsEnglobed = friendliesAndTargets
+                        .Where(x => x.AgentItem.IsEnglobedAgent)
+                        .ToList();
+                    var friendliesAndTargetsEnglobing = friendliesAndTargetsEnglobed
+                        .DistinctBy(x => x.EnglobingAgentItem)
+                        .Select(x => log.FindActor(x.EnglobingAgentItem))
+                        .ToList();
+                    var friendliesAndTargetsNonEnglobed = friendliesAndTargets
+                        .Where(x => !x.AgentItem.IsEnglobedAgent)
+                        .ToList();
+
+                    var friendliesAndTargetsAndMobsEnglobed = friendliesAndTargetsAndMobs
+                        .Where(x => x.AgentItem.IsEnglobedAgent)
+                        .ToList();
+                    var friendliesAndTargetsAndMobsEnglobing = friendliesAndTargetsAndMobsEnglobed
+                        .DistinctBy(x => x.EnglobingAgentItem)
+                        .Select(x => log.FindActor(x.EnglobingAgentItem))
+                        .ToList();
+                    var friendliesAndTargetsAndMobsNonEnglobed = friendliesAndTargetsAndMobs
+                        .Where(x => !x.AgentItem.IsEnglobedAgent)
+                        .ToList();
+
+                    DoMultiThreadAccelerationWithEnglobingAgents(log, _t, 
+                        friendliesAndTargets, 
+                        friendliesAndTargetsAndMobsEnglobing, friendliesAndTargetsAndMobsNonEnglobed, 
+                        friendliesAndTargetsEnglobing, 
+                        friendliesAndTargetsAndMobsEnglobed, friendliesAndTargetsNonEnglobed, 
+                        [(log.LogData.LogStart, log.LogData.LogEnd)]);
+                    IReadOnlyList<PhaseData> phases = log.LogData.GetPhases(log);
+                    DoMultiThreadAccelerationWithEnglobingAgents(log, _t,
+                        friendliesAndTargets,
+                        friendliesAndTargetsAndMobsEnglobing, friendliesAndTargetsAndMobsNonEnglobed,
+                        friendliesAndTargetsEnglobing,
+                        friendliesAndTargetsAndMobsEnglobed, friendliesAndTargetsNonEnglobed, 
+                        phases.Select(x => (x.Start, x.End)).ToList());
+                }
+                else
+                {
+                    DoMultiThreadAcceleration(log, _t, friendliesAndTargets, friendliesAndTargetsAndMobs, [(log.LogData.LogStart, log.LogData.LogEnd)]);
+                    IReadOnlyList<PhaseData> phases = log.LogData.GetPhases(log);
+                    DoMultiThreadAcceleration(log, _t, friendliesAndTargets, friendliesAndTargetsAndMobs, phases.Select(x => (x.Start, x.End)).ToList());
+                }
+            }
+            else if (log.LogData.IsInstance)
+            {
+                // Mandatory to detect encounters
+                operation.UpdateProgressWithCancellationCheck("Parsing: Finding encounters for instance log");
+                log.LogData.GetPhases(log);
+            }
+
+
+            return log;
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            Console.Error.WriteLine(ex);
+#endif
+
+            parsingFailureReason = new ParsingFailureReason(ex);
+            return null;
+        }
+    }
+
+    #endregion Main Parse Method
+
+    #region Sub Parse Methods
+
+    /// <summary>
+    /// Parses high level log related data.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <exception cref="EvtcFileException"></exception>
+    private void ParseLogData(BinaryReader reader, ParserController operation)
+    {
+        using var _t = new AutoTrace("Log Data");
+        // 12 bytes: arc build version
+        using var evtcVersion = GetCharArrayPooled(reader, 12, false);
+        if (!MemoryExtensions.StartsWith(evtcVersion, "EVTC".AsSpan()) || !int.TryParse(evtcVersion[4..], out int headerVersion))
+        {
+            throw new EvtcFileException("Not EVTC");
+        }
+        _evtcVersion = new EvtcVersionEvent(headerVersion);
+        operation.UpdateProgressWithCancellationCheck("Parsing: ArcDPS Build " + evtcVersion.AsSpan().ToString());
+
+        // 1 byte: revision
+        _revision = reader.ReadByte();
+        operation.UpdateProgressWithCancellationCheck("Parsing: ArcDPS Combat Item Revision " + _revision);
+
+        // 2 bytes: log ID
+        _id = reader.ReadUInt16();
+        operation.UpdateProgressWithCancellationCheck("Parsing: Trigger ID " + _id);
+        // 1 byte: skip
+        _ = reader.ReadByte();
+    }
+
+    /// <summary>
+    /// Get the Agent Profession as <see cref="string"/>.
+    /// </summary>
+    /// <param name="prof"></param>
+    /// <param name="elite"></param>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <returns></returns>
+    /// <exception cref="EvtcAgentException"></exception>
+    private string GetAgentProfString(uint prof, uint elite, ParserController operation)
+    {
+        string spec = _apiController.GetSpec(prof, elite);
+        if (spec == GW2APIController.UNKNOWN_SPEC)
+        {
+            operation.UpdateProgressWithCancellationCheck("Parsing: Missing or outdated GW2 API Cache or unknown player spec");
+        }
+        return spec;
+    }
+
+    /// <summary>
+    /// Parses agent related data.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    private void ParseAgentData(BinaryReader reader, ParserController operation)
+    {
+        using var _t = new AutoTrace("Agent Data");
+        // 4 bytes: player count
+        uint agentCount = reader.ReadUInt32();
+
+        operation.UpdateProgressWithCancellationCheck("Parsing: Agent Count " + agentCount);
+        // 96 bytes: each player
+        for (int i = 0; i < agentCount; i++)
+        {
+            // 8 bytes: agent
+            ulong agent = reader.ReadUInt64();
+
+            // 4 bytes: profession
+            uint prof = reader.ReadUInt32();
+
+            // 4 bytes: is_elite
+            uint isElite = reader.ReadUInt32();
+
+            // 2 bytes: toughness
+            ushort toughness = reader.ReadUInt16();
+            // 2 bytes: healing
+            ushort concentration = reader.ReadUInt16();
+            // 2 bytes: healing
+            ushort healing = reader.ReadUInt16();
+            // 2 bytes: hitbox width
+            uint hbWidth = (uint)(2 * reader.ReadUInt16());
+            // 2 bytes: condition
+            ushort condition = reader.ReadUInt16();
+            // 2 bytes: hitbox height
+            uint hbHeight = (uint)(2 * reader.ReadUInt16());
+            // 68 bytes: name
+            string name = GetString(reader, 68, false);
+            //Save
+            Spec agentProf = ProfToSpec(GetAgentProfString(prof, isElite, operation)); //TODO_PERF(Rennorb): Drop the 3 wrappers around what we are actually doing here.
+            AgentItem.AgentType type;
+            ushort ID = 0;
+            switch (agentProf)
+            {
+                case Spec.NPC:
+                    ID = (ushort)(prof > ushort.MaxValue ? 0 : prof);
+                    type = AgentItem.AgentType.StableSpecies;
+                    break;
+
+                case Spec.Gadget:
+                    ID = (ushort)(prof & 0x0000ffff);
+                    type = AgentItem.AgentType.VolatileSpecies;
+                    break;
+
+                default:
+                    type = AgentItem.AgentType.Player;
+                    break;
+            }
+            _allAgentsList.Add(new AgentItem(agent, name, agentProf, ID, type, toughness, healing, condition, concentration, hbWidth, hbHeight));
+        }
+    }
+
+    /// <summary>
+    /// Parses skill related data
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    private void ParseSkillData(BinaryReader reader, ParserController operation)
+    {
+        using var _t = new AutoTrace("Skill Data");
+        _skillData = new SkillData(_apiController, _evtcVersion);
+        // 4 bytes: player count
+        uint skillCount = reader.ReadUInt32();
+        operation.UpdateProgressWithCancellationCheck("Parsing: Skill Count " + skillCount);
+        //TempData["Debug"] += "Skill Count:" + skill_count.ToString();
+        // 68 bytes: each skill
+        for (int i = 0; i < skillCount; i++)
+        {
+            // 4 bytes: skill ID
+            int skillID = reader.ReadInt32();
+            // 64 bytes: name
+            string name = GetString(reader, 64);
+            //Save
+            _skillData.Add(skillID, name);
+        }
+    }
+
+    /// <summary>
+    /// Reads the <see cref="CombatItem"/> binary.<br></br>
+    /// Old version when header[12] == 0.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <returns><see cref="CombatItem"/></returns>
+    private CombatItem ReadCombatItem(BinaryReader reader)
+    {
+        // 8 bytes: time
+        long time = reader.ReadInt64();
+
+        // 8 bytes: src_agent
+        ulong srcAgent = reader.ReadUInt64();
+
+        // 8 bytes: dst_agent
+        ulong dstAgent = reader.ReadUInt64();
+
+        // 4 bytes: value
+        int value = reader.ReadInt32();
+
+        // 4 bytes: buff_dmg
+        int buffDmg = reader.ReadInt32();
+
+        // 2 bytes: overstack_value
+        ushort overstackValue = reader.ReadUInt16();
+
+        // 2 bytes: skill_id
+        ushort skillID = reader.ReadUInt16();
+
+        // 2 bytes: src_instid
+        ushort srcInstid = reader.ReadUInt16();
+
+        // 2 bytes: dst_instid
+        ushort dstInstid = reader.ReadUInt16();
+
+        // 2 bytes: src_master_instid
+        ushort srcMasterInstid = reader.ReadUInt16();
+
+        // 9 bytes: garbage
+        //NOTE(Rennorb): Avoid allocating array by splitting up the reads.
+        _ = reader.ReadInt64();
+        _ = reader.ReadByte();
+
+        // 1 byte: iff
+        byte iff = reader.ReadByte();
+
+        // 1 byte: buff
+        byte buff = reader.ReadByte();
+
+        // 1 byte: result
+        byte result = reader.ReadByte();
+
+        // 1 byte: is_activation
+        byte isActivation = reader.ReadByte();
+
+        // 1 byte: is_buffremove
+        byte isBuffRemove = reader.ReadByte();
+
+        // 1 byte: is_ninety
+        byte isNinety = reader.ReadByte();
+
+        // 1 byte: is_fifty
+        byte isFifty = reader.ReadByte();
+
+        // 1 byte: is_moving
+        byte isMoving = reader.ReadByte();
+
+        // 1 byte: is_statechange
+        byte isStateChange = reader.ReadByte();
+
+        // 1 byte: is_flanking
+        byte isFlanking = reader.ReadByte();
+
+        // 1 byte: is_flanking
+        byte isShields = reader.ReadByte();
+        // 1 byte: is_flanking
+        byte isOffcycle = reader.ReadByte();
+        // 1 bytes: garbage
+        _ = reader.ReadByte();
+
+        //save
+        // Add combat
+        return new CombatItem(time, srcAgent, dstAgent, value, buffDmg, overstackValue, skillID,
+            srcInstid, dstInstid, srcMasterInstid, 0, iff, buff, result, isActivation, isBuffRemove,
+            isNinety, isFifty, isMoving, isStateChange, isFlanking, isShields, isOffcycle, 0, _evtcVersion);
+    }
+
+    /// <summary>
+    /// Reads the <see cref="CombatItem"/> binary.<br></br>
+    /// Current version when header[12] == 1.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <returns><see cref="CombatItem"/></returns>
+    private CombatItem ReadCombatItemRev1(BinaryReader reader)
+    {
+        // 8 bytes: time
+        long time = reader.ReadInt64();
+
+        // 8 bytes: src_agent
+        ulong srcAgent = reader.ReadUInt64();
+
+        // 8 bytes: dst_agent
+        ulong dstAgent = reader.ReadUInt64();
+
+        // 4 bytes: value
+        int value = reader.ReadInt32();
+
+        // 4 bytes: buff_dmg
+        int buffDmg = reader.ReadInt32();
+
+        // 4 bytes: overstack_value
+        uint overstackValue = reader.ReadUInt32();
+
+        // 4 bytes: skill_id
+        uint skillID = reader.ReadUInt32();
+
+        // 2 bytes: src_instid
+        ushort srcInstid = reader.ReadUInt16();
+
+        // 2 bytes: dst_instid
+        ushort dstInstid = reader.ReadUInt16();
+
+        // 2 bytes: src_master_instid
+        ushort srcMasterInstid = reader.ReadUInt16();
+        // 2 bytes: dst_master_instid
+        ushort dstmasterInstid = reader.ReadUInt16();
+
+        // 1 byte: iff
+        byte iff = reader.ReadByte();
+
+        // 1 byte: buff
+        byte buff = reader.ReadByte();
+
+        // 1 byte: result
+        byte result = reader.ReadByte();
+
+        // 1 byte: is_activation
+        byte isActivation = reader.ReadByte();
+
+        // 1 byte: is_buffremove
+        byte isBuffRemove = reader.ReadByte();
+
+        // 1 byte: is_ninety
+        byte isNinety = reader.ReadByte();
+
+        // 1 byte: is_fifty
+        byte isFifty = reader.ReadByte();
+
+        // 1 byte: is_moving
+        byte isMoving = reader.ReadByte();
+
+        // 1 byte: is_statechange
+        byte isStateChange = reader.ReadByte();
+
+        // 1 byte: is_flanking
+        byte isFlanking = reader.ReadByte();
+
+        // 1 byte: is_flanking
+        byte isShields = reader.ReadByte();
+        // 1 byte: is_flanking
+        byte isOffcycle = reader.ReadByte();
+        // 4 bytes: pad
+        uint pad = reader.ReadUInt32();
+
+        //save
+        // Add combat
+        return new CombatItem(time, srcAgent, dstAgent, value, buffDmg, overstackValue, skillID,
+            srcInstid, dstInstid, srcMasterInstid, dstmasterInstid, iff, buff, result, isActivation, isBuffRemove,
+            isNinety, isFifty, isMoving, isStateChange, isFlanking, isShields, isOffcycle, pad, _evtcVersion);
+    }
+
+    /// <summary>
+    /// Parses combat related data.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <exception cref="EvtcCombatEventException"></exception>
+    /// <exception cref="TooShortException"></exception>
+    /// <exception cref="TooLongException"></exception>
+    private void ParseCombatList(BinaryReader reader, ParserController operation)
+    {
+        using var _t = new AutoTrace("Combat List");
+        // 64 bytes: each combat
+        long cbtItemCount = (reader.BaseStream.Length - reader.BaseStream.Position) / 64;
+        operation.UpdateProgressWithCancellationCheck("Parsing: Combat Event Count " + cbtItemCount);
+        int discardedCbtEvents = 0;
+        bool keepOnlyExtensionEvents = false;
+        int stopAtLogEndEvent = _id == (int)TargetID.Instance ? 1 : -1;
+        var extensionEvents = new List<CombatItem>(5000);
+        int currentMapID = -1;
+        for (long i = 0; i < cbtItemCount; i++)
+        {
+            CombatItem combatItem = _revision > 0 ? ReadCombatItemRev1(reader) : ReadCombatItem(reader);
+            if (stopAtLogEndEvent == -1 &&
+                combatItem.IsStateChange == StateChange.SquadCombatStart)
+            {
+                // Trigger ID is map ID
+                if (SquadCombatStartEvent.GetLogType(combatItem) == LogType.Map)
+                {
+                    _id = (int)TargetID.Instance;
+                    operation.UpdateProgressWithCancellationCheck("Parsing: Correcting boss log to instance log");
+                    stopAtLogEndEvent = 1;
+                }
+                else
+                {
+                    stopAtLogEndEvent = 0;
+                }
+            }
+            if (combatItem.IsStateChange == StateChange.MapID)
+            {
+                _mapID = MapIDEvent.GetMapID(combatItem);
+                currentMapID = _mapID;
+            }
+            if (combatItem.IsStateChange == StateChange.MapChange)
+            {
+                currentMapID = MapIDEvent.GetMapID(combatItem);
+            }
+            if (combatItem.IsStateChange == StateChange.AgentChange)
+            {
+                ArcDPSAgentRedirection[combatItem.SrcAgent] = combatItem.DstAgent;
+            }
+            if (!IsValid(combatItem, currentMapID, operation) || (keepOnlyExtensionEvents && !combatItem.IsExtension))
+            {
+                discardedCbtEvents++;
+                continue;
+            }
+
+            if (combatItem.IsStateChange == StateChange.ArcBuild)
+            {
+                _evtcVersion.SetFromCombatItem(combatItem);
+                continue;
+            }
+
+            if (combatItem.HasTime())
+            {
+                if (_logStartOffset == long.MinValue)
+                {
+                    _logStartOffset = combatItem.Time;
+                }
+                combatItem.OverrideTime(combatItem.Time - _logStartOffset);
+                _logEndTime = combatItem.Time;
+            }
+
+            _combatItems.Add(combatItem);
+            if (combatItem.IsExtension)
+            {
+                extensionEvents.Add(combatItem);
+            }
+
+            if (combatItem.IsStateChange == StateChange.GWBuild && GW2BuildEvent.GetBuild(combatItem) != 0)
+            {
+                _gw2Build = GW2BuildEvent.GetBuild(combatItem);
+            }
+
+            if (combatItem.IsStateChange == StateChange.SquadCombatEnd && stopAtLogEndEvent <= 0)
+            {
+                keepOnlyExtensionEvents = true;
+            }
+        }
+        extensionEvents.ForEach(x =>
+        {
+            if (x.HasTime(_enabledExtensions))
+            {
+                x.OverrideTime(x.Time - _logStartOffset);
+            }
+        });
+        operation.UpdateProgressWithCancellationCheck("Parsing: Combat Event Discarded " + discardedCbtEvents);
+        if (_combatItems.Count == 0)
+        {
+            throw new EvtcCombatEventException("No combat events found");
+        }
+        if (_logEndTime < _parserSettings.TooShortLimit)
+        {
+            throw new TooShortException(_logEndTime, _parserSettings.TooShortLimit);
+        }
+        // 24 hours
+        if (_logEndTime > 86400000)
+        {
+            throw new TooLongException();
+        }
+    }
+
+    /// <summary>
+    /// Checks if the <see cref="CombatItem"/> contains valid data and should be used.
+    /// </summary>
+    /// <param name="combatItem"><see cref="CombatItem"/> data to validate.</param>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <returns>Returns <see langword="true"/> if the <see cref="CombatItem"/> is valid, otherwise <see langword="false"/>.</returns>
+    private bool IsValid(CombatItem combatItem, long currentMapID, ParserController operation)
+    {
+        if (!IsSupportedStateChange(combatItem.IsStateChange))
+        {
+            return false;
+        }
+        if (_mapID != -1 && _mapID != currentMapID && (combatItem.SrcIsAgent(_enabledExtensions) || combatItem.DstIsAgent(_enabledExtensions)))
+        {
+            // ignore events linked to an agent that are not on current map
+            return false;
+        }
+        if ((_id == (int)TargetID.Instance) && !IsSupportedStateChangeForInstanceLogs(combatItem.IsStateChange))
+        {
+            return false;
+        }
+        if (combatItem.IsStateChange == StateChange.HealthUpdate && HealthUpdateEvent.GetHealthPercent(combatItem) > 200)
+        {
+            // DstAgent should be target health % times 100, values higher than 10000 are unlikely. 
+            // If it is more than 200% health ignore this record
+            return false;
+        }
+        if (combatItem.IsExtension)
+        {
+            if (!_parserSettings.ParseExtensions)
+            {
+                return false;
+            }
+            // Generic versioning check, we expect that the first event that'll be sent by an addon will always be meta data
+            // Can't be ExtensionCombat
+            if (combatItem.Pad == 0 && combatItem.IsStateChange == StateChange.Extension)
+            {
+                ExtensionHandler? handler = ExtensionHelper.GetExtensionHandler(combatItem);
+                if (handler != null)
+                {
+                    _enabledExtensions[handler.Signature] = handler;
+                    operation.UpdateProgressWithCancellationCheck("Parsing: Encountered supported extension " + handler.Name + " on " + handler.Version);
+                }
+                // No need to keep that event, it'll be immediately parsed by the handler
+                return false;
+            }
+            else
+            {
+                return _enabledExtensions.ContainsKey(combatItem.Pad);
+            }
+        }
+        if (combatItem.SrcInstid == 0 && combatItem.DstAgent == 0 && combatItem.SrcAgent == 0 && combatItem.DstInstid == 0 && combatItem.IFF == IFF.Unknown && !combatItem.IsEffect && !combatItem.IsMissile)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Sets an Agent InstID if not already set and updates its aware times.
+    /// </summary>
+    /// <param name="ag">Agent to update.</param>
+    /// <param name="logTime">Time to set as aware time.</param>
+    /// <param name="instid"></param>
+    /// <param name="checkInstid"></param>
+    /// <returns></returns>
+    private static bool UpdateAgentData(AgentItem ag, long logTime, ushort instid, bool checkInstid)
+    {
+        if (instid != 0)
+        {
+            if (ag.InstID == 0)
+            {
+                ag.SetInstid(instid);
+            }
+            else if (checkInstid && ag.InstID != instid)
+            {
+                return false;
+            }
         }
 
-        /// <summary>
-        /// Find the master of a minion.
-        /// </summary>
-        /// <param name="logTime">Log time.</param>
-        /// <param name="masterInstid">Id of the master.</param>
-        /// <param name="minionAgent"></param>
-        private void FindAgentMaster(long logTime, ushort masterInstid, ulong minionAgent)
+        if (ag.LastAware == long.MaxValue)
         {
-            AgentItem master = _agentData.GetAgentByInstID(masterInstid, logTime);
-            if (master != _unknownAgent)
+            ag.OverrideAwareTimes(logTime, logTime);
+        }
+        else
+        {
+            ag.OverrideAwareTimes(Math.Min(ag.FirstAware, logTime), Math.Max(ag.LastAware, logTime));
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Find the master of a minion.
+    /// </summary>
+    /// <param name="logTime">Log time.</param>
+    /// <param name="masterInstid">SpeciesID of the master.</param>
+    /// <param name="minionAgent"></param>
+    private void FindAgentMaster(long logTime, ushort masterInstid, ulong minionAgent)
+    {
+        AgentItem master = _agentData.GetAgentByInstID(masterInstid, logTime);
+        if (!master.IsUnknown)
+        {
+            AgentItem minion = _agentData.GetAgent(minionAgent, logTime);
+            if (!minion.IsUnknown)
             {
-                AgentItem minion = _agentData.GetAgent(minionAgent, logTime);
-                if (minion != _unknownAgent && minion.Master == null)
-                {
-                    minion.SetMaster(master);
-                }
+                minion.SetMaster(master);
             }
         }
+    }
 
-        /// <summary>
-        /// Complete the players agent data.
-        /// </summary>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        private void CompletePlayers(ParserController operation)
+    /// <summary>
+    /// Complete the players agent data.
+    /// </summary>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    private void CompletePlayers(ParserController operation)
+    {
+        //Create squad players
+        var noSquads = _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.Instanced5 || _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.sPvP;
+        IReadOnlyList<AgentItem> playerAgentList = _agentData.GetAgentByType(AgentItem.AgentType.Player);
+        foreach (AgentItem playerAgent in playerAgentList)
         {
-            var toRemove = new HashSet<AgentItem>();
-            //Handle squad players
-            IReadOnlyList<AgentItem> playerAgentList = _agentData.GetAgentByType(AgentItem.AgentType.Player);
-            foreach (AgentItem playerAgent in playerAgentList)
+            if (playerAgent.InstID == 0 || playerAgent.LastAware == long.MaxValue)
             {
-                if (playerAgent.InstID == 0 || playerAgent.FirstAware == 0 || playerAgent.LastAware == long.MaxValue)
-                {
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Skipping invalid player");
-                    continue;
-                }
-                bool skip = false;
-                var player = new Player(playerAgent, _fightData.Logic.ParseMode == FightLogic.ParseModeEnum.Instanced5 || _fightData.Logic.ParseMode == FightLogic.ParseModeEnum.sPvP);
-                foreach (Player p in _playerList)
-                {
-                    if (p.Account == player.Account)// same player
-                    {
-                        if (p.Character == player.Character) // same character, can be fused
-                        {
-                            skip = true;
-                            toRemove.Add(playerAgent);
-                            operation.UpdateProgressWithCancellationCheck("Parsing: Merging player " + player.AgentItem.InstID);
-                            RedirectAllEvents(_combatItems, _enabledExtensions, _agentData, player.AgentItem, p.AgentItem);
-                            p.AgentItem.OverrideAwareTimes(Math.Min(p.AgentItem.FirstAware, player.AgentItem.FirstAware), Math.Max(p.AgentItem.LastAware, player.AgentItem.LastAware));
-                            break;
-                        }
-                    }
-                }
-                if (!skip)
-                {
-                    _playerList.Add(player);
-                }
+                operation.UpdateProgressWithCancellationCheck("Parsing: Skipping invalid player");
+                continue;
             }
-            if (_playerList.Exists(x => x.Group == 0))
+            var player = new Player(playerAgent, noSquads);
+            _playerList.Add(player);
+        }
+        if (_playerList.Count == 0)
+        {
+            throw new EvtcAgentException("No valid players");
+        }
+        if (_playerList.Exists(x => x.Group == 0))
+        {
+            _playerList.ForEach(x => x.MakeSquadless());
+        }
+        _playerList = _playerList.OrderBy(a => a.Character).ToList();
+        if (_parserSettings.AnonymousPlayers)
+        {
+            operation.UpdateProgressWithCancellationCheck("Parsing: Anonymous players");
+            for (int i = 0; i < _playerList.Count; i++)
             {
-                _playerList.ForEach(x => x.MakeSquadless());
+                _playerList[i].Anonymize(i + 1);
             }
-            uint minToughness = _playerList.Min(x => x.Toughness);
-            if (minToughness > 0)
+            var allPlayerAgents = _agentData.GetAgentByType(AgentItem.AgentType.Player).ToList();
+            allPlayerAgents.AddRange(_agentData.GetAgentByType(AgentItem.AgentType.NonSquadPlayer));
+            var playerAgents = new HashSet<AgentItem>(_playerList.Select(x => x.AgentItem));
+            playerAgents.UnionWith(playerAgents.Select(x => x.EnglobingAgentItem).ToList());
+            int playerOffset = _playerList.Count + 1;
+            foreach (AgentItem playerAgent in allPlayerAgents.OrderBy(x => x.InstID))
             {
-                operation.UpdateProgressWithCancellationCheck("Parsing: Adjusting player toughness scores");
-                uint maxToughness = _playerList.Max(x => x.Toughness);
-                foreach (Player p in _playerList)
+                if (!playerAgents.Contains(playerAgent))
                 {
-                    p.AgentItem.OverrideToughness((ushort)Math.Round(10.0 * (p.AgentItem.Toughness - minToughness) / Math.Max(1.0, maxToughness - minToughness)));
-                }
-            }
-            // Handle non squad players
-            IReadOnlyList<AgentItem> nonSquadPlayerAgents = _agentData.GetAgentByType(AgentItem.AgentType.NonSquadPlayer);
-            if (nonSquadPlayerAgents.Any())
-            {
-                var encounteredNonSquadPlayerInstIDs = new HashSet<ushort>();
-                var teamChangeDict = _combatItems.Where(x => x.IsStateChange == ArcDPSEnums.StateChange.TeamChange).GroupBy(x => x.SrcAgent).ToDictionary(x => x.Key, x => x.ToList());
-                //
-                IReadOnlyList<AgentItem> squadPlayers = _agentData.GetAgentByType(AgentItem.AgentType.Player);
-                ulong greenTeam = ulong.MaxValue;
-                var greenTeams = new List<ulong>();
-                foreach (AgentItem a in squadPlayers)
-                {
-                    if (teamChangeDict.TryGetValue(a.Agent, out List<CombatItem> teamChangeList))
+                    if (playerAgent.Type == AgentItem.AgentType.Player)
                     {
-                        greenTeams.AddRange(teamChangeList.Where(x => x.SrcMatchesAgent(a)).Select(x => TeamChangeEvent.GetTeamIDInto(x)));
-                        if (_evtcVersion.Build > ArcDPSEnums.ArcDPSBuilds.TeamChangeOnDespawn)
-                        {
-                            greenTeams.AddRange(teamChangeList.Where(x => x.SrcMatchesAgent(a)).Select(x => TeamChangeEvent.GetTeamIDComingFrom(x)));
-                        }
-                    }
-                }
-                greenTeams.RemoveAll(x => x == 0);
-                if (greenTeams.Count != 0)
-                {
-                    greenTeam = greenTeams.GroupBy(x => x).OrderByDescending(x => x.Count()).Select(x => x.Key).First();
-                }
-                var playersToMerge = new Dictionary<AgentItem, AgentItem>();
-                var agentsToPlayersToMerge = new Dictionary<ulong, AgentItem>();
-
-                //
-                var uniqueNonSquadPlayers = new List<AgentItem>();
-                foreach (AgentItem nonSquadPlayer in nonSquadPlayerAgents)
-                {
-                    if (teamChangeDict.TryGetValue(nonSquadPlayer.Agent, out List<CombatItem> teamChangeList))
-                    {
-                        var team = teamChangeList.Where(x => x.SrcMatchesAgent(nonSquadPlayer)).Select(x => TeamChangeEvent.GetTeamIDInto(x)).ToList();
-                        if (_evtcVersion.Build > ArcDPSEnums.ArcDPSBuilds.TeamChangeOnDespawn)
-                        {
-                            team.AddRange(teamChangeList.Where(x => x.SrcMatchesAgent(nonSquadPlayer)).Select(x => TeamChangeEvent.GetTeamIDComingFrom(x)));
-                        }
-                        team.RemoveAll(x => x == 0);
-                        nonSquadPlayer.OverrideIsNotInSquadFriendlyPlayer(team.Any(x => x == greenTeam));
-                    }
-                    if (!encounteredNonSquadPlayerInstIDs.Contains(nonSquadPlayer.InstID))
-                    {
-                        uniqueNonSquadPlayers.Add(nonSquadPlayer);
-                        encounteredNonSquadPlayerInstIDs.Add(nonSquadPlayer.InstID);
+                        new Player(playerAgent, noSquads).Anonymize(playerOffset++);
                     }
                     else
                     {
-                        // we merge
-                        AgentItem mainPlayer = uniqueNonSquadPlayers.FirstOrDefault(x => x.InstID == nonSquadPlayer.InstID);
-                        playersToMerge[nonSquadPlayer] = mainPlayer;
-                        agentsToPlayersToMerge[nonSquadPlayer.Agent] = nonSquadPlayer;
+                        new PlayerNonSquad(playerAgent).Anonymize(playerOffset++);
                     }
                 }
-                if (playersToMerge.Count != 0)
+                foreach (var regrouped in playerAgent.Regrouped)
                 {
-                    foreach (CombatItem c in _combatItems)
+                    if (!playerAgents.Contains(regrouped.Merged))
                     {
-                        if (agentsToPlayersToMerge.TryGetValue(c.SrcAgent, out AgentItem nonSquadPlayer) && c.SrcMatchesAgent(nonSquadPlayer, _enabledExtensions))
+                        if (regrouped.Merged.Type == AgentItem.AgentType.Player)
                         {
-                            AgentItem mainPlayer = playersToMerge[nonSquadPlayer];
-                            c.OverrideSrcAgent(mainPlayer.Agent);
+                            new Player(regrouped.Merged, noSquads).Anonymize(playerOffset++);
                         }
-                        if (agentsToPlayersToMerge.TryGetValue(c.DstAgent, out nonSquadPlayer) && c.DstMatchesAgent(nonSquadPlayer, _enabledExtensions))
+                        else
                         {
-                            AgentItem mainPlayer = playersToMerge[nonSquadPlayer];
-                            c.OverrideDstAgent(mainPlayer.Agent);
+                            new PlayerNonSquad(regrouped.Merged).Anonymize(playerOffset++);
                         }
-                    }
-                    foreach (KeyValuePair<AgentItem, AgentItem> pair in playersToMerge)
-                    {
-                        AgentItem nonSquadPlayer = pair.Key;
-                        AgentItem mainPlayer = pair.Value;
-                        _agentData.SwapMasters(nonSquadPlayer, mainPlayer);
-                        mainPlayer.OverrideAwareTimes(Math.Min(nonSquadPlayer.FirstAware, mainPlayer.FirstAware), Math.Max(nonSquadPlayer.LastAware, mainPlayer.LastAware));
-                        toRemove.Add(nonSquadPlayer);
                     }
                 }
-            }
-            //
-            if (toRemove.Count != 0)
-            {
-                _agentData.RemoveAllFrom(toRemove);
+                foreach (var merge in playerAgent.Merges)
+                {
+                    if (!playerAgents.Contains(merge.Merged))
+                    {
+                        if (merge.Merged.Type == AgentItem.AgentType.Player)
+                        {
+                            new Player(merge.Merged, noSquads).Anonymize(playerOffset++);
+                        }
+                        else
+                        {
+                            new PlayerNonSquad(merge.Merged).Anonymize(playerOffset++);
+                        }
+                    }
+                }
             }
         }
-
-        /// <summary>
-        /// Complete the agents data.
-        /// </summary>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <exception cref="InvalidDataException"></exception>
-        /// <exception cref="EvtcAgentException"></exception>
-        private void CompleteAgents(ParserController operation)
+        uint minToughness = _playerList.Min(x => x.Toughness);
+        if (minToughness > 0)
         {
-            var allAgentValues = new HashSet<ulong>(_combatItems.Where(x => x.SrcIsAgent()).Select(x => x.SrcAgent));
-            allAgentValues.UnionWith(_combatItems.Where(x => x.DstIsAgent()).Select(x => x.DstAgent));
-            allAgentValues.ExceptWith(_allAgentsList.Select(x => x.Agent));
-            allAgentValues.Remove(0);
-            operation.UpdateProgressWithCancellationCheck("Parsing: Creating " + allAgentValues.Count + " missing agents");
-            foreach (ulong missingAgentValue in allAgentValues)
-            {
-                _allAgentsList.Add(new AgentItem(missingAgentValue, "UNKNOWN " + missingAgentValue, Spec.NPC, ArcDPSEnums.NonIdentifiedSpecies, AgentItem.AgentType.NPC, 0, 0, 0, 0, 0, 0));
-            }
-            var agentsLookup = _allAgentsList.GroupBy(x => x.Agent).ToDictionary(x => x.Key, x => x.ToList());
-            //var agentsLookup = _allAgentsList.ToDictionary(x => x.Agent);
-            // Set Agent instid, firstAware and lastAware
-            var invalidCombatItems = new HashSet<CombatItem>();
-            foreach (CombatItem c in _combatItems)
-            {
-                if (c.SrcIsAgent())
-                {
-                    if (agentsLookup.TryGetValue(c.SrcAgent, out List<AgentItem> agents))
-                    {
-                        bool updatedAgent = false;
-                        foreach (AgentItem agent in agents)
-                        {
-                            updatedAgent = UpdateAgentData(agent, c.Time, c.SrcInstid, agents.Count > 1);
-                            if (updatedAgent)
-                            {
-                                break;
-                            }
-                        }
-                        // this means that this particular combat item does not point to a proper agent
-                        if (!updatedAgent && c.SrcInstid != 0)
-                        {
-                            invalidCombatItems.Add(c);
-                        }
-                    }
-                }
-                if (c.DstIsAgent())
-                {
-                    if (agentsLookup.TryGetValue(c.DstAgent, out List<AgentItem> agents))
-                    {
-                        bool updatedAgent = false;
-                        foreach (AgentItem agent in agents)
-                        {
-                            updatedAgent = UpdateAgentData(agent, c.Time, c.DstInstid, agents.Count > 1);
-                            if (updatedAgent)
-                            {
-                                break;
-                            }
-                        }
-                        // this means that this particular combat item does not point to a proper agent
-                        if (!updatedAgent && c.DstInstid != 0)
-                        {
-                            invalidCombatItems.Add(c);
-                        }
-                    }
-                }
-            }
-            if (invalidCombatItems.Count != 0)
-            {
-#if DEBUG
-                throw new InvalidDataException("Must remove " + invalidCombatItems.Count + " invalid combat items");
-#else
-                operation.UpdateProgressWithCancellationCheck("Removing " + invalidCombatItems.Count + " invalid combat items");
-                _combatItems.RemoveAll(x => invalidCombatItems.Contains(x));
-#endif
-            }
-            _allAgentsList.RemoveAll(x => !(x.LastAware - x.FirstAware >= 0 && x.FirstAware != 0 && x.LastAware != long.MaxValue) && (x.Type != AgentItem.AgentType.Player && x.Type != AgentItem.AgentType.NonSquadPlayer));
-            operation.UpdateProgressWithCancellationCheck("Parsing: Keeping " + _allAgentsList.Count + " agents");
-            _agentData = new AgentData(_apiController, _allAgentsList);
-
-            if (_agentData.GetAgentByType(AgentItem.AgentType.Player).Count == 0)
-            {
-                throw new EvtcAgentException("No players found");
-            }
-
-            operation.UpdateProgressWithCancellationCheck("Parsing: Linking minions to their masters");
-            foreach (CombatItem c in _combatItems)
-            {
-                if (c.SrcIsAgent() && c.SrcMasterInstid != 0)
-                {
-                    FindAgentMaster(c.Time, c.SrcMasterInstid, c.SrcAgent);
-                }
-                if (c.DstIsAgent() && c.DstMasterInstid != 0)
-                {
-                    FindAgentMaster(c.Time, c.DstMasterInstid, c.DstAgent);
-                }
-            }
-
-            operation.UpdateProgressWithCancellationCheck("Parsing: Adjusting minion names");
-            foreach (AgentItem agent in _agentData.GetAgentByType(AgentItem.AgentType.NPC))
-            {
-                if (agent.Master != null)
-                {
-                    ProfHelper.AdjustMinionName(agent);
-                }
-            }
-
-            // Adjust extension events if needed
-            if (_enabledExtensions.Count != 0)
-            {
-                operation.UpdateProgressWithCancellationCheck("Parsing: Adjusting extension events");
-                foreach (CombatItem combatItem in _combatItems)
-                {
-                    if (combatItem.IsExtension)
-                    {
-                        if (_enabledExtensions.TryGetValue(combatItem.Pad, out AbstractExtensionHandler handler))
-                        {
-                            handler.AdjustCombatEvent(combatItem, _agentData);
-                        }
-                    }
-
-                }
-            }
-
-            _fightData = new FightData(_id, _agentData, _combatItems, _parserSettings, _logStartTime, _logEndTime, _evtcVersion);
-
-            operation.UpdateProgressWithCancellationCheck("Parsing: Creating players");
-            CompletePlayers(operation);
-        }
-
-        /// <summary>
-        /// Applies the EncounterStart offset to all time based related information (CombatEvent Time, First and Last Awares, etc.).
-        /// </summary>
-        private void OffsetEvtcData()
-        {
-            long offset = _fightData.Logic.GetFightOffset(_evtcVersion, _fightData, _agentData, _combatItems);
-            // apply offset to everything
-            foreach (CombatItem c in _combatItems)
-            {
-                if (c.HasTime(_enabledExtensions))
-                {
-                    c.OverrideTime(c.Time - offset);
-                }
-                if (c.IsStateChange == ArcDPSEnums.StateChange.InstanceStart)
-                {
-                    c.OverrideSrcAgent((ulong)(offset - (long)c.SrcAgent));
-                }
-            }
-            foreach (AgentItem a in _allAgentsList)
-            {
-                a.OverrideAwareTimes(a.FirstAware - offset, a.LastAware - offset);
-            }
-            //
-            _fightData.ApplyOffset(offset);
-        }
-
-        /// <summary>
-        /// Pre process evtc data for EI.
-        /// </summary>
-        /// <param name="operation">Operation object bound to the UI.</param>
-        /// <exception cref="EvtcAgentException"></exception>
-        /// <exception cref="MissingKeyActorsException"></exception>
-        private void PreProcessEvtcData(ParserController operation)
-        {
-            operation.UpdateProgressWithCancellationCheck("Parsing: Offseting time");
-            OffsetEvtcData();
-            operation.UpdateProgressWithCancellationCheck("Parsing: Offset of " + (_fightData.FightStartOffset) + " ms added");
-            operation.UpdateProgressWithCancellationCheck("Parsing: Adding environment agent");
-            _agentData.AddCustomNPCAgent(_fightData.LogStart, _fightData.LogEnd, "Environment", Spec.NPC, ArcDPSEnums.TrashID.Environment, true);
-            // Removal of players present before the fight but not during
-            var agentsToRemove = new HashSet<AgentItem>();
+            operation.UpdateProgressWithCancellationCheck("Parsing: Adjusting player toughness scores");
+            uint maxToughness = _playerList.Max(x => x.Toughness);
             foreach (Player p in _playerList)
             {
-                if (p.LastAware < 0)
-                {
-                    agentsToRemove.Add(p.AgentItem);
-                    operation.UpdateProgressWithCancellationCheck("Parsing: Removing player from player list (gone before fight start)");
-                }
+                p.AgentItem.OverrideToughness((ushort)Math.Round(10.0 * (p.AgentItem.Toughness - minToughness) / Math.Max(1.0, maxToughness - minToughness)));
             }
-            //
-            if (_fightData.Logic.ParseMode == FightLogic.ParseModeEnum.Instanced10)
+        }
+    }
+
+    /// <summary>
+    /// Complete the agents data.
+    /// </summary>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <exception cref="InvalidDataException"></exception>
+    /// <exception cref="EvtcAgentException"></exception>
+    private void CompleteAgents(ParserController operation)
+    {
+        using var _t = new AutoTrace("Linking Agents to list");
+        var allAgentValues = new HashSet<ulong>(
+            _combatItems.Where(x => x.SrcIsAgent())
+            .Select(x => x.SrcAgent)
+            .Concat(_combatItems.Where(x => x.DstIsAgent())
+                    .Select(x => x.DstAgent)
+                    )
+        );
+        allAgentValues.ExceptWith(_allAgentsList.Select(x => x.Agent));
+        allAgentValues.Remove(0);
+        operation.UpdateProgressWithCancellationCheck("Parsing: Creating " + allAgentValues.Count + " missing agents");
+        foreach (ulong missingAgentValue in allAgentValues)
+        {
+            _allAgentsList.Add(new AgentItem(missingAgentValue, "UNKNOWN " + missingAgentValue, Spec.NPC, NonIdentifiedSpecies, AgentItem.AgentType.StableSpecies, 0, 0, 0, 0, 0, 0));
+        }
+        var agentsLookup = _allAgentsList.GroupBy(x => x.Agent).ToDictionary(x => x.Key, x =>
+        {
+            var res = x.ToList();
+            res.SortByFirstAware();
+            return res;
+        });
+        //var agentsLookup = _allAgentsList.ToDictionary(x => x.Agent);
+        // Set Agent instid, firstAware and lastAware
+        var invalidSrcCombatItems = new HashSet<CombatItem>();
+        var invalidDstCombatItems = new HashSet<CombatItem>();
+        var orphanedSrcInstidCombatItems = new List<CombatItem>();
+        var orphanedDstInstidCombatItems = new List<CombatItem>();
+        foreach (CombatItem c in _combatItems)
+        {
+            if (c.SrcIsAgent())
             {
-                foreach (Player p in _playerList)
+                if (ArcDPSAgentRedirection.TryGetValue(c.SrcAgent, out ulong newAgent))
                 {
-                    // check for players who have spawned after fight start
-                    if (p.FirstAware > 100)
+                    c.OverrideSrcAgent(newAgent);
+                }
+                if (agentsLookup.TryGetValue(c.SrcAgent, out var agents))
+                {
+                    bool updatedAgent = false;
+                    foreach (AgentItem agent in agents)
                     {
-                        // look for a spawn event close to first aware
-                        CombatItem spawnEvent = _combatItems.FirstOrDefault(x => x.IsStateChange == ArcDPSEnums.StateChange.Spawn
-                            && x.SrcMatchesAgent(p.AgentItem) && x.Time <= p.FirstAware + 500);
-                        if (spawnEvent != null)
+                        updatedAgent = UpdateAgentData(agent, c.Time, c.SrcInstid, agents.Count > 1);
+                        if (updatedAgent)
                         {
-                            var damageEvents = _combatItems.Where(x => x.IsDamage() && x.SrcMatchesAgent(p.AgentItem)).ToList();
-                            if (damageEvents.Count == 0)
-                            {
-                                agentsToRemove.Add(p.AgentItem);
-                                operation.UpdateProgressWithCancellationCheck("Parsing: Removing player from player list (spawned after fight start in 10 men content)");
-                            }
+                            break;
                         }
                     }
+                    // this means that this particular combat item does not point to a proper agent
+                    if (!updatedAgent && c.SrcInstid != 0)
+                    {
+                        invalidSrcCombatItems.Add(c);
+                    }
+                }
+                else if (c.SrcInstid > 0)
+                {
+                    orphanedSrcInstidCombatItems.Add(c);
                 }
             }
-            _playerList.RemoveAll(x => agentsToRemove.Contains(x.AgentItem));
-            if (_playerList.Count == 0)
+            if (c.DstIsAgent())
             {
-                throw new EvtcAgentException("No valid players");
-            }
-            //
-            operation.UpdateProgressWithCancellationCheck("Parsing: Encounter specific processing");
-            _fightData.Logic.EIEvtcParse(_gw2Build, _evtcVersion, _fightData, _agentData, _combatItems, _enabledExtensions);
-            if (!_fightData.Logic.Targets.Any())
-            {
-                throw new MissingKeyActorsException("No Targets found");
-            }
-            operation.UpdateProgressWithCancellationCheck("Parsing: Player count: " + _playerList.Count);
-            operation.UpdateProgressWithCancellationCheck("Parsing: Friendlies count: " + _fightData.Logic.NonPlayerFriendlies.Count);
-            operation.UpdateProgressWithCancellationCheck("Parsing: Targets count: " + _fightData.Logic.Targets.Count);
-            operation.UpdateProgressWithCancellationCheck("Parsing: Trash Mobs count: " + _fightData.Logic.TrashMobs.Count);
-        }
-
-        /// <summary>
-        /// Read bytes from the <paramref name="reader"/> and convert them to <see cref="string"/>.
-        /// </summary>
-        /// <param name="reader">Reads binary values from the evtc.</param>
-        /// <param name="length">Length of bytes to read.</param>
-        /// <param name="nullTerminated"></param>
-        /// <returns><see cref="string"/> in <see cref="Encoding.UTF8"/>.</returns>
-        private static string GetString(BinaryReader reader, int length, bool nullTerminated = true)
-        {
-            byte[] bytes = reader.ReadBytes(length);
-            if (nullTerminated)
-            {
-                for (int i = 0; i < length; ++i)
+                if (ArcDPSAgentRedirection.TryGetValue(c.DstAgent, out ulong newAgent))
                 {
-                    if (bytes[i] == 0)
+                    c.OverrideDstAgent(newAgent);
+                }
+                if (agentsLookup.TryGetValue(c.DstAgent, out var agents))
+                {
+                    bool updatedAgent = false;
+                    foreach (AgentItem agent in agents)
                     {
-                        length = i;
-                        break;
+                        updatedAgent = UpdateAgentData(agent, c.Time, c.DstInstid, agents.Count > 1);
+                        if (updatedAgent)
+                        {
+                            break;
+                        }
+                    }
+                    // this means that this particular combat item does not point to a proper agent
+                    if (!updatedAgent && c.DstInstid != 0)
+                    {
+                        invalidDstCombatItems.Add(c);
+                    }
+                }
+                else if (c.DstInstid > 0)
+                {
+                    orphanedDstInstidCombatItems.Add(c);
+                }
+            }
+        }
+        if (orphanedSrcInstidCombatItems.Count > 0 || orphanedDstInstidCombatItems.Count > 0)
+        {
+            var agentsInstidLookup = _allAgentsList.GroupBy(x => x.InstID).ToDictionary(x => x.Key, x =>
+            {
+                var res = x.ToList();
+                res.SortByFirstAware();
+                return res;
+            });
+            foreach (var c in orphanedSrcInstidCombatItems)
+            {
+                if (agentsInstidLookup.TryGetValue(c.SrcInstid, out var candidates))
+                {
+                    var candidate = candidates.FirstOrDefault(x => x.InAwareTimes(c.Time - 300) || x.InAwareTimes(c.Time + 300));
+                    if (candidate != null)
+                    {
+                        c.OverrideSrcAgent(candidate.Agent);
+                        UpdateAgentData(candidate, c.Time, 0, false);
                     }
                 }
             }
-            return Encoding.UTF8.GetString(bytes, 0, length);
+            foreach (var c in orphanedDstInstidCombatItems)
+            {
+                if (agentsInstidLookup.TryGetValue(c.DstInstid, out var candidates))
+                {
+                    var candidate = candidates.FirstOrDefault(x => x.InAwareTimes(c.Time - 300) || x.InAwareTimes(c.Time + 300));
+                    if (candidate != null)
+                    {
+                        c.OverrideDstAgent(candidate.Agent);
+                        UpdateAgentData(candidate, c.Time, 0, false);
+                    }
+                }
+            }
         }
-
-        /// <summary>
-        /// Creates a <see cref="BinaryReader"/> of the <see cref="Stream"/> source.
-        /// </summary>
-        /// <param name="stream"></param>
-        /// <returns>Initialized <see cref="BinaryReader"/> in <see cref="UTF8Encoding"/>.</returns>
-        private static BinaryReader CreateReader(Stream stream)
+        var invalidCombatItems = invalidSrcCombatItems.Intersect(invalidDstCombatItems).ToHashSet();
+        if (invalidCombatItems.Count != 0)
         {
-            return new BinaryReader(stream, new UTF8Encoding(), leaveOpen: true);
+#if DEBUG2
+            throw new InvalidDataException("Must remove " + invalidCombatItems.Count + " invalid combat items");
+#else
+            operation.UpdateProgressWithCancellationCheck("Removing " + invalidCombatItems.Count + " invalid combat items");
+            _combatItems.RemoveAll(invalidCombatItems.Contains);
+#endif
+        }
+        _allAgentsList.RemoveAll(x => !(x.LastAware != long.MaxValue && x.LastAware - x.FirstAware >= 0));
+        operation.UpdateProgressWithCancellationCheck("Parsing: Keeping " + _allAgentsList.Count + " agents");
+        _agentData = new AgentData(_apiController, _allAgentsList);
+        operation.UpdateProgressWithCancellationCheck("Parsing: Adding environment agent");
+        _agentData.AddCustomNPCAgent(0, _logEndTime, "Environment", Spec.Gadget, TargetID.Environment, true);
+
+        // Adjust extension events if needed
+        if (_enabledExtensions.Count != 0)
+        {
+            operation.UpdateProgressWithCancellationCheck("Parsing: Adjusting extension events");
+            foreach (CombatItem combatItem in _combatItems)
+            {
+                if (combatItem.IsExtension)
+                {
+                    if (_enabledExtensions.TryGetValue(combatItem.Pad, out var handler))
+                    {
+                        handler.AdjustCombatEvent(combatItem, _agentData);
+                    }
+                }
+
+            }
         }
 
-        #endregion Sub Parse Methods
+        operation.UpdateProgressWithCancellationCheck("Parsing: Linking minions to their masters");
+        foreach (CombatItem c in _combatItems)
+        {
+            if (c.SrcIsAgent() && c.SrcMasterInstid != 0)
+            {
+                FindAgentMaster(c.Time, c.SrcMasterInstid, c.SrcAgent);
+            }
+            if (c.DstIsAgent() && c.DstMasterInstid != 0)
+            {
+                FindAgentMaster(c.Time, c.DstMasterInstid, c.DstAgent);
+            }
+        }
 
+        operation.UpdateProgressWithCancellationCheck("Parsing: Regrouping Agents");
+        AgentManipulationHelper.RegroupSameAgentsAndDetermineTeams(_agentData, _combatItems, _evtcVersion, _enabledExtensions);
+
+        if (_agentData.GetAgentByType(AgentItem.AgentType.Player).Count == 0)
+        {
+            throw new EvtcAgentException("No players found");
+        }
+
+        operation.UpdateProgressWithCancellationCheck("Parsing: Adjusting minion names");
+        foreach (AgentItem agent in _agentData.GetAgentByType(AgentItem.AgentType.StableSpecies))
+        {
+            if (agent.Master != null)
+            {
+                ProfHelper.AdjustMinionName(agent);
+            }
+        }
+
+        _logData = new LogData(_id, _agentData, _combatItems, _parserSettings, _logStartOffset, _logEndTime, _evtcVersion);
+        bool splitByEnterCombatEvents = _logData.IsInstance || _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.WvW || _logData.Logic.ParseMode == LogLogic.LogLogic.ParseModeEnum.OpenWorld;
+        if (splitByEnterCombatEvents || _agentData.GetAgentByType(AgentItem.AgentType.Player).Any(x => x.Regrouped.Count > 0))
+        {
+            var enterAndExitCombatEvents = _combatItems.Where(x => x.IsStateChange == StateChange.EnterCombat || x.IsStateChange == StateChange.ExitCombat).ToList();
+            var enterCombatEvents = enterAndExitCombatEvents.Where(x => x.IsStateChange == StateChange.EnterCombat).Select(x => new EnterCombatEvent(x, _agentData)).GroupBy(x => x.Src).ToDictionary(x => x.Key, x => x.ToList());
+            var exitCombatEvents = enterAndExitCombatEvents.Where(x => x.IsStateChange == StateChange.ExitCombat).Select(x => new ExitCombatEvent(x, _agentData)).GroupBy(x => x.Src).ToDictionary(x => x.Key, x => x.ToList());
+            operation.UpdateProgressWithCancellationCheck("Parsing: Splitting players per spec and subgroup");
+            foreach (var playerAgentItem in _agentData.GetAgentByType(AgentItem.AgentType.Player))
+            {
+                if (enterCombatEvents.TryGetValue(playerAgentItem, out var enterCombatEventsForAgent))
+                {
+                    if (exitCombatEvents.TryGetValue(playerAgentItem, out var exitCombatEventsForAgent))
+                    {
+                        AgentManipulationHelper.SplitPlayerPerSpecSubgroupAndSwap(enterCombatEventsForAgent, exitCombatEventsForAgent, _enabledExtensions, _agentData, playerAgentItem, splitByEnterCombatEvents);
+                    }
+                    else
+                    {
+                        AgentManipulationHelper.SplitPlayerPerSpecSubgroupAndSwap(enterCombatEventsForAgent, [], _enabledExtensions, _agentData, playerAgentItem, splitByEnterCombatEvents);
+                    }
+                }
+                else
+                {
+                    AgentManipulationHelper.SplitPlayerPerSpecSubgroupAndSwap([], [], _enabledExtensions, _agentData, playerAgentItem, splitByEnterCombatEvents);
+                }
+            }
+        }
+
+
+        operation.UpdateProgressWithCancellationCheck("Parsing: Creating players");
+        CompletePlayers(operation);
     }
+
+    /// <summary>
+    /// Applies the EncounterStart offset to all time based related information (CombatEvent Time, First and Last Awares, etc.).
+    /// </summary>
+    private void OffsetEvtcData()
+    {
+        long offset = _logData.Logic.GetLogOffset(_evtcVersion, _logData, _agentData, _combatItems);
+        if (offset == 0)
+        {
+            return;
+        }
+        // apply offset to everything
+        foreach (CombatItem c in _combatItems)
+        {
+            if (c.HasTime(_enabledExtensions))
+            {
+                c.OverrideTime(c.Time - offset);
+            }
+        }
+        _agentData.ApplyOffset(offset);
+
+        _logData.ApplyOffset(offset);
+    }
+
+    /// <summary>
+    /// Pre process evtc data for EI.
+    /// </summary>
+    /// <param name="operation">Operation object bound to the UI.</param>
+    /// <exception cref="EvtcAgentException"></exception>
+    /// <exception cref="MissingKeyActorsException"></exception>
+    private void PreProcessEvtcData(ParserController operation)
+    {
+        using var _t = new AutoTrace("Prepare Data for output");
+        operation.UpdateProgressWithCancellationCheck("Parsing: Identifying critical agents");
+        _logData.Logic.HandleCriticalAgents(_evtcVersion, _logData, _agentData, _combatItems, _enabledExtensions);
+        operation.UpdateProgressWithCancellationCheck("Parsing: Offseting time");
+        OffsetEvtcData();
+        operation.UpdateProgressWithCancellationCheck("Parsing: Offset of " + (_logData.LogStartOffset) + " ms added");
+
+        operation.UpdateProgressWithCancellationCheck("Parsing: Encounter specific processing");
+        _logData.Logic.EIEvtcParse(_gw2Build, _evtcVersion, _logData, _agentData, _combatItems, _enabledExtensions);
+        if (!_logData.Logic.Targets.Any())
+        {
+            throw new MissingKeyActorsException("No Targets found");
+        }
+    }
+
+    /// <summary>
+    /// Read bytes from the <paramref name="reader"/> and convert them to <see cref="string"/>.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <param name="length">Length of bytes to read.</param>
+    /// <param name="nullTerminated">if set the string will become truncated at the first null byte</param>
+    /// <returns><see cref="string"/> in <see cref="Encoding.UTF8"/>.</returns>
+    private static string GetString(BinaryReader reader, int length, bool nullTerminated = true)
+    {
+        using var buffer = GetByteArrayPooled(reader, length, nullTerminated);
+        return Encoding.UTF8.GetString(buffer);
+    }
+
+    /// <summary>
+    /// Read bytes from the <paramref name="reader"/>.
+    /// The returned value should be disposed at some point to return it to the pool.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <param name="length">Length of bytes to read.</param>
+    /// <param name="nullTerminated">if set the array will become truncated at the first null byte</param>
+    private static ArrayPoolReturner<byte> GetByteArrayPooled(BinaryReader reader, int length, bool nullTerminated = true)
+    {
+        var buffer = new ArrayPoolReturner<byte>(length)
+        {
+            Length = 0 // reuse the length, don't need to remember the original
+        }; // TODO use own reader for direct access 
+        while (length-- > 0)
+        {
+            var b = buffer.Array[buffer.Length] = reader.ReadByte();
+            if (nullTerminated && b == 0) { break; }
+            buffer.Length++;
+        }
+        // consume remaining length
+        for (; length > sizeof(UInt64); length -= sizeof(UInt64))
+        {
+            reader.ReadUInt64();
+        }
+        while (length-- > 0)
+        {
+            reader.ReadByte();
+        }
+        return buffer;
+    }
+
+    /// <summary>
+    /// Read bytes from the <paramref name="reader"/> and individually cast them to chars.
+    /// The returned value should be disposed at some point to return it to the pool.
+    /// </summary>
+    /// <param name="reader">Reads binary values from the evtc.</param>
+    /// <param name="length">Length of bytes to read.</param>
+    /// <param name="nullTerminated">if set the array will become truncated at the first null byte</param>
+    private static ArrayPoolReturner<char> GetCharArrayPooled(BinaryReader reader, int length, bool nullTerminated = true)
+    {
+        var buffer = new ArrayPoolReturner<char>(length)
+        {
+            Length = 0 // reuse the length, don't need to remember the original
+        }; // TODO use own reader for direct access 
+        while (length-- > 0)
+        {
+            var b = reader.ReadByte();
+            buffer.Array[buffer.Length] = (char)b;
+            if (nullTerminated && b == 0) { break; }
+            buffer.Length++;
+        }
+        return buffer;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="BinaryReader"/> of the <see cref="Stream"/> source.
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <returns>Initialized <see cref="BinaryReader"/> in <see cref="UTF8Encoding"/>.</returns>
+    private static BinaryReader CreateReader(Stream stream)
+    {
+        return new BinaryReader(stream, new UTF8Encoding(), leaveOpen: true);
+    }
+
+    #endregion Sub Parse Methods
+
 }

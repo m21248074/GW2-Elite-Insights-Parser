@@ -1,6 +1,6 @@
 ﻿<template>
     <div>
-        <div>
+        <div v-show="hasConditions">
             <h3 class="text-center">症狀</h3>
             <buff-table-component :condition="true" :generation="true" :id="'condition-stats-target-table-' + target.id" :buffs="conditions"
                 :playerdata="condiData" :sums="condiSums" :playerindex="playerindex" :hidecustom="false"></buff-table-component>
@@ -10,25 +10,34 @@
             <buff-table-component :condition="false" :generation="false" :id="'boon-stats-target-table-' + target.id" :buffs="boons"
                 :playerdata="boonData" :sums="[]" :hidecustom="false"></buff-table-component>
         </div>
+        <div v-show="hasDebuffs" class="mt-2">
+            <h3 class="text-center">Debuffs</h3>
+            <buff-table-component :condition="false" :generation="false" :id="'debuff-stats-target-table-' + target.id" :buffs="targetDebuffs"
+                :playerdata="debuffData" :sums="[]" :hidecustom="false"></buff-table-component>
+        </div>
+        <div v-show="hasOthers" class="mt-2">
+            <h3 class="text-center">Others</h3>
+            <buff-table-component :condition="false" :generation="false" :id="'others-stats-target-table-' + target.id" :buffs="targetOtherBuffs"
+                :playerdata="otherBuffData" :sums="[]" :hidecustom="false"></buff-table-component>
+        </div>
     </div>
 </template>
 
 <script>
     Vue.component("buff-stats-target-component", {
-        props: ['phaseindex', 'playerindex', 'targetindex'],
-        mixins: [buffComponent],
+        props: ['playerindex', 'targetindex'],
+        mixins: [buffComponent, encounterPhaseComponent],
         template: `${template}`,
         data: function () {
             return {
                 cacheCondi: new Map(),
                 cacheCondiSums: new Map(),
-                cacheBoon: new Map()
+                cacheBoon: new Map(),
+                cacheDebuff: new Map(),
+                cacheOther: new Map(),
             };
         },
         computed: {
-            phase: function() {
-                return logData.phases[this.phaseindex];
-            },
             target: function() {
                 return logData.targets[this.targetindex];
             },
@@ -38,15 +47,29 @@
             hasBoons: function () {
                 return this.buffsStatContainer.targetsBoonUptimes[this.targetPhaseIndex].avg > 0;
             },
+            hasConditions: function () {
+                return this.buffsStatContainer.targetsCondiUptimes[this.targetPhaseIndex].avg > 0;
+            },
+            hasDebuffs: function () {
+                return this.targetDebuffs.length > 0;
+            },
+            hasOthers: function () {
+                return this.targetOtherBuffs.length > 0;
+            },
             condiData: function () {
-                if (this.cacheCondi.has(this.phaseindex)) {
-                    return this.cacheCondi.get(this.phaseindex);
+                const cacheID = this.encounterPhase.id + '-' + this.phaseindex;
+                if (this.cacheCondi.has(cacheID)) {
+                    return this.cacheCondi.get(cacheID);
                 }
+                const players = getActivePlayersForPhase(this.encounterPhase);
                 const res = [];
                 if (this.targetPhaseIndex === -1) {
-                    for (let i = 0; i < logData.players.length; i++) {
+                    for (let i = 0; i < players.length; i++) {
+                        if (!players[i]) {
+                            continue;
+                        }
                         res.push({
-                            player: logData.players[i],
+                            player: players[i],
                             data: {
                                 avg: 0.0,
                                 data: []
@@ -54,19 +77,23 @@
                         });
                     }
                 } else {
-                    for (let i = 0; i < logData.players.length; i++) {
+                    for (let i = 0; i < players.length; i++) {
+                        if (!players[i]) {
+                            continue;
+                        }
                         res.push({
-                            player: logData.players[i],
+                            player: players[i],
                             data: this.buffsStatContainer.targetsCondiStats[this.targetPhaseIndex][i]
                         });
                     }
                 }
-                this.cacheCondi.set(this.phaseindex, res);
+                this.cacheCondi.set(cacheID, res);
                 return res;
             },
             condiSums: function () {
-                if (this.cacheCondiSums.has(this.phaseindex)) {
-                    return this.cacheCondiSums.get(this.phaseindex);
+                const cacheID = this.phaseindex;
+                if (this.cacheCondiSums.has(cacheID)) {
+                    return this.cacheCondiSums.get(cacheID);
                 }
                 const res = [];
                 if (this.targetPhaseIndex === -1) {
@@ -85,12 +112,13 @@
                         data: targetData.data
                     });
                 }
-                this.cacheCondiSums.set(this.phaseindex, res);
+                this.cacheCondiSums.set(cacheID, res);
                 return res;
             },
             boonData: function () {
-                if (this.cacheBoon.has(this.phaseindex)) {
-                    return this.cacheBoon.get(this.phaseindex);
+                const cacheID = this.phaseindex;
+                if (this.cacheBoon.has(cacheID)) {
+                    return this.cacheBoon.get(cacheID);
                 }
                 const res = [];
                 if (this.targetPhaseIndex === -1 || !this.hasBoons) {
@@ -108,7 +136,55 @@
                         data: targetData
                     });
                 }
-                this.cacheBoon.set(this.phaseindex, res);
+                this.cacheBoon.set(cacheID, res);
+                return res;
+            },
+            debuffData: function () {
+                const cacheID = this.phaseindex;
+                if (this.cacheDebuff.has(cacheID)) {
+                    return this.cacheDebuff.get(cacheID);
+                }
+                const res = [];
+                if (this.targetPhaseIndex === -1 || !this.hasDebuffs) {
+                    res.push({
+                        player: this.target,
+                        data: {
+                            avg: 0.0,
+                            data: []
+                        }
+                    });
+                } else {
+                    const targetData = this.phase.buffsStatContainer.targetsDebuffUptimes[this.targetPhaseIndex];
+                    res.push({
+                        player: this.target,
+                        data: targetData
+                    });
+                }
+                this.cacheDebuff.set(cacheID, res);
+                return res;
+            },
+            otherBuffData: function () {
+                const cacheID = this.phaseindex;
+                if (this.cacheOther.has(cacheID)) {
+                    return this.cacheOther.get(cacheID);
+                }
+                const res = [];
+                if (this.targetPhaseIndex === -1 || !this.hasOthers) {
+                    res.push({
+                        player: this.target,
+                        data: {
+                            avg: 0.0,
+                            data: []
+                        }
+                    });
+                } else {
+                    const targetData = this.phase.buffsStatContainer.targetsOtherBuffUptimes[this.targetPhaseIndex];
+                    res.push({
+                        player: this.target,
+                        data: targetData
+                    });
+                }
+                this.cacheOther.set(cacheID, res);
                 return res;
             }
         }

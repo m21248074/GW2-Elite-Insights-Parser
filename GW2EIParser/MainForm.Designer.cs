@@ -3,476 +3,492 @@ using System.Windows.Forms.VisualStyles;
 using System.Windows.Forms;
 using System;
 
-namespace GW2EIParser
+namespace GW2EIParser;
+
+partial class MainForm
 {
-    partial class MainForm
+    /// <summary>
+    /// Required designer variable.
+    /// </summary>
+    private System.ComponentModel.IContainer components = null;
+
+    /// <summary>
+    /// Clean up any resources being used.
+    /// </summary>
+    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+    protected override void Dispose(bool disposing)
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        if (disposing && (components != null))
         {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-                _settingsForm.Dispose();
-            }
-            base.Dispose(disposing);
+            components.Dispose();
+            _settingsForm.Dispose();
         }
-
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
-        private void InitializeComponent()
-        {
-            this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.FileDialog = new System.Windows.Forms.OpenFileDialog();
-            this.LblHeader = new System.Windows.Forms.Label();
-            this.BtnParse = new System.Windows.Forms.Button();
-            this.BtnPopulate = new System.Windows.Forms.Button();
-            this.NumericCustomPopulateLimit = new System.Windows.Forms.NumericUpDown();
-            this.LblCustomPopulateLimit = new System.Windows.Forms.Label();
-            this.BtnCancelAll = new System.Windows.Forms.Button();
-            this.BtnSettings = new System.Windows.Forms.Button();
-            this.BtnClearAll = new System.Windows.Forms.Button();
-            this.DgvFiles = new System.Windows.Forms.DataGridView();
-            this.LocationDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.StatusDataGridViewTextBoxColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ParseButtonState = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.ReParseButtonState = new DataGridViewDisableButtonColumn();
-            this.OperatorBindingSource = new System.Windows.Forms.BindingSource(this.components);
-            this.TlpMainWindow = new System.Windows.Forms.ToolTip(this.components);
-            this.BtnClearFailed = new System.Windows.Forms.Button();
-            this.BtnDiscordBatch = new System.Windows.Forms.Button();
-            this.LogFileWatcher = new System.IO.FileSystemWatcher();
-            this.LblVersion = new System.Windows.Forms.Label();
-            this.LblWatchingDir = new System.Windows.Forms.Label();
-            this.ChkApplicationTraces = new System.Windows.Forms.CheckBox();
-            this.ChkAutoDiscordBatch = new System.Windows.Forms.CheckBox();
-            ((System.ComponentModel.ISupportInitialize)(this.NumericCustomPopulateLimit)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.DgvFiles)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.OperatorBindingSource)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.LogFileWatcher)).BeginInit();
-            this.SuspendLayout();
-            // 
-            // FileDialog
-            // 
-            this.FileDialog.FileName = "openFileDialog1";
-            // 
-            // LblHeader
-            // 
-            this.LblHeader.AutoSize = true;
-            this.LblHeader.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.LblHeader.Location = new System.Drawing.Point(12, 22);
-            this.LblHeader.Name = "LblHeader";
-            this.LblHeader.Size = new System.Drawing.Size(279, 20);
-            this.LblHeader.TabIndex = 4;
-            this.LblHeader.Text = "拖放 EVTC 檔案至下面";
-            this.LblHeader.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            // 
-            // BtnParse
-            // 
-            this.BtnParse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnParse.Location = new System.Drawing.Point(442, 305);
-            this.BtnParse.Name = "BtnParse";
-            this.BtnParse.Size = new System.Drawing.Size(235, 23);
-            this.BtnParse.TabIndex = 10;
-            this.BtnParse.Text = "解析全部";
-            this.BtnParse.UseVisualStyleBackColor = true;
-            this.BtnParse.Click += new System.EventHandler(this.BtnParseClick);
-            // 
-            // BtnPopulate
-            // 
-            this.BtnPopulate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.BtnPopulate.Location = new System.Drawing.Point(261, 335);
-            this.BtnPopulate.Name = "BtnPopulate";
-            this.BtnPopulate.Size = new System.Drawing.Size(154, 23);
-            this.BtnPopulate.TabIndex = 10;
-            this.BtnPopulate.Text = "從資料夾導入";
-            this.BtnPopulate.UseVisualStyleBackColor = true;
-            this.BtnPopulate.Click += new System.EventHandler(this.BtnPopulateFromDirectory);
-            // 
-            // NumericCustomPopulateLimit
-            // 
-            this.NumericCustomPopulateLimit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.NumericCustomPopulateLimit.Location = new System.Drawing.Point(325, 311);
-            this.NumericCustomPopulateLimit.Maximum = new decimal(new int[] {
-            86400000,
-            0,
-            0,
-            0});
-            this.NumericCustomPopulateLimit.Name = "NumericCustomPopulateLimit";
-            this.NumericCustomPopulateLimit.Size = new System.Drawing.Size(90, 20);
-            this.NumericCustomPopulateLimit.TabIndex = 15;
-            this.NumericCustomPopulateLimit.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.NumericCustomPopulateLimit.ValueChanged += new System.EventHandler(this.NumericCustomPopulateLimitValueChanged);
-            // 
-            // LblCustomPopulateLimit
-            // 
-            this.LblCustomPopulateLimit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.LblCustomPopulateLimit.AutoSize = true;
-            this.LblCustomPopulateLimit.Location = new System.Drawing.Point(258, 315);
-            this.LblCustomPopulateLimit.Name = "LblCustomPopulateLimit";
-            this.LblCustomPopulateLimit.Size = new System.Drawing.Size(65, 13);
-            this.LblCustomPopulateLimit.TabIndex = 12;
-            this.LblCustomPopulateLimit.Text = "時間 (小時)";
-            this.TlpMainWindow.SetToolTip(this.LblCustomPopulateLimit, "在給定時間之前創建的檔案將被忽略。設定為0表示無限。");
-            // 
-            // BtnCancelAll
-            // 
-            this.BtnCancelAll.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnCancelAll.Location = new System.Drawing.Point(442, 335);
-            this.BtnCancelAll.Name = "BtnCancelAll";
-            this.BtnCancelAll.Size = new System.Drawing.Size(75, 23);
-            this.BtnCancelAll.TabIndex = 11;
-            this.BtnCancelAll.Text = "取消全部";
-            this.BtnCancelAll.UseVisualStyleBackColor = true;
-            this.BtnCancelAll.Click += new System.EventHandler(this.BtnCancelAllClick);
-            // 
-            // BtnSettings
-            // 
-            this.BtnSettings.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.BtnSettings.Location = new System.Drawing.Point(16, 335);
-            this.BtnSettings.Name = "BtnSettings";
-            this.BtnSettings.Size = new System.Drawing.Size(75, 23);
-            this.BtnSettings.TabIndex = 15;
-            this.BtnSettings.Text = "設定";
-            this.BtnSettings.UseVisualStyleBackColor = true;
-            this.BtnSettings.Click += new System.EventHandler(this.BtnSettingsClick);
-            // 
-            // BtnClearAll
-            // 
-            this.BtnClearAll.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnClearAll.Location = new System.Drawing.Point(602, 335);
-            this.BtnClearAll.Name = "BtnClearAll";
-            this.BtnClearAll.Size = new System.Drawing.Size(75, 23);
-            this.BtnClearAll.TabIndex = 16;
-            this.BtnClearAll.Text = "清除全部";
-            this.BtnClearAll.UseVisualStyleBackColor = true;
-            this.BtnClearAll.Click += new System.EventHandler(this.BtnClearAllClick);
-            // 
-            // DgvFiles
-            // 
-            this.DgvFiles.AllowDrop = true;
-            this.DgvFiles.AllowUserToAddRows = false;
-            this.DgvFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.DgvFiles.AutoGenerateColumns = false;
-            this.DgvFiles.BackgroundColor = System.Drawing.SystemColors.Control;
-            this.DgvFiles.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.DgvFiles.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.LocationDataGridViewTextBoxColumn,
-            this.StatusDataGridViewTextBoxColumn,
-            this.ParseButtonState,
-            this.ReParseButtonState});
-            this.DgvFiles.DataSource = this.OperatorBindingSource;
-            this.DgvFiles.GridColor = System.Drawing.SystemColors.Control;
-            this.DgvFiles.Location = new System.Drawing.Point(16, 46);
-            this.DgvFiles.MultiSelect = false;
-            this.DgvFiles.Name = "DgvFiles";
-            this.DgvFiles.ReadOnly = true;
-            this.DgvFiles.Size = new System.Drawing.Size(661, 244);
-            this.DgvFiles.TabIndex = 17;
-            this.DgvFiles.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DgvFilesCellContentClick);
-            this.DgvFiles.CellMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DgvFilesCellContentDoubleClick);
-            this.DgvFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.DgvFilesDragDrop);
-            this.DgvFiles.DragEnter += new System.Windows.Forms.DragEventHandler(this.DgvFilesDragEnter);
-            // 
-            // LocationDataGridViewTextBoxColumn
-            // 
-            this.LocationDataGridViewTextBoxColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.LocationDataGridViewTextBoxColumn.DataPropertyName = "InputFile";
-            this.LocationDataGridViewTextBoxColumn.FillWeight = 60F;
-            this.LocationDataGridViewTextBoxColumn.HeaderText = "輸入檔案";
-            this.LocationDataGridViewTextBoxColumn.Name = "LocationDataGridViewTextBoxColumn";
-            this.LocationDataGridViewTextBoxColumn.ReadOnly = true;
-            this.LocationDataGridViewTextBoxColumn.ToolTipText = "雙擊左鍵開啟輸入位置";
-            // 
-            // StatusDataGridViewTextBoxColumn
-            // 
-            this.StatusDataGridViewTextBoxColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.StatusDataGridViewTextBoxColumn.DataPropertyName = "Status";
-            this.StatusDataGridViewTextBoxColumn.FillWeight = 30F;
-            this.StatusDataGridViewTextBoxColumn.HeaderText = "狀態";
-            this.StatusDataGridViewTextBoxColumn.Name = "StatusDataGridViewTextBoxColumn";
-            this.StatusDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // ParseButtonState
-            // 
-            this.ParseButtonState.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ParseButtonState.DataPropertyName = "ButtonText";
-            this.ParseButtonState.FillWeight = 10F;
-            this.ParseButtonState.HeaderText = "操作";
-            this.ParseButtonState.Name = "ParseButtonState";
-            this.ParseButtonState.ReadOnly = true;
-            this.ParseButtonState.ToolTipText = "左鍵開啟檔案和輸出檔案位置\r\n如果可用，右鍵複製 dps.report 連結至剪貼簿\r\n中鍵僅開啟輸出檔案位置";
-            // 
-            // ReParseButtonState
-            // 
-            this.ReParseButtonState.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ReParseButtonState.DataPropertyName = "ReParseText";
-            this.ReParseButtonState.FillWeight = 11F;
-            this.ReParseButtonState.HeaderText = "重新解析";
-            this.ReParseButtonState.Name = "ReParseButtonState";
-            this.ReParseButtonState.ReadOnly = true;
-            this.ReParseButtonState.ToolTipText = "Only useable if the file was already successfully parsed";
-            // 
-            // OperatorBindingSource
-            // 
-            this.OperatorBindingSource.DataSource = typeof(GW2EIParser.FormOperationController);
-            // 
-            // BtnClearFailed
-            // 
-            this.BtnClearFailed.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.BtnClearFailed.Location = new System.Drawing.Point(521, 335);
-            this.BtnClearFailed.Name = "BtnClearFailed";
-            this.BtnClearFailed.Size = new System.Drawing.Size(75, 23);
-            this.BtnClearFailed.TabIndex = 19;
-            this.BtnClearFailed.Text = "清除壞檔";
-            this.TlpMainWindow.SetToolTip(this.BtnClearFailed, "從清單中刪除無法解析的日誌");
-            this.BtnClearFailed.UseVisualStyleBackColor = true;
-            this.BtnClearFailed.Click += new System.EventHandler(this.BtnClearFailedClick);
-            // 
-            // BtnDiscordBatch
-            // 
-            this.BtnDiscordBatch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.BtnDiscordBatch.Location = new System.Drawing.Point(101, 335);
-            this.BtnDiscordBatch.Name = "BtnDiscordBatch";
-            this.BtnDiscordBatch.Size = new System.Drawing.Size(154, 23);
-            this.BtnDiscordBatch.TabIndex = 20;
-            this.BtnDiscordBatch.Text = "全部送至 Discord";
-            this.TlpMainWindow.SetToolTip(this.BtnDiscordBatch, "將目前解析的日誌與 dps.report 連結批次傳送到 Discord Webhook");
-            this.BtnDiscordBatch.UseVisualStyleBackColor = true;
-            this.BtnDiscordBatch.Click += new System.EventHandler(this.BtnDiscordBatchClick);
-            // 
-            // LogFileWatcher
-            // 
-            this.LogFileWatcher.EnableRaisingEvents = true;
-            this.LogFileWatcher.IncludeSubdirectories = true;
-            this.LogFileWatcher.SynchronizingObject = this;
-            this.LogFileWatcher.Created += new System.IO.FileSystemEventHandler(this.LogFileWatcher_Created);
-            this.LogFileWatcher.Renamed += new System.IO.RenamedEventHandler(this.LogFileWatcher_Renamed);
-            // 
-            // LblVersion
-            // 
-            this.LblVersion.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.LblVersion.AutoSize = true;
-            this.LblVersion.Location = new System.Drawing.Point(13, 361);
-            this.LblVersion.Name = "LblVersion";
-            this.LblVersion.Size = new System.Drawing.Size(29, 13);
-            this.LblVersion.TabIndex = 17;
-            this.LblVersion.Text = "V1.3";
-            // 
-            // LblWatchingDir
-            // 
-            this.LblWatchingDir.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.LblWatchingDir.AutoEllipsis = true;
-            this.LblWatchingDir.Location = new System.Drawing.Point(16, 295);
-            this.LblWatchingDir.Name = "LblWatchingDir";
-            this.LblWatchingDir.Size = new System.Drawing.Size(410, 13);
-            this.LblWatchingDir.TabIndex = 18;
-            this.LblWatchingDir.Text = "Watching log dir";
-            // 
-            // ChkApplicationTraces
-            // 
-            this.ChkApplicationTraces.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ChkApplicationTraces.AutoSize = true;
-            this.ChkApplicationTraces.Location = new System.Drawing.Point(19, 315);
-            this.ChkApplicationTraces.Name = "ChkApplicationTraces";
-            this.ChkApplicationTraces.Size = new System.Drawing.Size(59, 17);
-            this.ChkApplicationTraces.TabIndex = 0;
-            this.ChkApplicationTraces.Text = "操作痕跡";
-            this.ChkApplicationTraces.CheckedChanged += new System.EventHandler(this.ChkApplicationTracesCheckedChanged);
-            // 
-            // ChkAutoDiscordBatch
-            // 
-            this.ChkAutoDiscordBatch.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ChkAutoDiscordBatch.AutoSize = true;
-            this.ChkAutoDiscordBatch.Location = new System.Drawing.Point(101, 315);
-            this.ChkAutoDiscordBatch.Name = "ChkAutoDiscordBatch";
-            this.ChkAutoDiscordBatch.Size = new System.Drawing.Size(118, 17);
-            this.ChkAutoDiscordBatch.TabIndex = 0;
-            this.ChkAutoDiscordBatch.Text = "自動 Discord 批次上傳";
-            this.ChkAutoDiscordBatch.CheckedChanged += new System.EventHandler(this.ChkAutoDiscordBatchCheckedChanged);
-            // 
-            // MainForm
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Menu;
-            this.ClientSize = new System.Drawing.Size(704, 380);
-            this.Controls.Add(this.BtnDiscordBatch);
-            this.Controls.Add(this.BtnClearFailed);
-            this.Controls.Add(this.LblWatchingDir);
-            this.Controls.Add(this.DgvFiles);
-            this.Controls.Add(this.LblVersion);
-            this.Controls.Add(this.BtnClearAll);
-            this.Controls.Add(this.BtnSettings);
-            this.Controls.Add(this.BtnCancelAll);
-            this.Controls.Add(this.BtnParse);
-            this.Controls.Add(this.BtnPopulate);
-            this.Controls.Add(this.LblCustomPopulateLimit);
-            this.Controls.Add(this.NumericCustomPopulateLimit);
-            this.Controls.Add(this.LblHeader);
-            this.Controls.Add(this.ChkApplicationTraces);
-            this.Controls.Add(this.ChkAutoDiscordBatch);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MinimumSize = new System.Drawing.Size(720, 300);
-            this.Name = "MainForm";
-            this.Text = "激戰2 Elite Insights 解析器";
-            this.TransparencyKey = System.Drawing.Color.OrangeRed;
-            ((System.ComponentModel.ISupportInitialize)(this.NumericCustomPopulateLimit)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.DgvFiles)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.OperatorBindingSource)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.LogFileWatcher)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
-        }
-
-        #endregion
-        private System.Windows.Forms.OpenFileDialog FileDialog;
-        private System.Windows.Forms.Label LblHeader;
-        private System.Windows.Forms.Button BtnParse;
-        private System.Windows.Forms.Button BtnPopulate;
-        private System.Windows.Forms.NumericUpDown NumericCustomPopulateLimit;
-        private System.Windows.Forms.Label LblCustomPopulateLimit;
-        private System.Windows.Forms.Button BtnCancelAll;
-        private System.Windows.Forms.Button BtnSettings;
-        private System.Windows.Forms.Button BtnClearAll;
-        private System.Windows.Forms.DataGridView DgvFiles;
-        private System.Windows.Forms.BindingSource OperatorBindingSource;
-        private System.Windows.Forms.DataGridViewTextBoxColumn LocationDataGridViewTextBoxColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn StatusDataGridViewTextBoxColumn;
-        private System.Windows.Forms.DataGridViewButtonColumn ParseButtonState;
-        private DataGridViewDisableButtonColumn ReParseButtonState;
-        private System.Windows.Forms.Label LblVersion;
-        private System.IO.FileSystemWatcher LogFileWatcher;
-        private System.Windows.Forms.Label LblWatchingDir;
-        private System.Windows.Forms.Button BtnClearFailed;
-        private System.Windows.Forms.ToolTip TlpMainWindow;
-        private System.Windows.Forms.Button BtnDiscordBatch;
-        private System.Windows.Forms.CheckBox ChkApplicationTraces;
-        private System.Windows.Forms.CheckBox ChkAutoDiscordBatch;
-
-        #region CUSTOM_GRID_VIEW
-        // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/disable-buttons-in-a-button-column-in-the-datagrid?view=netframeworkdesktop-4.8&redirectedfrom=MSDN
-        public class DataGridViewDisableButtonColumn : DataGridViewButtonColumn
-        {
-            public DataGridViewDisableButtonColumn()
-            {
-                this.CellTemplate = new DataGridViewDisableButtonCell();
-            }
-        }
-
-        public class DataGridViewDisableButtonCell : DataGridViewButtonCell
-        {
-            private bool enabledValue;
-            public bool Enabled
-            {
-                get
-                {
-                    return enabledValue;
-                }
-                set
-                {
-                    enabledValue = value;
-                }
-            }
-
-            // Override the Clone method so that the Enabled property is copied.
-            public override object Clone()
-            {
-                DataGridViewDisableButtonCell cell =
-                    (DataGridViewDisableButtonCell)base.Clone();
-                cell.Enabled = this.Enabled;
-                return cell;
-            }
-
-            // By default, enable the button cell.
-            public DataGridViewDisableButtonCell()
-            {
-                this.enabledValue = true;
-            }
-
-            protected override void Paint(Graphics graphics,
-                Rectangle clipBounds, Rectangle cellBounds, int rowIndex,
-                DataGridViewElementStates elementState, object value,
-                object formattedValue, string errorText,
-                DataGridViewCellStyle cellStyle,
-                DataGridViewAdvancedBorderStyle advancedBorderStyle,
-                DataGridViewPaintParts paintParts)
-            {
-                // The button cell is disabled, so paint the border,
-                // background, and disabled button for the cell.
-                if (!this.enabledValue)
-                {
-                    // Draw the cell background, if specified.
-                    if ((paintParts & DataGridViewPaintParts.Background) ==
-                        DataGridViewPaintParts.Background)
-                    {
-                        SolidBrush cellBackground =
-                            new SolidBrush(cellStyle.BackColor);
-                        graphics.FillRectangle(cellBackground, cellBounds);
-                        cellBackground.Dispose();
-                    }
-
-                    // Draw the cell borders, if specified.
-                    if ((paintParts & DataGridViewPaintParts.Border) ==
-                        DataGridViewPaintParts.Border)
-                    {
-                        PaintBorder(graphics, clipBounds, cellBounds, cellStyle,
-                            advancedBorderStyle);
-                    }
-
-                    // Calculate the area in which to draw the button.
-                    Rectangle buttonArea = cellBounds;
-                    Rectangle buttonAdjustment =
-                        this.BorderWidths(advancedBorderStyle);
-                    buttonArea.X += buttonAdjustment.X;
-                    buttonArea.Y += buttonAdjustment.Y;
-                    buttonArea.Height -= buttonAdjustment.Height;
-                    buttonArea.Width -= buttonAdjustment.Width;
-
-                    // Draw the disabled button.
-                    ButtonRenderer.DrawButton(graphics, buttonArea,
-                        PushButtonState.Disabled);
-
-                    // Draw the disabled button text.
-                    if (this.FormattedValue is String)
-                    {
-                        TextRenderer.DrawText(graphics,
-                            (string)this.FormattedValue,
-                            this.DataGridView.Font,
-                            buttonArea, SystemColors.GrayText);
-                    }
-                }
-                else
-                {
-                    // The button cell is enabled, so let the base class
-                    // handle the painting.
-                    base.Paint(graphics, clipBounds, cellBounds, rowIndex,
-                        elementState, value, formattedValue, errorText,
-                        cellStyle, advancedBorderStyle, paintParts);
-                }
-            }
-        }
-        #endregion
+        base.Dispose(disposing);
     }
+
+    #region Windows Form Designer generated code
+
+    /// <summary>
+    /// Required method for Designer support - do not modify
+    /// the contents of this method with the code editor.
+    /// </summary>
+    private void InitializeComponent()
+    {
+        components = new System.ComponentModel.Container();
+        var resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+        FileDialog = new OpenFileDialog();
+        LblHeader = new Label();
+        BtnParse = new Button();
+        BtnPopulate = new Button();
+        NumericCustomPopulateLimit = new NumericUpDown();
+        LblCustomPopulateLimit = new Label();
+        BtnCancelAll = new Button();
+        BtnSettings = new Button();
+        BtnClearAll = new Button();
+        DgvFiles = new DataGridView();
+        LocationDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+        StatusDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+        ParseButtonState = new DataGridViewButtonColumn();
+        ReParseButtonState = new DataGridViewDisableButtonColumn();
+        OperatorBindingSource = new BindingSource(components);
+        TlpMainWindow = new ToolTip(components);
+        BtnClearFailed = new Button();
+        BtnDiscordBatch = new Button();
+        LogFileWatcher = new FileSystemWatcher();
+        LblVersion = new Label();
+        LblWatchingDir = new Label();
+        ChkApplicationTraces = new CheckBox();
+        ChkAutoDiscordBatch = new CheckBox();
+        BtnCheckUpdates = new Button();
+        ((System.ComponentModel.ISupportInitialize)NumericCustomPopulateLimit).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)DgvFiles).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)OperatorBindingSource).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)LogFileWatcher).BeginInit();
+        SuspendLayout();
+        // 
+        // FileDialog
+        // 
+        FileDialog.FileName = "openFileDialog1";
+        // 
+        // LblHeader
+        // 
+        LblHeader.AutoSize = true;
+        LblHeader.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        LblHeader.Location = new Point(14, 25);
+        LblHeader.Margin = new Padding(4, 0, 4, 0);
+        LblHeader.Name = "LblHeader";
+        LblHeader.Size = new Size(279, 20);
+        LblHeader.TabIndex = 4;
+        LblHeader.Text = "Drag and Drop EVTC file(s) below";
+        LblHeader.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+        // 
+        // BtnParse
+        // 
+        BtnParse.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        BtnParse.Location = new Point(516, 359);
+        BtnParse.Margin = new Padding(4, 3, 4, 3);
+        BtnParse.Name = "BtnParse";
+        BtnParse.Size = new Size(274, 27);
+        BtnParse.TabIndex = 10;
+        BtnParse.Text = "Parse All";
+        BtnParse.UseVisualStyleBackColor = true;
+        BtnParse.Click += BtnParseClick;
+        // 
+        // BtnPopulate
+        // 
+        BtnPopulate.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        BtnPopulate.Location = new Point(220, 386);
+        BtnPopulate.Margin = new Padding(4, 3, 4, 3);
+        BtnPopulate.Name = "BtnPopulate";
+        BtnPopulate.Size = new Size(155, 27);
+        BtnPopulate.TabIndex = 10;
+        BtnPopulate.Text = "Populate from directory";
+        BtnPopulate.UseVisualStyleBackColor = true;
+        BtnPopulate.Click += BtnPopulateFromDirectory;
+        // 
+        // NumericCustomPopulateLimit
+        // 
+        NumericCustomPopulateLimit.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        NumericCustomPopulateLimit.Location = new Point(232, 360);
+        NumericCustomPopulateLimit.Margin = new Padding(4, 3, 4, 3);
+        NumericCustomPopulateLimit.Maximum = new decimal(new int[] { 86400000, 0, 0, 0 });
+        NumericCustomPopulateLimit.Name = "NumericCustomPopulateLimit";
+        NumericCustomPopulateLimit.Size = new Size(105, 23);
+        NumericCustomPopulateLimit.TabIndex = 15;
+        NumericCustomPopulateLimit.TextAlign = HorizontalAlignment.Right;
+        NumericCustomPopulateLimit.ValueChanged += NumericCustomPopulateLimitValueChanged;
+        // 
+        // LblCustomPopulateLimit
+        // 
+        LblCustomPopulateLimit.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        LblCustomPopulateLimit.AutoSize = true;
+        LblCustomPopulateLimit.Location = new Point(149, 365);
+        LblCustomPopulateLimit.Margin = new Padding(4, 0, 4, 0);
+        LblCustomPopulateLimit.Name = "LblCustomPopulateLimit";
+        LblCustomPopulateLimit.Size = new Size(75, 15);
+        LblCustomPopulateLimit.TabIndex = 12;
+        LblCustomPopulateLimit.Text = "Time (hours)";
+        TlpMainWindow.SetToolTip(LblCustomPopulateLimit, "Files which were created before given hours ago will be ignored. Set to 0 for infinite.");
+        // 
+        // BtnCancelAll
+        // 
+        BtnCancelAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        BtnCancelAll.Location = new Point(516, 387);
+        BtnCancelAll.Margin = new Padding(4, 3, 4, 3);
+        BtnCancelAll.Name = "BtnCancelAll";
+        BtnCancelAll.Size = new Size(88, 27);
+        BtnCancelAll.TabIndex = 11;
+        BtnCancelAll.Text = "Cancel All";
+        BtnCancelAll.UseVisualStyleBackColor = true;
+        BtnCancelAll.Click += BtnCancelAllClick;
+        // 
+        // BtnSettings
+        // 
+        BtnSettings.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        BtnSettings.Location = new Point(19, 387);
+        BtnSettings.Margin = new Padding(4, 3, 4, 3);
+        BtnSettings.Name = "BtnSettings";
+        BtnSettings.Size = new Size(79, 27);
+        BtnSettings.TabIndex = 15;
+        BtnSettings.Text = "Settings";
+        BtnSettings.UseVisualStyleBackColor = true;
+        BtnSettings.Click += BtnSettingsClick;
+        // 
+        // BtnClearAll
+        // 
+        BtnClearAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        BtnClearAll.Location = new Point(702, 387);
+        BtnClearAll.Margin = new Padding(4, 3, 4, 3);
+        BtnClearAll.Name = "BtnClearAll";
+        BtnClearAll.Size = new Size(88, 27);
+        BtnClearAll.TabIndex = 16;
+        BtnClearAll.Text = "Clear All";
+        BtnClearAll.UseVisualStyleBackColor = true;
+        BtnClearAll.Click += BtnClearAllClick;
+        // 
+        // DgvFiles
+        // 
+        DgvFiles.AllowDrop = true;
+        DgvFiles.AllowUserToAddRows = false;
+        DgvFiles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        DgvFiles.AutoGenerateColumns = false;
+        DgvFiles.BackgroundColor = SystemColors.Control;
+        DgvFiles.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        DgvFiles.Columns.AddRange(new DataGridViewColumn[] { LocationDataGridViewTextBoxColumn, StatusDataGridViewTextBoxColumn, ParseButtonState, ReParseButtonState });
+        DgvFiles.DataSource = OperatorBindingSource;
+        DgvFiles.GridColor = SystemColors.Control;
+        DgvFiles.Location = new Point(19, 53);
+        DgvFiles.Margin = new Padding(4, 3, 4, 3);
+        DgvFiles.MultiSelect = false;
+        DgvFiles.Name = "DgvFiles";
+        DgvFiles.ReadOnly = true;
+        DgvFiles.Size = new Size(771, 282);
+        DgvFiles.TabIndex = 17;
+        DgvFiles.CellMouseClick += DgvFilesCellContentClick;
+        DgvFiles.CellMouseDoubleClick += DgvFilesCellContentDoubleClick;
+        DgvFiles.DragDrop += DgvFilesDragDrop;
+        DgvFiles.DragEnter += DgvFilesDragEnter;
+        // 
+        // LocationDataGridViewTextBoxColumn
+        // 
+        LocationDataGridViewTextBoxColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        LocationDataGridViewTextBoxColumn.DataPropertyName = "InputFile";
+        LocationDataGridViewTextBoxColumn.FillWeight = 60F;
+        LocationDataGridViewTextBoxColumn.HeaderText = "Input File";
+        LocationDataGridViewTextBoxColumn.Name = "LocationDataGridViewTextBoxColumn";
+        LocationDataGridViewTextBoxColumn.ReadOnly = true;
+        LocationDataGridViewTextBoxColumn.ToolTipText = "Double left click to open input location";
+        // 
+        // StatusDataGridViewTextBoxColumn
+        // 
+        StatusDataGridViewTextBoxColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        StatusDataGridViewTextBoxColumn.DataPropertyName = "Status";
+        StatusDataGridViewTextBoxColumn.FillWeight = 30F;
+        StatusDataGridViewTextBoxColumn.HeaderText = "Status";
+        StatusDataGridViewTextBoxColumn.Name = "StatusDataGridViewTextBoxColumn";
+        StatusDataGridViewTextBoxColumn.ReadOnly = true;
+        // 
+        // ParseButtonState
+        // 
+        ParseButtonState.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        ParseButtonState.DataPropertyName = "ButtonText";
+        ParseButtonState.FillWeight = 10F;
+        ParseButtonState.HeaderText = "Action";
+        ParseButtonState.Name = "ParseButtonState";
+        ParseButtonState.ReadOnly = true;
+        ParseButtonState.ToolTipText = "Left click open files and output location\r\nRight click to copy dps.report link to clipboard, if applicable\r\nMiddle click to only open output location";
+        // 
+        // ReParseButtonState
+        // 
+        ReParseButtonState.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        ReParseButtonState.DataPropertyName = "ReParseText";
+        ReParseButtonState.FillWeight = 10F;
+        ReParseButtonState.HeaderText = "Re-Parse";
+        ReParseButtonState.Name = "ReParseButtonState";
+        ReParseButtonState.ReadOnly = true;
+        ReParseButtonState.ToolTipText = "Only useable if the file was already successfully parsed";
+        // 
+        // OperatorBindingSource
+        // 
+        OperatorBindingSource.DataSource = typeof(FormOperationController);
+        // 
+        // BtnClearFailed
+        // 
+        BtnClearFailed.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        BtnClearFailed.Location = new Point(608, 387);
+        BtnClearFailed.Margin = new Padding(4, 3, 4, 3);
+        BtnClearFailed.Name = "BtnClearFailed";
+        BtnClearFailed.Size = new Size(88, 27);
+        BtnClearFailed.TabIndex = 19;
+        BtnClearFailed.Text = "Clear Failed";
+        TlpMainWindow.SetToolTip(BtnClearFailed, "Removes from the list logs that could not be parsed");
+        BtnClearFailed.UseVisualStyleBackColor = true;
+        BtnClearFailed.Click += BtnClearFailedClick;
+        // 
+        // BtnDiscordBatch
+        // 
+        BtnDiscordBatch.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        BtnDiscordBatch.Location = new Point(383, 386);
+        BtnDiscordBatch.Margin = new Padding(4, 3, 4, 3);
+        BtnDiscordBatch.Name = "BtnDiscordBatch";
+        BtnDiscordBatch.Size = new Size(125, 27);
+        BtnDiscordBatch.TabIndex = 20;
+        BtnDiscordBatch.Text = "Send all to Discord";
+        TlpMainWindow.SetToolTip(BtnDiscordBatch, "Send currently parsed logs with dps.report links to discord webhook in a batch");
+        BtnDiscordBatch.UseVisualStyleBackColor = true;
+        BtnDiscordBatch.Click += BtnDiscordBatchClick;
+        // 
+        // LogFileWatcher
+        // 
+        LogFileWatcher.EnableRaisingEvents = true;
+        LogFileWatcher.IncludeSubdirectories = true;
+        LogFileWatcher.SynchronizingObject = this;
+        LogFileWatcher.Created += LogFileWatcher_Created;
+        LogFileWatcher.Renamed += LogFileWatcher_Renamed;
+        // 
+        // LblVersion
+        // 
+        LblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        LblVersion.AutoSize = true;
+        LblVersion.Location = new Point(15, 417);
+        LblVersion.Margin = new Padding(4, 0, 4, 0);
+        LblVersion.Name = "LblVersion";
+        LblVersion.Size = new Size(29, 15);
+        LblVersion.TabIndex = 17;
+        LblVersion.Text = "V1.3";
+        // 
+        // LblWatchingDir
+        // 
+        LblWatchingDir.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        LblWatchingDir.AutoEllipsis = true;
+        LblWatchingDir.Location = new Point(19, 340);
+        LblWatchingDir.Margin = new Padding(4, 0, 4, 0);
+        LblWatchingDir.Name = "LblWatchingDir";
+        LblWatchingDir.Size = new Size(478, 15);
+        LblWatchingDir.TabIndex = 18;
+        LblWatchingDir.Text = "Watching log dir";
+        // 
+        // ChkApplicationTraces
+        // 
+        ChkApplicationTraces.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        ChkApplicationTraces.AutoSize = true;
+        ChkApplicationTraces.Location = new Point(22, 364);
+        ChkApplicationTraces.Margin = new Padding(4, 3, 4, 3);
+        ChkApplicationTraces.Name = "ChkApplicationTraces";
+        ChkApplicationTraces.Size = new Size(59, 19);
+        ChkApplicationTraces.TabIndex = 0;
+        ChkApplicationTraces.Text = "Traces";
+        ChkApplicationTraces.CheckedChanged += ChkApplicationTracesCheckedChanged;
+        // 
+        // ChkAutoDiscordBatch
+        // 
+        ChkAutoDiscordBatch.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        ChkAutoDiscordBatch.AutoSize = true;
+        ChkAutoDiscordBatch.Location = new Point(383, 364);
+        ChkAutoDiscordBatch.Margin = new Padding(4, 3, 4, 3);
+        ChkAutoDiscordBatch.Name = "ChkAutoDiscordBatch";
+        ChkAutoDiscordBatch.Size = new Size(128, 19);
+        ChkAutoDiscordBatch.TabIndex = 0;
+        ChkAutoDiscordBatch.Text = "Auto Discord Batch";
+        ChkAutoDiscordBatch.CheckedChanged += ChkAutoDiscordBatchCheckedChanged;
+        // 
+        // BtnCheckUpdates
+        // 
+        BtnCheckUpdates.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        BtnCheckUpdates.Location = new Point(105, 386);
+        BtnCheckUpdates.Margin = new Padding(4, 3, 4, 3);
+        BtnCheckUpdates.Name = "BtnCheckUpdates";
+        BtnCheckUpdates.Size = new Size(108, 27);
+        BtnCheckUpdates.TabIndex = 21;
+        BtnCheckUpdates.Text = "Check EI Updates";
+        BtnCheckUpdates.UseVisualStyleBackColor = true;
+        BtnCheckUpdates.Click += BtnCheckUpdates_Click;
+        // 
+        // MainForm
+        // 
+        AutoScaleDimensions = new SizeF(7F, 15F);
+        AutoScaleMode = AutoScaleMode.Font;
+        BackColor = SystemColors.Menu;
+        ClientSize = new Size(821, 438);
+        Controls.Add(BtnCheckUpdates);
+        Controls.Add(BtnDiscordBatch);
+        Controls.Add(BtnClearFailed);
+        Controls.Add(LblWatchingDir);
+        Controls.Add(DgvFiles);
+        Controls.Add(LblVersion);
+        Controls.Add(BtnClearAll);
+        Controls.Add(BtnSettings);
+        Controls.Add(BtnCancelAll);
+        Controls.Add(BtnParse);
+        Controls.Add(BtnPopulate);
+        Controls.Add(LblCustomPopulateLimit);
+        Controls.Add(NumericCustomPopulateLimit);
+        Controls.Add(LblHeader);
+        Controls.Add(ChkApplicationTraces);
+        Controls.Add(ChkAutoDiscordBatch);
+        Icon = (Icon)resources.GetObject("$this.Icon");
+        Margin = new Padding(4, 3, 4, 3);
+        MinimumSize = new Size(837, 340);
+        Name = "MainForm";
+        Text = "GW2 Elite Insights Parser";
+        TransparencyKey = Color.OrangeRed;
+        ((System.ComponentModel.ISupportInitialize)NumericCustomPopulateLimit).EndInit();
+        ((System.ComponentModel.ISupportInitialize)DgvFiles).EndInit();
+        ((System.ComponentModel.ISupportInitialize)OperatorBindingSource).EndInit();
+        ((System.ComponentModel.ISupportInitialize)LogFileWatcher).EndInit();
+        ResumeLayout(false);
+        PerformLayout();
+
+    }
+
+    #endregion
+    private OpenFileDialog FileDialog;
+    private Label LblHeader;
+    private Button BtnParse;
+    private Button BtnPopulate;
+    private NumericUpDown NumericCustomPopulateLimit;
+    private Label LblCustomPopulateLimit;
+    private Button BtnCancelAll;
+    private Button BtnSettings;
+    private Button BtnClearAll;
+    private DataGridView DgvFiles;
+    private BindingSource OperatorBindingSource;
+    private DataGridViewTextBoxColumn LocationDataGridViewTextBoxColumn;
+    private DataGridViewTextBoxColumn StatusDataGridViewTextBoxColumn;
+    private DataGridViewButtonColumn ParseButtonState;
+    private DataGridViewDisableButtonColumn ReParseButtonState;
+    private Label LblVersion;
+    private FileSystemWatcher LogFileWatcher;
+    private Label LblWatchingDir;
+    private Button BtnClearFailed;
+    private ToolTip TlpMainWindow;
+    private Button BtnDiscordBatch;
+    private CheckBox ChkApplicationTraces;
+    private CheckBox ChkAutoDiscordBatch;
+    private Button BtnCheckUpdates;
+
+    #region CUSTOM_GRID_VIEW
+    // https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/disable-buttons-in-a-button-column-in-the-datagrid?view=netframeworkdesktop-4.8&redirectedfrom=MSDN
+    public class DataGridViewDisableButtonColumn : DataGridViewButtonColumn
+    {
+        public DataGridViewDisableButtonColumn()
+        {
+            this.CellTemplate = new DataGridViewDisableButtonCell();
+        }
+    }
+
+    public class DataGridViewDisableButtonCell : DataGridViewButtonCell
+    {
+        private bool enabledValue;
+        public bool Enabled
+        {
+            get
+            {
+                return enabledValue;
+            }
+            set
+            {
+                enabledValue = value;
+            }
+        }
+
+        // Override the Clone method so that the Enabled property is copied.
+        public override object Clone()
+        {
+            DataGridViewDisableButtonCell cell =
+                (DataGridViewDisableButtonCell)base.Clone();
+            cell.Enabled = this.Enabled;
+            return cell;
+        }
+
+        // By default, enable the button cell.
+        public DataGridViewDisableButtonCell()
+        {
+            this.enabledValue = true;
+        }
+
+        protected override void Paint(Graphics graphics,
+            Rectangle clipBounds, Rectangle cellBounds, int rowIndex,
+            DataGridViewElementStates elementState, object value,
+            object formattedValue, string errorText,
+            DataGridViewCellStyle cellStyle,
+            DataGridViewAdvancedBorderStyle advancedBorderStyle,
+            DataGridViewPaintParts paintParts)
+        {
+            // The button cell is disabled, so paint the border,
+            // background, and disabled button for the cell.
+            if (!this.enabledValue)
+            {
+                // Draw the cell background, if specified.
+                if ((paintParts & DataGridViewPaintParts.Background) ==
+                    DataGridViewPaintParts.Background)
+                {
+                    SolidBrush cellBackground =
+                        new SolidBrush(cellStyle.BackColor);
+                    graphics.FillRectangle(cellBackground, cellBounds);
+                    cellBackground.Dispose();
+                }
+
+                // Draw the cell borders, if specified.
+                if ((paintParts & DataGridViewPaintParts.Border) ==
+                    DataGridViewPaintParts.Border)
+                {
+                    PaintBorder(graphics, clipBounds, cellBounds, cellStyle,
+                        advancedBorderStyle);
+                }
+
+                // Calculate the area in which to draw the button.
+                Rectangle buttonArea = cellBounds;
+                Rectangle buttonAdjustment =
+                    this.BorderWidths(advancedBorderStyle);
+                buttonArea.X += buttonAdjustment.X;
+                buttonArea.Y += buttonAdjustment.Y;
+                buttonArea.Height -= buttonAdjustment.Height;
+                buttonArea.Width -= buttonAdjustment.Width;
+
+                // Draw the disabled button.
+                ButtonRenderer.DrawButton(graphics, buttonArea,
+                    PushButtonState.Disabled);
+
+                // Draw the disabled button text.
+                if (this.FormattedValue is String)
+                {
+                    TextRenderer.DrawText(graphics,
+                        (string)this.FormattedValue,
+                        this.DataGridView.Font,
+                        buttonArea, SystemColors.GrayText);
+                }
+            }
+            else
+            {
+                // The button cell is enabled, so let the base class
+                // handle the painting.
+                base.Paint(graphics, clipBounds, cellBounds, rowIndex,
+                    elementState, value, formattedValue, errorText,
+                    cellStyle, advancedBorderStyle, paintParts);
+            }
+        }
+    }
+    #endregion
 }
 

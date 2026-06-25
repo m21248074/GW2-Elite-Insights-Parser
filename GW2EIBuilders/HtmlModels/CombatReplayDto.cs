@@ -1,34 +1,36 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser;
+﻿using GW2EIEvtcParser;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIBuilders.HtmlModels
+namespace GW2EIBuilders.HtmlModels;
+
+internal class CombatReplayDto
 {
-    internal class CombatReplayDto
+    public List<CombatReplayRenderingDescription> DecorationRenderings { get; set; }
+    public List<CombatReplayMetadataDescription> DecorationMetadata { get; set; }
+    public List<SingleActorCombatReplayDescription> Actors { get; set; }
+    public List<List<double>>? DefaultViewpoints { get; set; }
+    public int[] Sizes { get; set; }
+    public float InchToPixel { get; set; }
+    public int PollingRate { get; set; }
+
+    public CombatReplayDto(ParsedEvtcLog log, Dictionary<long, SkillItem> usedSkills, Dictionary<long, Buff> usedBuffs)
     {
-        public List<AbstractCombatReplayRenderingDescription> DecorationRenderings { get; set; }
-        public List<AbstractCombatReplayDecorationMetadataDescription> DecorationMetadata { get; set; }
-        public List<AbstractSingleActorCombatReplayDescription> Actors { get; set; }
-        public int[] Sizes { get; set; }
-        public long MaxTime { get; set; }
-        public float InchToPixel { get; set; }
-        public int PollingRate { get; set; }
-        public IReadOnlyList<CombatReplayMap.MapItem> Maps { get; set; }
-
-        public CombatReplayDto(ParsedEvtcLog log, Dictionary<long, SkillItem> usedSkills, Dictionary<long, Buff> usedBuffs)
+        CombatReplayMap map = log.LogData.Logic.GetCombatReplayMap(log);
+        (Actors, DecorationRenderings, DecorationMetadata) = log.GetCombatReplayDescriptions(usedSkills, usedBuffs);
+        (int width, int height) = map.GetPixelMapSize();
+        Sizes = [width, height];
+        InchToPixel = map.GetInchToPixel();
+        PollingRate = ParserHelper.CombatReplayPollingRate;
+        if (map.DefaultViewpoints != null)
         {
-            CombatReplayMap map = log.FightData.Logic.GetCombatReplayMap(log);
-            (Actors, DecorationRenderings, DecorationMetadata) = log.GetCombatReplayDescriptions(usedSkills, usedBuffs);
-            Maps = map.Maps;
-            (int width, int height) = map.GetPixelMapSize();
-            Sizes = new int[2] { width, height };
-            InchToPixel = map.GetInchToPixel();
-            MaxTime = log.PlayerList.First().GetCombatReplayPolledPositions(log).Last().Time;
-            PollingRate = ParserHelper.CombatReplayPollingRate;
+            DefaultViewpoints = new(map.DefaultViewpoints.Count);
+            foreach (var defaultViewpoint in map.DefaultViewpoints)
+            {
+                DefaultViewpoints.Add([defaultViewpoint.XTranslatePercent, defaultViewpoint.YTranslatePercent, defaultViewpoint.Scale, defaultViewpoint.EncounterID]);
+            }
         }
-
-
     }
+
+
 }

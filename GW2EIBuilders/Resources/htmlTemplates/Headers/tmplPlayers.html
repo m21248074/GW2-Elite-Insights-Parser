@@ -1,7 +1,10 @@
 ﻿<template>
     <div class="d-flex flex-row">
-        <img class="icon mr-1" src="https://i.imgur.com/nSYuby8.png" :data-original-title="scoreExpl" />
-        <div class="d-flex flex-column" style="max-width: 900px;">
+        <div class="d-flex flex-column mr-1">
+            <img class="icon" :src="UIIcons.QuestionMark" :data-original-title="scoreExpl" />
+            <img class="icon" :src="UIIcons.QuestionMark" :data-original-title="weaponExpl" />
+        </div>
+        <div class="d-flex flex-column max-wd-900px">
             <div v-for="group in groups" class="d-flex flex-wrap mb-1">
                 <div v-for="player in group"
                     class="player-cell d-flex flex-column align-items-center justify-content-center"
@@ -9,34 +12,38 @@
                     <div>
                         <img :src="player.icon" :alt="player.profession" class="icon"
                             :data-original-title="player.profession">
-                        <img v-if="player.health > 0" src="https://wiki.guildwars2.com/images/b/be/Vitality.png"
+                        <img v-if="player.health > 0" :src="UIIcons.VitalityChar"
                             alt="Health" class="icon" :data-original-title="'Health: ' + player.health">
-                        <img v-if="player.condi > 0" src="https://wiki.guildwars2.com/images/5/54/Condition_Damage.png"
+                        <img v-if="player.condi > 0" :src="UIIcons.ConditionDamageChar"
                             alt="Condition Damage" class="icon"
                             :data-original-title="scoreV2 ? 'Condition Damage' : 'Condition Damage: ' + player.condi">
-                        <img v-if="player.conc > 0" src="https://wiki.guildwars2.com/images/4/44/Boon_Duration.png"
+                        <img v-if="player.conc > 0" :src="UIIcons.BoonDurationChar"
                             alt="Concentration" class="icon" :data-original-title="scoreV2 ? 'Concentration' : 'Concentration: ' + player.conc">
-                        <img v-if="player.heal > 0" src="https://wiki.guildwars2.com/images/8/81/Healing_Power.png"
+                        <img v-if="player.heal > 0" :src="UIIcons.HealingPowerChar"
                             alt="Healing Power" class="icon" :data-original-title="scoreV2 ? 'Healing Power' : 'Healing Power: ' + player.heal">
-                        <img v-if="player.tough > 0" src="https://wiki.guildwars2.com/images/1/12/Toughness.png"
+                        <img v-if="player.tough > 0" :src="UIIcons.ToughnessChar"
                             alt="Toughness" class="icon" :data-original-title="scoreV2 ? 'Toughness' : 'Toughness: ' + player.tough">
                     </div>
-                    <div v-if="player.l1Set.length > 0 || player.l2Set.length > 0">
-                        <img v-for="wep in player.l1Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
-                        <span v-if="player.l1Set.length > 0 && player.l2Set.length > 0">/</span>
-                        <img v-for="wep in player.l2Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
-                    </div>
-                    <div v-if="player.a1Set.length > 0 || player.a2Set.length > 0">
-                        <img v-for="wep in player.a1Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
-                        <span v-if="player.a1Set.length > 0 && player.a2Set.length > 0">/</span>
-                        <img v-for="wep in player.a2Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
+                    <div v-for="(weaponSet, weaponSetIndex) in player.weaponSets">
+                        <div v-show="showWeaponSet(weaponSetIndex, player.weaponSets, encounterPhase)">
+                            <div v-if="weaponSet.l1Set.length > 0 || weaponSet.l2Set.length > 0">
+                                <img v-for="wep in weaponSet.l1Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
+                                <span v-if="weaponSet.l1Set.length > 0 && weaponSet.l2Set.length > 0">/</span>
+                                <img v-for="wep in weaponSet.l2Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
+                            </div>
+                            <div v-if="weaponSet.a1Set.length > 0 || weaponSet.a2Set.length > 0">
+                                <img v-for="wep in weaponSet.a1Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
+                                <span v-if="weaponSet.a1Set.length > 0 && weaponSet.a2Set.length > 0">/</span>
+                                <img v-for="wep in weaponSet.a2Set" :src="getIcon(wep)" :data-original-title="wep" class="icon">
+                            </div>
+                        </div>
                     </div>
                     <div class="d-flex align-items-center justify-content-center">
                         <img v-if="runningExtensions && runningExtensions[player.id]"
-                            src="https://wiki.guildwars2.com/images/f/f0/Event_flag_green.png" alt="Extensions"
+                            :src="UIIcons.GreenFlag" alt="Extensions"
                             class="icon" :data-original-title="computeExtensionTooltip(runningExtensions[player.id])">
                         <img v-if="player.isCommander"
-                            src="https://wiki.guildwars2.com/images/5/54/Commander_tag_%28blue%29.png" alt="Commander"
+                            :src="UIIcons.Commander" alt="Commander"
                             class="icon" :data-original-title="getCommanderTooltip(player)">
                         <span class="player-cell-shorten" :data-original-title="player.name + ' - ' + player.acc">
                             {{ player.name }}
@@ -52,30 +59,19 @@
 <script>
 
     Vue.component("player-component", {
-        props: ["players"],
+        props: ["players", "phaseindex"],
+        mixins: [encounterPhaseComponent, playerHeaderComponent, UIIconsComponent],
         template: `${template}`,
         methods: {
-            getIcon: function (path) {
-                return urls[path];
-            },
             select: function (id) {
                 for (var i = 0; i < this.players.length; i++) {
-                    this.players[i].active = false;
+                    if (id === i) {
+                        reactiveLogdata.activeEncounterPhaseData[this.encounterPhase.encounterID].player = i;
+                        this.players[i].active = true;
+                    } else {
+                        this.players[i].active = false;
+                    }
                 }
-                this.players[id].active = true;
-            },
-            getCommanderTooltip: function(player) {
-                if (!player.isCommander) {
-                    return false;
-                }
-                let res = 'Commander';
-                for (let i = 0; i < player.commanderStates.length; i++) {
-                    res = `
-                        ${res}<br>
-                        From ${player.commanderStates[i][0]} to ${player.commanderStates[i][1]}
-                    `;
-                }
-                return res;
             },
             computeExtensionTooltip: function(data) {
                 var str = "此玩家正在使用: <br>";
@@ -106,11 +102,30 @@
                 </span>
                 `
             },
+            weaponExpl: function () {
+                if (IsMultiEncounterLog) {
+                    return `
+                    <span style='text-align:left;display: block;'>
+                    Weapons are estimated based on skills that were cast by the player. 
+                    <br>
+                    If the player has changed weapons during the instance, only the weapons used during the selected encounter will be displayed. 
+                    <br>
+                    If the whole instance is selected, the first encountered weapon set will be shown instead.
+                    </span>
+                    `;
+                }
+                return `
+                <span style='text-align:left;display: block;'>
+                Weapons are estimated based on skills that were cast by the player.
+                </span>
+                `;
+            },
             groups: function () {
                 var aux = [];
-                for (var i = 0; i < logData.players.length; i++) {
-                    var playerData = logData.players[i];
-                    if (playerData.isFake) {
+                const players = getActiveNonFakePlayersForPhase(this.encounterPhase);
+                for (var i = 0; i < players.length; i++) {
+                    var playerData = players[i];
+                    if (!playerData) {
                         continue;
                     }
                     if (!aux[playerData.group]) {
@@ -133,8 +148,13 @@
             runningExtensions: function () {
                 if (logData.usedExtensions) {
                     var res = [];
-                    for (var i = 0; i < logData.players.length; i++) {
-                        var playerData = logData.players[i];
+                    const players = getActiveNonFakePlayersForPhase(this.encounterPhase);
+                    for (var i = 0; i < players.length; i++) {
+                        var playerData = players[i];
+                        if (!playerData) {
+                            res.push(null);
+                            continue;
+                        }
                         var subRes = [];
                         for (var j = 0; j < logData.usedExtensions.length; j++) {
                             var usedExtension = logData.usedExtensions[j];

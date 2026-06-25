@@ -1,6 +1,6 @@
 ﻿<template>
     <div class="d-flex flex-row justify-content-center mt-1 mb-1">     
-        <ul class="nav nav-pills d-flex flex-wrap justify-content-center mr-3 scale85" :class="{'flex-row': !column, 'flex-column': column}">
+        <ul class="nav nav-pills d-flex flex-wrap justify-content-center mr-3 scale75" :class="{'flex-row': !column, 'flex-column': column}">
             <li class="nav-item d-flex flex-row justify-content-center align-items-center">
                 <a class="nav-link" @click="data.dpsmode = 0" :class="{active: data.dpsmode === 0}">全程</a>
             </li>
@@ -24,25 +24,29 @@
                                                    :placeholderValue="0"></custom-numberform-component>
             </li>        
         </ul>    
-        <ul class="nav nav-pills d-flex flex-wrap justify-content-center ml-3 scale85" :class="{'flex-row': !column, 'flex-column': column}">
+        <ul class="nav nav-pills d-flex flex-wrap justify-content-center ml-3 scale75" :class="{'flex-row': !column, 'flex-column': column}">
             <li class="nav-item d-flex flex-row justify-content-center align-items-center" data-original-title="直傷 + 症狀">
-                <a class="nav-link" @click="data.damagemode = damageModeEnum.All" :class="{active: data.damagemode === damageModeEnum.All}"><img src="https://wiki.guildwars2.com/images/thumb/6/6a/Damage.png/30px-Damage.png" alt="All"
+                <a class="nav-link" @click="data.damagemode = damageModeEnum.All" :class="{active: data.damagemode === damageModeEnum.All}">
+                    <img :src="UIIcons.Damage" alt="All"
                     class="icon"></a>
             </li>    
             <li class="nav-item d-flex flex-row justify-content-center align-items-center" data-original-title="直傷">
-                <a class="nav-link" @click="data.damagemode = damageModeEnum.Power" :class="{active: data.damagemode === damageModeEnum.Power}"><img src="https://wiki.guildwars2.com/images/2/23/Power.png" alt="Power"
+                <a class="nav-link" @click="data.damagemode = damageModeEnum.Power" :class="{active: data.damagemode === damageModeEnum.Power}">
+                    <img :src="UIIcons.Power" alt="Power"
                     class="icon"></a>
             </li>                     
             <li class="nav-item d-flex flex-row justify-content-center align-items-center" data-original-title="症狀">
-                <a class="nav-link" @click="data.damagemode = damageModeEnum.Condition" :class="{active: data.damagemode === damageModeEnum.Condition}"><img src="https://wiki.guildwars2.com/images/5/54/Condition_Damage.png" alt="Condition"
+                <a class="nav-link" @click="data.damagemode = damageModeEnum.Condition" :class="{active: data.damagemode === damageModeEnum.Condition}">
+                    <img :src="UIIcons.ConditionDamage" alt="Condition"
                     class="icon"></a>
             </li>
             <li class="nav-item d-flex flex-row justify-content-center align-items-center" v-if="hasBreakbarDamage" data-original-title="蔑視條">
-                <a class="nav-link" @click="data.damagemode = damageModeEnum.Breakbar" :class="{active: data.damagemode === damageModeEnum.Breakbar}"> <img src="https://wiki.guildwars2.com/images/a/ae/Unshakable.png" alt="Breakbar"
+                <a class="nav-link" @click="data.damagemode = damageModeEnum.Breakbar" :class="{active: data.damagemode === damageModeEnum.Breakbar}"> 
+                    <img :src="UIIcons.Breakbar" alt="Breakbar"
                     class="icon"></a>
             </li>
         </ul>
-        <ul class="nav nav-pills d-flex flex-wrap justify-content-center ml-3 scale85" :class="{'flex-row': !column, 'flex-column': column}">
+        <ul class="nav nav-pills d-flex flex-wrap justify-content-center ml-3 scale75" :class="{'flex-row': !column, 'flex-column': column}">
             <li class="nav-item d-flex flex-row justify-content-center align-items-center">
                 <a class="nav-link" @click="data.graphmode = graphModeEnum.DPS" :class="{active: data.graphmode === graphModeEnum.DPS}">秒傷</a>
             </li>    
@@ -60,13 +64,14 @@
     Vue.component("dps-graph-mode-selector-component", {
         props: ['data', 'phaseduration', 'phasehassubphases', 'ignorebreakbar', "column"],
         template: `${template}`,
+        mixins: [UIIconsComponent],
         mounted() {
             var _this = this;
             $('#customDPS').on("input ", function () {
-                _this.data.dpsmode = Math.ceil($(this).val() / 2) * 2;
+                _this.data.dpsmode = Math.ceil(Number.parseFloat($(this).val()) / 2) * 2;
             });
             $('#customDPS').on("click ", function () {
-                _this.data.dpsmode = Math.ceil($(this).val() / 2) * 2;
+                _this.data.dpsmode = Math.ceil(Number.parseFloat($(this).val()) / 2) * 2;
             });
         },
         computed: {
@@ -78,7 +83,7 @@
             },
             hasBreakbarDamage: function() {
                 return !this.ignorebreakbar && logData.hasBreakbarDamage;
-            }
+            },
         }
     });
 </script>

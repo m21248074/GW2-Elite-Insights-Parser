@@ -14,10 +14,12 @@
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="targetmode = 1" :class="{active: targetmode}">目標</a>
+                    <a class="nav-link" @click="targetmode = 1" data-original-title="Against selected target(s)."
+                       :class="{active: targetmode}">目標</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="targetmode = 0" :class="{active: !targetmode }">全部</a>
+                    <a class="nav-link" @click="targetmode = 0" data-original-title="Against all enemies."
+                       :class="{active: !targetmode }">全部</a>
                 </li>
             </ul>
         </div>
@@ -61,34 +63,41 @@
                 return healingStatsExtension.playerHealingDetails[this.playerindex].minions[this.distmode].healingDistributionsTargets[this.phaseindex];
             },
             healingdisttarget: function () {
-                var cacheID = this.phaseindex + '-' + this.distmode + '-';
+                let cacheID = this.phaseindex + '-' + this.distmode + '-';
                 cacheID += getTargetCacheID(this.activetargets);
                 if (this.cacheTarget.has(cacheID)) {
                     return this.cacheTarget.get(cacheID);
                 }
-                var dist = {
+                const dist = {
                     contributedHealing: 0,
                     contributedDownedHealing: 0,
                     totalHealing: 0,
                     totalCasting: 0,
                     distribution: [],
                 };
-                var rows = new Map();
-                for (var i = 0; i < this.activetargets.length; i++) {
-                    var targetid = this.activetargets[i];
-                    var targetDist = this._healingdisttarget[targetid];
+                const rows = new Map();
+                for (let i = 0; i < this.activetargets.length; i++) {
+                    const targetid = this.activetargets[i];
+                    const targetDist = this._healingdisttarget[targetid];
                     dist.contributedHealing += targetDist.contributedHealing;
                     dist.contributedDownedHealing += targetDist.contributedDownedHealing;
                     dist.totalHealing += targetDist.totalHealing;
                     dist.totalCasting = targetDist.totalCasting;
-                    var distribution = targetDist.distribution;
-                    for (var k = 0; k < distribution.length; k++) {
-                        var targetDistribution = distribution[k];
+                    const distribution = targetDist.distribution;
+                    for (let k = 0; k < distribution.length; k++) {
+                        const targetDistribution = distribution[k];
                         if (rows.has(targetDistribution[1])) {
-                            var row = rows.get(targetDistribution[1]);
-                            row[2] += targetDistribution[2];
-                            row[3] = Math.min(targetDistribution[3], row[3]);
-                            row[4] = Math.max(targetDistribution[4], row[4]);
+                            const row = rows.get(targetDistribution[1]);
+                            row[2] += targetDistribution[2];                 
+                            if (targetDistribution[8]) {
+                                if (row[8] === 0) {
+                                    row[3] = targetDistribution[3];
+                                    row[4] = targetDistribution[4];
+                                } else {
+                                    row[3] = Math.min(targetDistribution[3], row[3]);
+                                    row[4] = Math.max(targetDistribution[4], row[4]);
+                                }
+                            }
                             // skip 5 6 7
                             row[8] += targetDistribution[8];
                             // skip 9

@@ -1,23 +1,93 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 using GW2EIEvtcParser.EIData;
 using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.Extensions
+namespace GW2EIEvtcParser.Extensions;
+
+public abstract class EXTActorBarrierHelper
 {
-    public abstract class EXTActorBarrierHelper
+    protected Dictionary<AgentItem, List<EXTBarrierEvent>>? BarrierEventsByDst;
+    protected Dictionary<AgentItem, List<EXTBarrierEvent>>? BarrierReceivedEventsBySrc;
+
+    internal EXTActorBarrierHelper()
     {
-        protected List<EXTAbstractBarrierEvent> BarrierEvents { get; set; }
-        protected Dictionary<AgentItem, List<EXTAbstractBarrierEvent>> BarrierEventsByDst { get; set; }
-        protected List<EXTAbstractBarrierEvent> BarrierReceivedEvents { get; set; }
-        protected Dictionary<AgentItem, List<EXTAbstractBarrierEvent>> BarrierReceivedEventsBySrc { get; set; }
-
-        internal EXTActorBarrierHelper()
-        {
-        }
-
-        public abstract IReadOnlyList<EXTAbstractBarrierEvent> GetOutgoingBarrierEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end);
-
-        public abstract IReadOnlyList<EXTAbstractBarrierEvent> GetIncomingBarrierEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end);
-
     }
+
+    protected abstract AgentItem GetAgentItemForCachingSrc();
+
+    #region INITIALIZERS
+    [MemberNotNull(nameof(BarrierEventsByDst))]
+    protected abstract void InitBarrierEvents(ParsedEvtcLog log);
+
+    [MemberNotNull(nameof(BarrierReceivedEventsBySrc))]
+    protected abstract void InitIncomingBarrierEvents(ParsedEvtcLog log);
+    #endregion INITIALIZERS
+
+    private CachingCollectionWithTarget<List<EXTBarrierEvent>>? BarrierEventByDstCache;
+    public IReadOnlyList<EXTBarrierEvent> GetOutgoingBarrierEvents(SingleActor? target, ParsedEvtcLog log, long start, long end)
+    {
+        InitBarrierEvents(log);
+        BarrierEventByDstCache ??= new(GetAgentItemForCachingSrc(), log);
+        if (!BarrierEventByDstCache.TryGetValue(start, end, target, out var list))
+        {
+            if (target != null)
+            {
+                if (BarrierEventsByDst.TryGetValue(target.EnglobingAgentItem, out var damageEvents))
+                {
+                    long targetStart = target.FirstAware;
+                    long targetEnd = target.LastAware;
+                    list = damageEvents.Where(x => x.Time >= start && x.Time >= targetStart && x.Time <= end && x.Time <= targetEnd).ToList();
+                }
+                else
+                {
+                    list = [];
+                }
+            }
+            else
+            {
+                list = BarrierEventsByDst[ParserHelper._nullAgent].Where(x => x.Time >= start && x.Time <= end).ToList();
+            }
+            BarrierEventByDstCache.Set(start, end, target, list);
+        }
+        return list;
+    }
+    public IReadOnlyList<EXTBarrierEvent> GetOutgoingBarrierEvents(SingleActor? target, ParsedEvtcLog log)
+    {
+        return GetOutgoingBarrierEvents(target, log, log.LogData.LogStart, log.LogData.LogEnd);
+    }
+
+
+    private CachingCollectionWithTarget<List<EXTBarrierEvent>>? BarrierReceivedEventBySrcCache;
+    public IReadOnlyList<EXTBarrierEvent> GetIncomingBarrierEvents(SingleActor? target, ParsedEvtcLog log, long start, long end)
+    {
+        InitIncomingBarrierEvents(log);
+        BarrierReceivedEventBySrcCache ??= new(GetAgentItemForCachingSrc(), log);
+        if (!BarrierReceivedEventBySrcCache.TryGetValue(start, end, target, out var list))
+        {
+            if (target != null)
+            {
+                if (BarrierReceivedEventsBySrc.TryGetValue(target.EnglobingAgentItem, out var damageEvents))
+                {
+                    long targetStart = target.FirstAware;
+                    long targetEnd = target.LastAware;
+                    list = damageEvents.Where(x => x.Time >= start && x.Time >= targetStart && x.Time <= end && x.Time <= targetEnd).ToList();
+                }
+                else
+                {
+                    list = [];
+                }
+            }
+            else
+            {
+                list = BarrierReceivedEventsBySrc[ParserHelper._nullAgent].Where(x => x.Time >= start && x.Time <= end).ToList();
+            }
+            BarrierReceivedEventBySrcCache.Set(start, end, target, list);
+        }
+        return list;
+    }
+    public IEnumerable<EXTBarrierEvent> GetIncomingBarrierEvents(SingleActor? target, ParsedEvtcLog log)
+    {
+        return GetIncomingBarrierEvents(target, log, log.LogData.LogStart, log.LogData.LogEnd);
+    }
+
 }

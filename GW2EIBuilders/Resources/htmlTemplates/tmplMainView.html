@@ -9,10 +9,9 @@
                 <target-component :targets="reactiveLogdata.targets" :phaseindex="activePhase"></target-component>
             </div>
             <div class="ml-5">
-                <player-component :players="reactiveLogdata.players"></player-component>
+                <player-component :players="reactiveLogdata.players" :phaseindex="activePhase"></player-component>
             </div>
         </div>     
-        <h2 class="text-center">{{ name }}</h2>
         <ul class="nav nav-tabs">
             <li>
                 <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">一般統計</a>
@@ -101,7 +100,7 @@
         data: function () {
             return {
                 tab: getDefaultMainSubComponent(),
-                reactiveLogdata: simpleLogData
+                reactiveLogdata: reactiveLogdata
             };
         },
         computed: {
@@ -126,7 +125,8 @@
                 return -1;
             },
             name: function () {
-                return this.phase.name + " 總結";
+                const phase = this.phase;
+                return (phase.name) + " 總結";
             },
             activePhaseTargets: function () {
                 var res = [];

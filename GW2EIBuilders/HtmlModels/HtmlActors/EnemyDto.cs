@@ -1,7 +1,8 @@
-﻿namespace GW2EIBuilders.HtmlModels.HTMLActors
+﻿namespace GW2EIBuilders.HtmlModels.HTMLActors;
+
+internal class EnemyDto
 {
-    internal class EnemyDto
-    {
-        public string Name { get; set; }
-    }
+    public string? Name { get; set; }
+    public double FirstAware;
+    public double LastAware;
 }

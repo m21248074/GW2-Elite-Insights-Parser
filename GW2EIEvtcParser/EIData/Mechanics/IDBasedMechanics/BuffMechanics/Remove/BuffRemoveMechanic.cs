@@ -1,45 +1,52 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+
+internal abstract class BuffRemoveMechanic<T> : IDBasedMechanic<T> where T : AbstractBuffRemoveEvent
 {
 
-    internal abstract class BuffRemoveMechanic<T> : IDBasedMechanic<T> where T : AbstractBuffRemoveEvent
+    public BuffRemoveMechanic(long mechanicID, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : this([mechanicID], plotlySetting, shortName, description, fullName, internalCoolDown)
     {
+    }
 
-        public BuffRemoveMechanic(long mechanicID, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : this(new long[] { mechanicID }, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
+    public BuffRemoveMechanic(long[] mechanicIDs, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(mechanicIDs, plotlySetting, shortName, description, fullName, internalCoolDown)
+    {
+    }
+
+    internal BuffRemoveMechanic<T> UsingBuffChecker(long buffID, bool isPresent)
+    {
+        if (isPresent)
         {
+            return (BuffRemoveMechanic<T>)UsingChecker((evt, log) => GetAgentItem(evt).HasBuff(log, buffID, evt.Time - ParserHelper.ServerDelayConstant));
         }
-
-        public BuffRemoveMechanic(long[] mechanicIDs, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(mechanicIDs, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
+        else
         {
+            return (BuffRemoveMechanic<T>)UsingChecker((evt, log) => !GetAgentItem(evt).HasBuff(log, buffID, evt.Time - ParserHelper.ServerDelayConstant));
         }
+    }
 
-        protected abstract AgentItem GetAgentItem(T brae);
-        protected abstract AbstractSingleActor GetActor(ParsedEvtcLog log, AgentItem agentItem, Dictionary<int, AbstractSingleActor> regroupedMobs);
+    protected abstract AgentItem GetAgentItem(T brae);
+    protected abstract bool TryGetActor(ParsedEvtcLog log, AgentItem agentItem, Dictionary<int, SingleActor> regroupedMobs, [NotNullWhen(true)] out SingleActor? actor);
 
-        protected virtual void AddMechanic(ParsedEvtcLog log, Dictionary<Mechanic, List<MechanicEvent>> mechanicLogs, T brae, AbstractSingleActor actor)
+    protected virtual void AddMechanic(ParsedEvtcLog log, Dictionary<Mechanic, List<MechanicEvent>> mechanicLogs, T brae, SingleActor actor)
+    {
+        InsertMechanic(log, mechanicLogs, brae.Time, actor, brae.RemovedDuration);
+    }
+
+    internal override void CheckMechanic(ParsedEvtcLog log, Dictionary<Mechanic, List<MechanicEvent>> mechanicLogs, Dictionary<int, SingleActor> regroupedMobs)
+    {
+        foreach (long mechanicID in MechanicIDs)
         {
-            InsertMechanic(log, mechanicLogs, brae.Time, actor);
-        }
-
-        internal override void CheckMechanic(ParsedEvtcLog log, Dictionary<Mechanic, List<MechanicEvent>> mechanicLogs, Dictionary<int, AbstractSingleActor> regroupedMobs)
-        {
-            foreach (long mechanicID in MechanicIDs)
+            foreach (BuffEvent c in log.CombatData.GetBuffData(mechanicID))
             {
-                foreach (AbstractBuffEvent c in log.CombatData.GetBuffData(mechanicID))
+                if (c is T brae && TryGetActor(log, GetAgentItem(brae), regroupedMobs, out var amp) && Keep(brae, log))
                 {
-                    if (c is T brae && Keep(brae, log))
-                    {
-                        AbstractSingleActor amp = GetActor(log, GetAgentItem(brae), regroupedMobs);
-                        if (amp != null)
-                        {
-                            AddMechanic(log, mechanicLogs, brae, amp);
-                        }
-                    }
+                    AddMechanic(log, mechanicLogs, brae, amp);
                 }
             }
         }
-
     }
+
 }

@@ -4,32 +4,46 @@
 /*global animator, ToRadians, overheadAnimationFrame, maxOverheadAnimationFrame, facingIcon, animateCanvas, noUpdateTime, SkillDecorationCategory*/
 "use strict";
 
-class GenericDecorationMetadata {
+class GenericMetadata {
     constructor(params) {
 
     }
 }
 
-class GenericAttachedDecorationMetadata extends GenericDecorationMetadata{
+class TextMetadata extends GenericMetadata{
+    constructor(params) {
+        super(params);
+        this.color = params.color;
+        this.backgroundColor = params.backgroundColor;
+    }
+}
+
+class TextOverheadMetadata extends TextMetadata {
     constructor(params) {
         super(params);
     }
 }
 
-class ActorOrientationDecorationMetadata extends GenericAttachedDecorationMetadata {
+class GenericAttachedMetadata extends GenericMetadata{
     constructor(params) {
         super(params);
     }
 }
 
-class FormDecorationMetadata extends GenericAttachedDecorationMetadata {
+class ActorOrientationMetadata extends GenericAttachedMetadata {
+    constructor(params) {
+        super(params);
+    }
+}
+
+class FormMetadata extends GenericAttachedMetadata {
     constructor(params) {
         super(params);
         this.color = params.color;
     }
 }
 
-class CircleDecorationMetadata extends FormDecorationMetadata {
+class CircleMetadata extends FormMetadata {
     constructor(params) {
         super(params);
         this.radius = InchToPixel * params.radius;
@@ -37,7 +51,21 @@ class CircleDecorationMetadata extends FormDecorationMetadata {
     }
 }
 
-class DoughnutDecorationMetadata extends FormDecorationMetadata {
+class RegularPolygonMetadata extends FormMetadata {
+    constructor(params) {
+        super(params);
+        this.radius = InchToPixel * params.radius;
+        this.nbPolygon = params.nbPolygon;
+    }
+}
+
+class CustomPolygonMetadata extends FormMetadata {
+    constructor(params) {
+        super(params);
+    }
+}
+
+class DoughnutMetadata extends FormMetadata {
     constructor(params) {
         super(params);
         this.outerRadius = InchToPixel * params.outerRadius;
@@ -45,13 +73,18 @@ class DoughnutDecorationMetadata extends FormDecorationMetadata {
     }
 }
 
-class LineDecorationMetadata extends FormDecorationMetadata {
+class LineMetadata extends FormMetadata {
     constructor(params) {
         super(params);
+        this.thickness = params.thickness;
+        this.worldSizeThickness = params.worldSizeThickness;
+        if (this.worldSizeThickness) {
+            this.thickness *= InchToPixel;
+        }
     }
 }
 
-class PieDecorationMetadata extends CircleDecorationMetadata {
+class PieMetadata extends CircleMetadata {
     constructor(params) {
         super(params);
         this.openingAngle = params.openingAngle;
@@ -60,7 +93,7 @@ class PieDecorationMetadata extends CircleDecorationMetadata {
     }
 }
 
-class RectangleDecorationMetadata extends FormDecorationMetadata {
+class RectangleMetadata extends FormMetadata {
     constructor(params) {
         super(params);
         this.width = InchToPixel * params.width;
@@ -68,49 +101,79 @@ class RectangleDecorationMetadata extends FormDecorationMetadata {
     }
 }
 
-class GenericIconDecorationMetadata extends GenericAttachedDecorationMetadata{
+class ProgressBarMetadata extends RectangleMetadata {
+    constructor(params) {
+        super(params);
+        this.secondaryColor = params.secondaryColor;
+    }
+}
+
+class OverheadProgressBarMetadata extends ProgressBarMetadata {
+    constructor(params) {
+        super(params);
+        this.pixelWidth = params.pixelWidth;
+        this.pixelHeight = params.pixelHeight;
+    }
+}
+
+class ArenaMetadata extends GenericAttachedMetadata {
     constructor(params) {
         super(params);
         this.imageUrl = params.image;
         this.image = new Image();
-        this.image.src = this.imageUrl;
+        this.image.src = _buildFallBackURL(this.imageUrl);
+        this.image.onload = () => {
+            animator.needBGUpdate = true;
+            animateCanvas(noUpdateTime);
+        };
+        this.width = InchToPixel * params.width;
+        this.height = InchToPixel * params.height;
+    }
+}
+
+class GenericIconMetadata extends GenericAttachedMetadata{
+    constructor(params) {
+        super(params);
+        this.imageUrl = params.image;
+        this.image = new Image();
+        this.image.src = _buildFallBackURL(this.imageUrl);
         this.image.onload = () => animateCanvas(noUpdateTime);
         this.pixelSize = params.pixelSize;
         this.worldSize = InchToPixel * params.worldSize;
     }
 }
 
-class BackgroundIconDecorationMetadata extends GenericIconDecorationMetadata {
+class BackgroundIconMetadata extends GenericIconMetadata {
     constructor(params) {
         super(params);
     }
 }
 
-class IconDecorationMetadata extends GenericIconDecorationMetadata {
+class IconMetadata extends GenericIconMetadata {
     constructor(params) {
         super(params);
         this.opacity = params.opacity;
     }
 }
 
-class IconOverheadDecorationMetadata extends IconDecorationMetadata {
+class IconOverheadMetadata extends IconMetadata {
     constructor(params) {
         super(params);
     }
 }
 
-class BackgroundDecorationMetadata extends GenericDecorationMetadata{
+class BackgroundMetadata extends GenericMetadata{
     constructor(params) {
         super(params);
     }
 }
 
-class MovingPlatformDecorationMetadata extends BackgroundDecorationMetadata{
+class MovingPlatformMetadata extends BackgroundMetadata{
     constructor(params, ) {
         super(params);
         this.imageUrl = params.image;
         this.image = new Image();
-        this.image.src = this.imageUrl;
+        this.image.src = _buildFallBackURL(this.imageUrl);
         this.image.onload = () => animateCanvas(noUpdateTime);
         this.width = InchToPixel * params.width;
         this.height = InchToPixel * params.height;
@@ -120,12 +183,17 @@ class MovingPlatformDecorationMetadata extends BackgroundDecorationMetadata{
 
 //// BASE MECHANIC
 
-function interpolatedPositionFetcher(connection, master) {
-    var index = -1;
-    var totalPoints = connection.positions.length / 3;
-    var time = animator.reactiveDataStatus.time;
-    for (var i = 0; i < totalPoints; i++) {
-        var posTime = connection.positions[3 * i + 2];
+const InterpolationMethod = {
+    LINEAR: 0,
+    STEP: 1,
+};
+
+function interpolatedPositionFetcher(connection, master, start, end) {
+    let index = -1;
+    const totalPoints = connection.positions.length / 3;
+    const time = animator.reactiveDataStatus.time;
+    for (let i = 0; i < totalPoints; i++) {
+        const posTime = connection.positions[3 * i + 2];
         if (time < posTime) {
             break;
         }
@@ -142,30 +210,38 @@ function interpolatedPositionFetcher(connection, master) {
             y: connection.positions[3 * index + 1]
         };
     } else {
-        var cur = {
+        const cur = {
             x: connection.positions[3 * index],
             y: connection.positions[3 * index + 1]
         };
-        var curTime = connection.positions[3 * index + 2];
-        var next = {
-            x: connection.positions[3 * (index + 1)],
-            y: connection.positions[3 * (index + 1) + 1]
-        };
-        var nextTime = connection.positions[3 * (index + 1) + 2];
-        var pt = {
-            x: 0,
-            y: 0
-        };
-        pt.x = cur.x + (time - curTime) / (nextTime - curTime) * (next.x - cur.x);
-        pt.y = cur.y + (time - curTime) / (nextTime - curTime) * (next.y - cur.y);
-        return pt;
+        switch (connection.interpolationMethod) {
+            case InterpolationMethod.LINEAR:
+                const curTime = connection.positions[3 * index + 2];
+                const next = {
+                    x: connection.positions[3 * (index + 1)],
+                    y: connection.positions[3 * (index + 1) + 1]
+                };
+                const nextTime = connection.positions[3 * (index + 1) + 2];
+                const pt = {
+                    x: 0,
+                    y: 0
+                };
+                pt.x = cur.x + (time - curTime) / (nextTime - curTime) * (next.x - cur.x);
+                pt.y = cur.y + (time - curTime) / (nextTime - curTime) * (next.y - cur.y);
+                return pt;
+            case InterpolationMethod.STEP:
+                return cur;
+            default:
+                return null;
+        }
     }
 }
 
-function staticPositionFetcher(connection, master) {
+function staticPositionFetcher(connection, master, start, end) {
+    const factor = connection.isScreenSpace ? resolutionMultiplier : 1;
     return {
-        x: connection.position[0],
-        y: connection.position[1]
+        x: factor * connection.position[0],
+        y: factor * connection.position[1]
     };
 }
 
@@ -183,7 +259,76 @@ function staticOffsetFetcher(connection) {
     };
 }
 
-function masterPositionFetcher(connection, master) {
+function positionToMasterPositionFetcher(connection, master, start, end) {
+    if (!master) {
+        return null;
+    }
+    const initialPosition = {
+        x: connection.position[0],
+        y: connection.position[1],
+    }
+    const initialTime = connection.position[2];
+    const time = animator.reactiveDataStatus.time;
+    if (time <= initialTime) {
+        return null;
+    }
+    if (!connection._positions) { 
+        const pollingRate = PollingRate / 2;
+        const velocity = InchToPixel * connection.velocity;
+        let currentPosition = initialPosition;
+        connection._positions = [
+            {
+                x: currentPosition.x, 
+                y: currentPosition.y, 
+                time: initialTime
+            }
+        ];
+        for (let i = 1; i < (end - start)/ pollingRate + 1; i++) {
+            let nextTime = initialTime + i*pollingRate;
+            const targetPosition = master._getPosition(nextTime);
+            if (!targetPosition) {
+                connection._positions.push({
+                    x: currentPosition.x, 
+                    y: currentPosition.y, 
+                    time: nextTime
+                });
+            } else {
+                const vector = {
+                    x: targetPosition.x - currentPosition.x,
+                    y: targetPosition.y - currentPosition.y,
+                }
+                const length = Math.sqrt(vector.x * vector.x +vector.y * vector.y );
+                vector.x /= Math.max(length, 1e-6);
+                vector.y /= Math.max(length, 1e-6);
+                const factor = pollingRate * velocity;
+                connection._positions.push({
+                    x: currentPosition.x + factor * vector.x, 
+                    y: currentPosition.y + factor * vector.y, 
+                    time: nextTime
+                });
+                currentPosition = connection._positions[i];
+            }
+        }  
+    }
+    const positions = connection._positions;
+    // TODO: optimize if necessary
+    let i = 0;
+    for (i = 0; i < positions.length; i++) {
+        let cur = positions[i];
+        if (cur.time > time) {
+            break;
+        }
+    }
+    const cur = positions[i - 1];
+    const next = positions[i]
+    const factor = (time - cur.time) / (next.time - cur.time);
+    return {
+        x:  factor* (next.x - cur.x) + cur.x,
+        y:  factor* (next.y - cur.y) + cur.y
+    };
+}
+
+function masterPositionFetcher(connection, master, start, end) {
     if (!master) {
         return null;
     }
@@ -195,11 +340,11 @@ function noAngleFetcher(connection, master, start, end) {
 }
 
 function interpolatedAngleFetcher(connection, master, dstMaster, start, end) {
-    var index = -1;
-    var totalPoints = connection.angles.length / 2;
-    var time = animator.reactiveDataStatus.time;
-    for (var i = 0; i < totalPoints; i++) {
-        var posTime = connection.angles[2 * i + 1];
+    let index = -1;
+    const totalPoints = connection.angles.length / 2;
+    const time = animator.reactiveDataStatus.time;
+    for (let i = 0; i < totalPoints; i++) {
+        const posTime = connection.angles[2 * i + 1];
         if (time < posTime) {
             break;
         }
@@ -210,25 +355,36 @@ function interpolatedAngleFetcher(connection, master, dstMaster, start, end) {
     } else if (index === totalPoints - 1) {
         return connection.angles[2 * index];
     } else {
-        var cur = connection.angles[2 * index];
-        var curTime = connection.angles[2 * index + 1];
-        var next = connection.angles[2 * (index + 1)];
-        var nextTime = connection.angles[2 * (index + 1) + 1];
-        // Make sure the interpolation is only done on the shortest path to avoid big flips around PI or -PI radians
-        if (next - cur < -180) {
-            next += 360.0;
-        } else if (next - cur > 180) {
-            next -= 360.0;
+        const cur = connection.angles[2 * index];
+        switch (connection.interpolationMethod) {
+            case InterpolationMethod.LINEAR:
+                const curTime = connection.angles[2 * index + 1];
+                let next = connection.angles[2 * (index + 1)];
+                const nextTime = connection.angles[2 * (index + 1) + 1];
+                // Make sure the interpolation is only done on the shortest path to avoid big flips around PI or -PI radians
+                if (next - cur < -180) {
+                    next += 360.0;
+                } else if (next - cur > 180) {
+                    next -= 360.0;
+                }
+                const interpolatedAngle = cur + (time - curTime) / (nextTime - curTime) * (next - cur);
+                return interpolatedAngle;
+            case InterpolationMethod.STEP:
+                return cur;
+            default:
+                return 0;
         }
-        var interpolatedAngle = cur + (time - curTime) / (nextTime - curTime) * (next - cur);
-        return interpolatedAngle;
     }
 }
 
+function spinningAngleFetcher(connection, master, dstMaster, start, end) {
+    const time = animator.reactiveDataStatus.time;
+    const factor = Math.max((time - start) / (end - start), 0.0);
+    return connection.angle + factor * connection.spinAngle;
+}
+
 function staticAngleFetcher(connection, master, dstMaster, start, end) {
-    var time = animator.reactiveDataStatus.time;
-    var velocity = Math.min((time - start) / (end - start), 1.0);
-    return connection.angles[0] + velocity * connection.angles[1];
+    return connection.angle;
 }
 
 function masterRotationFetcher(connection, master, dstMaster, start, end) {
@@ -242,12 +398,12 @@ function masterToMasterRotationFetcher(connection, master, dstMaster, start, end
     if (!master || !dstMaster) {
         return null;
     }
-    var origin = master.getPosition();
-    var dst = dstMaster.getPosition();
+    const origin = master.getPosition();
+    const dst = dstMaster.getPosition();
     if (!origin || !dst) {
         return null;
     }
-    var vector = {
+    const vector = {
         x: dst.x - origin.x,
         y: dst.y - origin.y,
     }
@@ -266,11 +422,13 @@ class MechanicDrawable {
         this.end = params.end;
         this.positionFetcher = null;
         this.connectedTo = params.connectedTo;
-        if (this.connectedTo.interpolationMethod >= 0) {
+        if (this.connectedTo.velocity >= 0) {
+            this.positionFetcher = positionToMasterPositionFetcher;
+        } else if (this.connectedTo.interpolationMethod >= 0) {
             this.positionFetcher = interpolatedPositionFetcher;
         } else if (this.connectedTo.position) {
             this.positionFetcher = staticPositionFetcher;
-        } else if (this.connectedTo.masterId >= 0) {         
+        } else if (this.connectedTo.masterID >= 0) {         
             this.positionFetcher = masterPositionFetcher;
         }
         this.offsetFetcher = noOffsetFetcher;
@@ -284,11 +442,13 @@ class MechanicDrawable {
         if (this.rotationConnectedTo) {
             if (this.rotationConnectedTo.interpolationMethod >= 0) {
                 this.rotationFetcher = interpolatedAngleFetcher;
-            } else if (this.rotationConnectedTo.angles) {
+            } else if (this.rotationConnectedTo.spinAngle !== undefined) {
+                this.rotationFetcher = spinningAngleFetcher;
+            } else if (this.rotationConnectedTo.angle !== undefined) {
                 this.rotationFetcher = staticAngleFetcher;
-            } else if (this.rotationConnectedTo.dstMasterId) {
+            } else if (this.rotationConnectedTo.dstMasterID) {
                 this.rotationFetcher = masterToMasterRotationFetcher;
-            } else if (this.rotationConnectedTo.masterId) {
+            } else if (this.rotationConnectedTo.masterID) {
                 this.rotationFetcher = masterRotationFetcher;
                 this.rotationOffset = this.rotationConnectedTo.rotationOffset;
                 this.rotationOffsetMode = this.rotationConnectedTo.rotationOffsetMode;
@@ -302,7 +462,7 @@ class MechanicDrawable {
         this.owner = null;
         this.category = 0;
         if (params.skillMode) {
-            this.ownerID = params.skillMode.owner;
+            this.ownerID = params.skillMode.owner.ownerID;
             this.category = params.skillMode.category;
         }
         //
@@ -315,7 +475,7 @@ class MechanicDrawable {
     }
 
     getOffset() {
-        var time = animator.reactiveDataStatus.time;
+        const time = animator.reactiveDataStatus.time;
         if (this.start > time || this.end < time) {
             return null;
         }
@@ -323,7 +483,7 @@ class MechanicDrawable {
     }
 
     getRotation() {
-        var time = animator.reactiveDataStatus.time;
+        const time = animator.reactiveDataStatus.time;
         if (this.start > time || this.end < time) {
             return null;
         }
@@ -331,11 +491,11 @@ class MechanicDrawable {
     }
 
     getPosition() {
-        var time = animator.reactiveDataStatus.time;
+        const time = animator.reactiveDataStatus.time;
         if (this.start > time || this.end < time) {
             return null;
         }
-        return this.positionFetcher(this.connectedTo, this.master);
+        return this.positionFetcher(this.connectedTo, this.master, this.start, this.end);
     }
 
     moveContext(ctx, pos, rot) {
@@ -367,27 +527,36 @@ class MechanicDrawable {
         if (this.connectedTo === null) {
             return false;
         }
-        if (this.positionFetcher === masterPositionFetcher) {
-            if (this.master === null) {
-                let masterId = this.connectedTo.masterId;
-                this.master = animator.getActorData(masterId);
+        if (this.positionFetcher === masterPositionFetcher || this.positionFetcher === positionToMasterPositionFetcher) {
+            const masterID = this.connectedTo.masterID;
+            const perParentArray = animator.agentDataPerParentID.get(masterID);
+            if (perParentArray) {
+                this.master = perParentArray.filter(x => x.getPosition() != null)[0];
+            } else if (this.master === null) {
+                this.master = animator.getActorData(masterID);
             }
             if (!this.master || (!this.master.canDraw() && !this.ownerID )) {
                 return false;
             }
         }
         if (this.rotationFetcher === masterRotationFetcher || this.rotationFetcher === masterToMasterRotationFetcher) {
-            if (this.rotationMaster === null) {
-                let masterId = this.rotationConnectedTo.masterId;
-                this.rotationMaster = animator.getActorData(masterId);
+            const masterID = this.rotationConnectedTo.masterID;
+            const perParentArray = animator.agentDataPerParentID.get(masterID);
+            if (perParentArray) {
+                this.rotationMaster = perParentArray.filter(x => x.getPosition() != null)[0];
+            } else if (this.rotationMaster === null) {
+                this.rotationMaster = animator.getActorData(masterID);
             }
             if (!this.rotationMaster || (!this.rotationMaster.canDraw() && !this.ownerID)) {
                 return false;
             }
             if (this.rotationFetcher === masterToMasterRotationFetcher) {
-                if (this.dstRotationMaster === null) {
-                    let dstMasterId = this.rotationConnectedTo.dstMasterId;
-                    this.dstRotationMaster = animator.getActorData(dstMasterId);
+                const dstMasterID = this.rotationConnectedTo.dstMasterID;
+                const perDstParentArray = animator.agentDataPerParentID.get(dstMasterID);
+                if (perDstParentArray) {       
+                    this.dstRotationMaster = perDstParentArray.filter(x => x.getPosition() != null)[0];
+                } else if (this.dstRotationMaster === null) {
+                    this.dstRotationMaster = animator.getActorData(dstMasterID);
                 }
                 if (!this.dstRotationMaster || (!this.dstRotationMaster.canDraw() && !this.ownerID)) {
                     return false;
@@ -395,8 +564,12 @@ class MechanicDrawable {
             }
         }
         if (this.ownerID !== null) {
-            if (this.owner === null) {
-                this.owner = animator.getActorData(this.ownerID);
+            const ownerID = this.ownerID;
+            const perParentArray = animator.agentDataPerParentID.get(ownerID);
+            if (perParentArray) {       
+                this.owner = perParentArray.filter(x => x.getPosition() != null)[0];
+            } else if (this.owner === null) {
+                this.owner = animator.getActorData(ownerID);
             }
             if (!this.owner) {
                 return false;
@@ -416,7 +589,7 @@ class MechanicDrawable {
 
 }
 //// FACING
-class FacingMechanicDrawable extends MechanicDrawable {
+class ActorOrientationDrawable extends MechanicDrawable {
     constructor(params) {
         super(params);
     }
@@ -430,24 +603,27 @@ class FacingMechanicDrawable extends MechanicDrawable {
         if (pos === null || rot === null) {
             return;
         }
-        var ctx = animator.mainContext;
+        const ctx = animator.mainContext;
         ctx.save();
         this.moveContext(ctx, pos, rot);
         const facingFullSize = 5 * this.master.getSize() / 3;
         const facingHalfSize = facingFullSize / 2;
-        if (this.master !== null && animator.coneControl.enabled && this.master.isSelected()) {           
-            ctx.save(); 
-            var coneOpening = ToRadians(animator.coneControl.openingAngle);
-            ctx.rotate(0.5 * coneOpening);
-            var coneRadius = InchToPixel * animator.coneControl.radius;
-            ctx.beginPath();
-            ctx.arc(0, 0, coneRadius, -coneOpening, 0, false);
-            ctx.arc(0, 0, 0, 0, coneOpening, true);
-            ctx.closePath();
-            ctx.fillStyle = "rgba(0, 255, 200, 0.3)";
-            ctx.fill();
-            ctx.restore();
-        }
+        if (this.master !== null && animator.extraDecorationMap.has(this.master.id)) {
+            let coneControl = animator.extraDecorationMap.get(this.master.id).coneControl;
+            if (coneControl.enabled) {
+                ctx.save();
+                const coneOpening = ToRadians(coneControl.openingAngle);
+                ctx.rotate(0.5 * coneOpening);
+                const coneRadius = InchToPixel * coneControl.radius;
+                ctx.beginPath();
+                ctx.arc(0, 0, coneRadius, -coneOpening, 0, false);
+                ctx.arc(0, 0, 0, 0, coneOpening, true);
+                ctx.closePath();
+                ctx.fillStyle = "rgba(0, 255, 200, 0.3)";
+                ctx.fill();
+                ctx.restore();
+            }
+        }    
         ctx.drawImage(facingIcon, -facingHalfSize, -facingHalfSize, facingFullSize, facingFullSize);
         ctx.restore();
     }
@@ -469,8 +645,8 @@ class FormMechanicDrawable extends MechanicDrawable {
         if (this.growingEnd <= this.start) {
             return 1.0;
         }
-        var time = animator.reactiveDataStatus.time;
-        var value = Math.min((time - this.start) / (this.growingEnd - this.start), 1.0);
+        const time = animator.reactiveDataStatus.time;
+        let value = Math.min((time - this.start) / (this.growingEnd - this.start), 1.0);
         if (this.growingReverse) {
             value = 1 - value;
         }
@@ -500,12 +676,107 @@ class CircleMechanicDrawable extends FormMechanicDrawable {
         if (pos === null || rot === null) {
             return;
         }
-        var ctx = animator.mainContext;
+        const ctx = animator.mainContext;
         ctx.save();
         this.moveContext(ctx, pos, rot);
         ctx.beginPath();
         ctx.arc(0, 0, this.getPercent() * (this.radius - this.minRadius) + this.minRadius, 0, 2 * Math.PI);
         ctx.closePath();
+        if (this.fill) {
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        } else {
+            ctx.lineWidth = (2 / animator.scale).toString();
+            ctx.strokeStyle = this.color;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+class RegularPolygonMechanicDrawable extends FormMechanicDrawable {
+    constructor(params) {
+        super(params);
+    }
+
+    get radius() {
+        return this.metadata.radius;
+    }
+
+    get nbPolygon() {
+        return this.metadata.nbPolygon;
+    }
+
+    draw() {
+        if (!this.canDraw()) {
+            return;
+        }
+        const pos = this.getPosition();
+        const rot = this.getRotation();
+        if (pos === null || rot === null) {
+            return;
+        }
+        const ctx = animator.mainContext;
+        ctx.save();
+        this.moveContext(ctx, pos, rot);
+        ctx.beginPath();
+        const radius = this.getPercent() * this.radius;
+        const nbPolygon = this.nbPolygon;
+        ctx.moveTo(radius * Math.cos(0), radius * Math.sin(0));
+        for (let i = 1; i <= nbPolygon; i += 1) {
+            ctx.lineTo(radius * Math.cos(i * 2 * Math.PI / nbPolygon), radius * Math.sin(i * 2 * Math.PI / nbPolygon));
+        }
+
+        if (this.fill) {
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        } else {
+            ctx.lineWidth = (2 / animator.scale).toString();
+            ctx.strokeStyle = this.color;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+class CustomPolygonMechanicDrawable extends FormMechanicDrawable {
+    constructor(params) {
+        super(params);
+        this.points = params.points;
+        for (let i = 0; i < this.points.length; i++) {
+            this.points[i][0] *= InchToPixel;
+            this.points[i][1] *= InchToPixel;
+        }
+    }
+
+    _percentedPoint(point, center, percent) {
+        return {
+            x: percent * (point[0] - center.x) + center.x,
+            y: percent * (point[1] - center.y) + center.y,
+        };
+    }
+
+    draw() {
+        if (!this.canDraw()) {
+            return;
+        }
+        const pos = this.getPosition();
+        const rot = this.getRotation();
+        if (pos === null || rot === null) {
+            return;
+        }
+        const ctx = animator.mainContext;
+        ctx.save();
+        this.moveContext(ctx, pos, rot);
+        ctx.beginPath();
+        const percent = this.getPercent();
+        const firstPoint = this._percentedPoint(this.points[0], pos, percent);
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+        for (let i = 1; i < this.points.length; i++) {
+            const curPoint = this._percentedPoint(this.points[i], pos, percent);
+            ctx.lineTo(curPoint.x, curPoint.y);
+        }
+        ctx.lineTo(firstPoint.x, firstPoint.y);
         if (this.fill) {
             ctx.fillStyle = this.color;
             ctx.fill();
@@ -532,7 +803,7 @@ class DoughnutMechanicDrawable extends FormMechanicDrawable {
     }
 
     drawOuterCircle(percent) {      
-        var ctx = animator.mainContext; 
+        const ctx = animator.mainContext; 
         if (this.growingReverse) {    
             ctx.arc(0, 0, this.outerRadius , 2 * Math.PI, 0, false);
         }  else {
@@ -541,7 +812,7 @@ class DoughnutMechanicDrawable extends FormMechanicDrawable {
     }
 
     drawInnerCircle(percent) {      
-        var ctx = animator.mainContext; 
+        const ctx = animator.mainContext; 
         if (this.growingReverse) {    
             ctx.arc(0, 0, this.innerRadius + percent * (this.outerRadius - this.innerRadius), 0, 2 * Math.PI, true);
         }  else {
@@ -559,7 +830,7 @@ class DoughnutMechanicDrawable extends FormMechanicDrawable {
             return;
         }
         const percent = this.getPercent();
-        var ctx = animator.mainContext;
+        const ctx = animator.mainContext;
         ctx.save();
         this.moveContext(ctx, pos, rot);
         if (this.fill) {
@@ -611,7 +882,7 @@ class RectangleMechanicDrawable extends FormMechanicDrawable {
             return;
         }
         const percent = this.getPercent();
-        var ctx = animator.mainContext;
+        const ctx = animator.mainContext;
         ctx.save();
         this.moveContext(ctx, pos, rot);
         ctx.beginPath();
@@ -626,6 +897,157 @@ class RectangleMechanicDrawable extends FormMechanicDrawable {
             ctx.stroke();
         }
         ctx.restore();
+    }
+}
+
+class ProgressBarMechanicDrawable extends RectangleMechanicDrawable {
+    constructor(params) {
+        super(params);
+        this.interpolationMethod = params.interpolationMethod;
+        this.progress = params.progress;
+    }
+
+    get secondaryColor() {
+        return this.metadata.secondaryColor;
+    }
+
+    getSecondaryOffset() {
+        return null;
+    }
+
+    computeProgress() {
+        const progress = this.progress;
+        let index = -1;
+        const totalPoints = progress.length;
+        const time = animator.reactiveDataStatus.time;
+        for (let i = 0; i < totalPoints; i++) {
+            const posTime = progress[i][0];
+            if (time < posTime) {
+                break;
+            }
+            index = i;
+        }
+        if (index === -1) {
+            return progress[0][1];
+        } else if (index === totalPoints - 1) {
+            return progress[index][1];
+        } else {
+            const cur = progress[index][1];
+            switch (this.interpolationMethod) {
+                case InterpolationMethod.LINEAR:
+                    const curTime = progress[index][0];
+                    const next = progress[index + 1][1];
+                    const nextTime = progress[index + 1][0];
+                    const interpolated = cur + (time - curTime) / (nextTime - curTime) * (next - cur);
+                    return interpolated;
+                case InterpolationMethod.STEP:
+                    return cur;
+                default:
+                    return 0;
+            }
+        }
+    }
+
+    getSize() {
+        return {
+            h: this.height,
+            w: this.width,
+        }
+    }
+
+    draw() {
+        if (!this.canDraw()) {
+            return;
+        }
+        const pos = this.getPosition();
+        const rot = this.getRotation();
+        if (pos === null || rot === null) {
+            return;
+        }
+        const size = this.getSize();
+        const progressPercent = this.computeProgress() / 100.0;
+        const ctx = animator.mainContext;
+        ctx.save();
+        this.moveContext(ctx, pos, rot);
+        const secondaryOffset = this.getSecondaryOffset();
+        if (secondaryOffset) {
+            ctx.translate(secondaryOffset.x, secondaryOffset.y);
+        }
+        const normalizedRot = Math.abs((ToRadians(rot + this.rotationOffset) / Math.PI) % 2);
+        if (0.5 < normalizedRot && normalizedRot < 1.5) {
+            // make sure the progress bar remains upright
+            ctx.rotate(-ToRadians(180));
+        }
+        if (progressPercent > 0) {
+            ctx.beginPath();
+            ctx.rect(- 0.5 * size.w, - 0.5 * size.h, progressPercent * size.w, size.h);
+            ctx.closePath();
+            ctx.fillStyle = this.color;
+            ctx.fill();     
+            //
+            ctx.beginPath();
+            ctx.rect(- 0.5 * size.w, - 0.5 * size.h, progressPercent * size.w, size.h);
+            ctx.closePath();
+            ctx.lineWidth = (3 / animator.scale).toString();
+            ctx.strokeStyle = this.color;
+            ctx.stroke();
+            //
+            ctx.beginPath();
+            ctx.rect(- 0.5 * size.w, - 0.5 * size.h, size.w, size.h);
+            ctx.closePath();
+            ctx.lineWidth = (2 / animator.scale).toString();
+            ctx.strokeStyle = this.color;
+            ctx.stroke();
+            if (progressPercent < 1) {
+                const reverseProgressPercent = 1.0 - progressPercent;
+                ctx.beginPath();
+                ctx.rect((- 0.5 + progressPercent) * size.w, - 0.5 * size.h, reverseProgressPercent * size.w, size.h);
+                ctx.closePath();
+                ctx.fillStyle = this.secondaryColor;
+                ctx.fill();
+            }
+        }
+        ctx.restore();
+    }
+}
+
+class OverheadProgressBarMechanicDrawable extends ProgressBarMechanicDrawable {
+    constructor(params) {
+        super(params);
+    }
+    get pixelHeight() {
+        return this.metadata.pixelHeight;
+    }
+
+    get pixelWidth() {
+        return this.metadata.pixelWidth;
+    }
+    getSecondaryOffset() {
+        if (!this.master) {
+            console.error('Invalid OverheadProgressBar decoration');
+            return null;
+        }
+        const masterSize = this.master.getSize();
+        let offset = {
+            x: 0,
+            y: 0,
+        };
+        offset.y -= masterSize / 4 + this.getSize().h;
+        return offset;
+    }
+
+    getSize() {
+        if (animator.displaySettings.useActorHitboxWidth) {
+            return {
+                h: this.height,
+                w: this.width,
+            }
+        } else {
+            return {
+                h: this.pixelHeight / animator.scale,
+                w: this.pixelWidth / animator.scale,
+            }
+        }
     }
 }
 class PieMechanicDrawable extends FormMechanicDrawable {
@@ -654,7 +1076,7 @@ class PieMechanicDrawable extends FormMechanicDrawable {
         if (pos === null || rot === null) {
             return;
         }
-        var ctx = animator.mainContext;
+        const ctx = animator.mainContext;
         const percent = this.getPercent();
         ctx.save();
         this.moveContext(ctx, pos, rot + this.halfOpeningAngle);
@@ -693,16 +1115,24 @@ class LineMechanicDrawable extends FormMechanicDrawable {
         this.endMaster = null;
     }
 
+    get thickness() {
+        return this.metadata.thickness;
+    }
+
+    get worldSizeThickness() {
+        return this.metadata.worldSizeThickness;
+    }
+
     getTargetPosition() {
-        var time = animator.reactiveDataStatus.time;
+        const time = animator.reactiveDataStatus.time;
         if (this.start > time || this.end < time) {
             return null;
         }
-        var pos = this.targetPositionFetcher(this.connectedFrom, this.endMaster);
+        const pos = this.targetPositionFetcher(this.connectedFrom, this.endMaster);
         if (!pos) {
             return null;
         }
-        var offset = this.targetOffsetFetcher(this.connectedFrom);
+        const offset = this.targetOffsetFetcher(this.connectedFrom);
         pos.x += offset.x;
         pos.y += offset.y;
         return pos;
@@ -712,10 +1142,13 @@ class LineMechanicDrawable extends FormMechanicDrawable {
         if (this.connectedFrom === null) {
             return false;
         }
-        if (this.targetPositionFetcher === masterPositionFetcher) {
-            if (this.endMaster === null) {
-                let masterId = this.connectedFrom.masterId;
-                this.endMaster = animator.getActorData(masterId);
+        if (this.targetPositionFetcher === masterPositionFetcher) {      
+            const masterID = this.connectedFrom.masterID;
+            const perParentArray = animator.agentDataPerParentID.get(masterID);
+            if (perParentArray) {       
+                this.endMaster = perParentArray.filter(x => x.getPosition() != null)[0];
+            } else if (this.endMaster === null) {
+                this.endMaster = animator.getActorData(masterID);
             }
             if (!this.endMaster || !this.endMaster.canDraw()) {
                 return false;
@@ -734,7 +1167,7 @@ class LineMechanicDrawable extends FormMechanicDrawable {
             return;
         }
         const percent = this.getPercent();
-        var ctx = animator.mainContext;
+        const ctx = animator.mainContext;
         ctx.save();
         if (this.growingReverse) {
             this.moveContext(ctx, target, 0);
@@ -749,8 +1182,11 @@ class LineMechanicDrawable extends FormMechanicDrawable {
             ctx.lineTo(percent * (target.x - pos.x), percent * (target.y - pos.y));
             ctx.closePath();
         }
-        
-        ctx.lineWidth = (2 / animator.scale).toString();
+        let thickness = this.thickness;
+        if (!this.worldSizeThickness) {
+            thickness /= animator.scale;
+        }
+        ctx.lineWidth = (thickness).toString();
         ctx.strokeStyle = this.color;
         ctx.stroke();
         ctx.restore();
@@ -781,12 +1217,12 @@ class BackgroundDrawable {
 
 class MovingPlatformDrawable extends BackgroundDrawable {
     constructor(params) {
-        super(start, end);
+        super(params);
         this.positions = params.positions;
         if (this.positions.length > 1) {
             this.currentIndex = 0;
             this.currentStart = Number.NEGATIVE_INFINITY;
-            this.currentEnd = positions[0][5];
+            this.currentEnd = this.positions[0][5];
         }
     }
 
@@ -811,12 +1247,12 @@ class MovingPlatformDrawable extends BackgroundDrawable {
         if (pos === null) {
             return;
         }
-        let ctx = animator.mainContext;
+        const ctx = animator.mainContext;
         const rads = pos.angle;
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(rads % (2 * Math.PI));
-        ctx.globalAlpha = pos.opacity;
+        ctx.globalAlpha = pos.opacity;    
         ctx.drawImage(this.image, -0.5 * this.width, -0.5 * this.height, this.width, this.height);
         ctx.restore();
     }
@@ -905,10 +1341,66 @@ class MovingPlatformDrawable extends BackgroundDrawable {
     }
 }
 ///
+
+class ArenaDrawable extends MechanicDrawable {
+    constructor(params) {
+        super(params);
+        this.previouslyRendered = false;
+    }
+
+    get image() {
+        return this.metadata.image;
+    }
+
+    get imageUrl() {
+        return this.metadata.imageUrl;
+    }
+
+    get width() {
+        return this.metadata.width;
+    }
+
+    get height() {
+        return this.metadata.height;
+    }
+
+    needsUpdate() {
+        if (!this.canDraw()) {
+            return this.previouslyRendered;
+        }
+        const pos = this.getPosition();
+        if (pos === null) {
+            return this.previouslyRendered;
+        }  
+        return !this.previouslyRendered;
+    }
+
+    draw() {
+        this.previouslyRendered = false;
+        if (!this.canDraw()) {
+            return;
+        }
+        const pos = this.getPosition();
+        if (pos === null) {
+            return;
+        }    
+        this.previouslyRendered = true; 
+        const ctx = animator.bgContext;
+        ctx.save();
+        this.moveContext(ctx, pos, null);
+        const height = this.height;   
+        const width = this.width;    
+        ctx.clearRect(0, 0, width, height);  
+        ctx.drawImage(this.image, 0, 0, width, height);
+        ctx.restore();
+    }
+}
+
 class IconMechanicDrawable extends MechanicDrawable {
     constructor(params) {
         super(params);
         this.canRotate = false;
+        this.text = params.text;
     }
 
     get image() {
@@ -954,21 +1446,30 @@ class IconMechanicDrawable extends MechanicDrawable {
         if (pos === null || rot === null) {
             return;
         }
-        const secondaryOffset = this.getSecondaryOffset();
-        const size = this.getSize();
         
         const ctx = animator.mainContext;
         ctx.save();
         this.moveContext(ctx, pos, rot);
         ctx.globalAlpha = this.getOpacity();
+        const secondaryOffset = this.getSecondaryOffset();
         if (secondaryOffset) {        
             ctx.translate(secondaryOffset.x, secondaryOffset.y);
         }
-        if(!this.canRotate) {
+        if (!this.canRotate) {
             // Don't rotate the icon
             ctx.rotate(-ToRadians(rot + this.rotationOffset));
         }
-        ctx.drawImage(this.image, - size / 2, - size / 2, size, size);
+        const size = this.getSize();   
+        const aspectRatio = this.image.width/this.image.height;
+        const sizeW = size * aspectRatio;
+        ctx.drawImage(this.image, - sizeW / 2, - size / 2, sizeW, size);
+        if (this.text) {        
+            const font = "bold " + sizeW/1.5 + "px Comic Sans MS";
+            ctx.font = font;
+            ctx.fillStyle = "rgb(0,0,0)";
+            ctx.textAlign = "center";
+            ctx.fillText(this.text, 0, sizeW / 2.5);
+        }
         ctx.restore();
     }
 }
@@ -986,7 +1487,7 @@ class BackgroundIconMechanicDrawable extends IconMechanicDrawable {
         const heights = this.heights;
         const totalPoints = heights.length / 2;
         const time = animator.reactiveDataStatus.time;
-        for (var i = 0; i < totalPoints; i++) {
+        for (let i = 0; i < totalPoints; i++) {
             let heightTime = heights[2 * i + 1];
             if (time < heightTime) {
                 index = i - 1;
@@ -1009,7 +1510,7 @@ class BackgroundIconMechanicDrawable extends IconMechanicDrawable {
         const totalPoints = opacities.length / 2;
         const time = animator.reactiveDataStatus.time;
         let interpolate = 0;
-        for (var i = 0; i < totalPoints; i++) {
+        for (let i = 0; i < totalPoints; i++) {
             let opacityTime = opacities[2 * i + 1];
             if (time < opacityTime) {
                 if (opacityTime - time <= 1500) interpolate = opacityTime;
@@ -1052,7 +1553,93 @@ class IconOverheadMechanicDrawable extends IconMechanicDrawable {
             x: 0,
             y: 0,
         };
-        offset.y -= masterSize/4 + this.getSize()/2 + 3 * overheadAnimationFrame/ maxOverheadAnimationFrame / scale;
+        offset.y -= masterSize / 3.0 + this.getSize() / 2.0 + 3.0 * overheadAnimationFrame / maxOverheadAnimationFrame / scale;
+        return offset;
+    }
+}
+
+//
+
+class TextDrawable extends MechanicDrawable {
+    constructor(params) {
+        super(params);
+        this.text = params.text;
+        this.bold = !!params.bold;
+        this.fontSize = params.fontSize;
+        this.fontType = params.fontType || "Comic Sans MS";
+    }
+    get color() {
+        return this.metadata.color;
+    }
+    get backgroundColor() {
+        return this.metadata.backgroundColor;
+    }
+
+    getFontSize() {
+        if (this.connectedTo.isScreenSpace) {
+            return this.fontSize * resolutionMultiplier;
+        }
+        return this.fontSize / animator.scale;
+    }
+
+    getSecondaryOffset() {
+        return null;
+    }
+    
+    draw() {
+        if (!this.canDraw()) {
+            return;
+        }
+        const pos = this.getPosition();
+        const rot = this.getRotation();
+        if (pos === null || rot === null) {
+            return;
+        }
+        const fontSize = this.getFontSize();
+        pos.y += fontSize / 2;
+        const ctx = animator.mainContext;
+        ctx.save();
+        this.moveContext(ctx, pos, rot);     
+        const secondaryOffset = this.getSecondaryOffset();
+        if (secondaryOffset) {        
+            ctx.translate(secondaryOffset.x, secondaryOffset.y);
+        }  
+        // Don't rotate the text
+        ctx.rotate(-ToRadians(rot + this.rotationOffset));
+        const font = (this.bold ? "bold " : "") + fontSize + "px " + this.fontType;
+        ctx.font = font;
+        ctx.fillStyle = this.color;
+        ctx.textAlign = "center";
+        ctx.fillText(this.text, 0, 0);
+        ctx.restore();
+    }
+}
+
+class TextOverheadDrawable extends TextDrawable {
+    constructor(params) {
+        super(params);
+    }
+
+    getFontSize() {
+        if (animator.displaySettings.useActorHitboxWidth) {
+            return this.fontSize / (resolutionMultiplier * resolutionMultiplier) ;
+        } else {
+            return this.fontSize / animator.scale;
+        }
+    }
+
+    getSecondaryOffset() {
+        if (!this.master) {
+            console.error('Invalid TextOverhead decoration');
+            return null; 
+        }
+        const masterSize = this.master.getSize();
+        const scale = animator.displaySettings.useActorHitboxWidth ? 1 / InchToPixel : animator.scale;
+        let offset = {
+            x: 0,
+            y: 0,
+        };
+        offset.y -= masterSize / 3.0 + this.getFontSize() / 2.0 + 3.0 * overheadAnimationFrame / maxOverheadAnimationFrame / scale;
         return offset;
     }
 }

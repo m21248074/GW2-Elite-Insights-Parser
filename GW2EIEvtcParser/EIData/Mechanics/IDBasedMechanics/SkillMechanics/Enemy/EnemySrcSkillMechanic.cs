@@ -1,21 +1,16 @@
 ﻿using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+
+internal abstract class EnemySrcSkillMechanic<T> : EnemySkillMechanic<T> where T : SkillEvent
 {
 
-    internal class EnemySrcSkillMechanic : EnemySkillMechanic
+    public EnemySrcSkillMechanic(long[] mechanicIDs, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown, CombatEventsGetter getter) : base(mechanicIDs, plotlySetting, shortName, description, fullName, internalCoolDown, getter)
     {
-
-        public EnemySrcSkillMechanic(long mechanicID, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(mechanicID, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
-        {
-        }
-
-        public EnemySrcSkillMechanic(long[] mechanicIDs, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(mechanicIDs, inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
-        {
-        }
-        protected override AgentItem GetAgentItem(AbstractHealthDamageEvent ahde)
-        {
-            return ahde.From;
-        }
+    }
+    protected override AgentItem GetAgentItem(T evt)
+    {
+        return evt.From;
     }
 }

@@ -1,21 +1,13 @@
-﻿using System.Collections.Generic;
+﻿namespace GW2EIEvtcParser.EIData;
 
-namespace GW2EIEvtcParser.EIData
+public abstract class IDBasedMechanic<Checkable> : CheckedMechanic<Checkable>
 {
-    public abstract class IDBasedMechanic<Checkable> : CheckedMechanic<Checkable>
+
+    protected readonly HashSet<long> MechanicIDs = [];
+
+    protected IDBasedMechanic(long[] mechanicIDs, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(plotlySetting, shortName, description, fullName, internalCoolDown)
     {
-
-        protected HashSet<long> MechanicIDs { get; } = new HashSet<long>();
-
-        protected IDBasedMechanic(long mechanicID, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
-        {
-            MechanicIDs.Add(mechanicID);
-        }
-
-        protected IDBasedMechanic(long[] mechanicIDs, string inGameName, MechanicPlotlySetting plotlySetting, string shortName, string description, string fullName, int internalCoolDown) : base(inGameName, plotlySetting, shortName, description, fullName, internalCoolDown)
-        {
-            MechanicIDs.UnionWith(mechanicIDs);
-        }
-
+        MechanicIDs.UnionWith(mechanicIDs);
     }
+
 }

@@ -3,22 +3,24 @@
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="buffMode = 0" :class="{active: buffMode === 0}">Uptime</a>
+                    <a class="nav-link" @click="buffMode = 0" :class="{active: buffMode === 0}"
+                       data-original-title="Buffs upkeep.">Uptime</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="buffMode = 1" :class="{active: buffMode === 1 }">Generation Self</a>
+                    <a class="nav-link" @click="buffMode = 1" :class="{active: buffMode === 1 }"
+                       data-original-title="Buffs applied to yourself.">Generation Self</a>
                 </li>
                 <li v-if="!singlePlayer" class="nav-item">
                     <a class="nav-link" @click="buffMode = 2" :class="{active: buffMode === 2 }"
-                        data-original-title="Self excluded">Generation Group</a>
+                        data-original-title="Buffs applied to your group members. Self excluded.">Generation Group</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 3" :class="{active: buffMode === 3 }"
-                        data-original-title="Self excluded">Generation Off-Group</a>
+                        data-original-title="Buffs applied to your non-group members. Self excluded.">Generation Off-Group</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 4" :class="{active: buffMode === 4 }"
-                        data-original-title="Self excluded">Generation Squad</a>
+                        data-original-title="Buffs applied to the squad. Self excluded.">Generation Squad</a>
                 </li>
             </ul>
         </div>
@@ -48,8 +50,8 @@
 
 <script>
     Vue.component("buff-stats-component", {
-        props: ['type', 'phaseindex', 'playerindex', 'activeduration'],
-        mixins: [buffComponent],
+        props: ['type', 'playerindex', 'activeduration'],
+        mixins: [buffComponent, encounterPhaseComponent, numberComponent],
         template: `${template}`,
         data: function () {
             return {
@@ -81,9 +83,10 @@
                 let totalCount = 0;
                 let groupBoonAvg = [];
                 let totalBoonAvg = 0;
-                for (let i = 0; i < logData.players.length; i++) {
-                    const player = logData.players[i];
-                    if (player.isFake) {
+                const players = getActiveNonFakePlayersForPhase(this.encounterPhase);
+                for (let i = 0; i < players.length; i++) {
+                    const player = players[i];
+                    if (!player) {
                         continue;
                     }
                     uptimes.push({
@@ -123,29 +126,42 @@
                     groupBoonAvg[player.group] += playerWeight * uptimesStats[i].avg;
                     groupCount[player.group] += playerWeight;
                     for (let j = 0; j < uptimesStats[i].data.length; j++) {
-                        totalAvg[j] = (totalAvg[j] || 0) + playerWeight * (uptimesStats[i].data[j][0] || 0);
-                        groupAvg[player.group][j] = (groupAvg[player.group][j] || 0) + playerWeight * (uptimesStats[i].data[j][0] || 0);
+                        if (!totalAvg[j]) {
+                            totalAvg[j] = [];
+                        }
+                        if (!groupAvg[player.group][j]) {
+                            groupAvg[player.group][j] = [];
+                        }
+                        for (let k = 0; k < uptimesStats[i].data[j].length; k++) {
+                            totalAvg[j][k] = (totalAvg[j][k] || 0) + playerWeight * (uptimesStats[i].data[j][k] || 0);
+                            groupAvg[player.group][j][k] = (groupAvg[player.group][j][k] || 0) + 
+                                playerWeight * (uptimesStats[i].data[j][k] || 0);
+                        }
                     }
                 }
                 for (let i = 0; i < groupAvg.length; i++) {
                     if (groupAvg[i]) {
                         for (let k = 0; k < groupAvg[i].length; k++) {
-                            groupAvg[i][k] = Math.round(1000 * groupAvg[i][k] / groupCount[i]) / 1000;
+                            for (let j = 0; j < groupAvg[i][k].length; j++) {
+                                groupAvg[i][k][j] = this.round3(groupAvg[i][k][j] / groupCount[i]);
+                            }
                         }
                         avg.push({
                             name: "Group " + i,
                             data: groupAvg[i],
-                            avg: Math.round(1000 * groupBoonAvg[i] / groupCount[i]) / 1000
+                            avg: this.round3(groupBoonAvg[i] / groupCount[i])
                         });
                     }
                 }
                 for (let k = 0; k < totalAvg.length; k++) {
-                    totalAvg[k] = Math.round(1000 * totalAvg[k] / totalCount) / 1000;
+                    for (let j = 0; j < totalAvg[k].length; j++) {
+                        totalAvg[k][j] = this.round3(totalAvg[k][j] / totalCount);
+                    }
                 }
                 avg.push({
                     name: "Total",
                     data: totalAvg,
-                    avg: Math.round(1000 * totalBoonAvg / totalCount) / 1000
+                    avg: this.round3(totalBoonAvg / totalCount)
                 });
                 return [uptimes, genSelf, genGroup, genOffGroup, genSquad, avg];
             }
@@ -157,14 +173,11 @@
             singlePlayer: function () {
                 return logData.players.filter(x => !x.notInSquad).length <= 1;
             },
-            phase: function () {
-                return logData.phases[this.phaseindex];
-            },
             buffData: function () {
-                const id = this.phaseindex + '-' + this.activeduration;
+                const id = this.encounterPhase.id + '-' + this.phaseindex + '-' + this.activeduration;
                 if (this.cache.has(id)) {
                     return this.cache.get(id);
-                }  
+                }
                 let res = {
                     boonsData: this.getData("boon", this.buffsStatContainer),
                     offsData: this.getData("offBuff", this.buffsStatContainer),

@@ -43,6 +43,7 @@ var hierarchy =
     [ "GW2EIJSON.JsonMechanics.JsonMechanic", "class_g_w2_e_i_j_s_o_n_1_1_json_mechanics_1_1_json_mechanic.html", null ],
     [ "GW2EIJSON.JsonMechanics", "class_g_w2_e_i_j_s_o_n_1_1_json_mechanics.html", null ],
     [ "GW2EIJSON.JsonMinions", "class_g_w2_e_i_j_s_o_n_1_1_json_minions.html", null ],
+    [ "GW2EIJSON.JsonNPC.JsonNPCHealthBar", "class_g_w2_e_i_j_s_o_n_1_1_json_n_p_c_1_1_json_n_p_c_health_bar.html", null ],
     [ "GW2EIJSON.JsonPhase", "class_g_w2_e_i_j_s_o_n_1_1_json_phase.html", null ],
     [ "GW2EIJSON.JsonPlayerBuffOutgoingVolumes", "class_g_w2_e_i_j_s_o_n_1_1_json_player_buff_outgoing_volumes.html", null ],
     [ "GW2EIJSON.JsonPlayerBuffsGeneration", "class_g_w2_e_i_j_s_o_n_1_1_json_player_buffs_generation.html", null ],
@@ -50,5 +51,7 @@ var hierarchy =
     [ "GW2EIJSON.JsonRotation", "class_g_w2_e_i_j_s_o_n_1_1_json_rotation.html", null ],
     [ "GW2EIJSON.JsonRotation.JsonSkill", "class_g_w2_e_i_j_s_o_n_1_1_json_rotation_1_1_json_skill.html", null ],
     [ "GW2EIJSON.JsonStatistics", "class_g_w2_e_i_j_s_o_n_1_1_json_statistics.html", null ],
+    [ "GW2EIJSON.JsonWeaponSet", "class_g_w2_e_i_j_s_o_n_1_1_json_weapon_set.html", null ],
+    [ "GW2EIJSON.JsonWvWMapData", "class_g_w2_e_i_j_s_o_n_1_1_json_wv_w_map_data.html", null ],
     [ "GW2EIJSON.JsonLog.SkillDesc", "class_g_w2_e_i_j_s_o_n_1_1_json_log_1_1_skill_desc.html", null ]
 ];

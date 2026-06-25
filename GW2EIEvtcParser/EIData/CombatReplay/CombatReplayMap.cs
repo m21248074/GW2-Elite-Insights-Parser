@@ -1,178 +1,263 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Numerics;
 
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+public class CombatReplayMap
 {
-    public class CombatReplayMap
+    private (int width, int height) _pixelSize;
+    private (double topX, double topY, double bottomX, double bottomY) _rectInMap;
+    public float Width => (float)(_rectInMap.bottomX - _rectInMap.topX);
+
+    public float Height => (float)(_rectInMap.bottomY - _rectInMap.topY);
+    public float TopX => (float)_rectInMap.topX;
+
+    public float TopY => (float)_rectInMap.topY;
+    public float BottomX => (float)_rectInMap.bottomX;
+
+    public float BottomY => (float)_rectInMap.bottomY;
+
+    public class CombatReplayMapViewpoint
     {
+        public readonly double XTranslatePercent;
+        public readonly double YTranslatePercent;
+        public readonly double Scale;
+        public readonly long EncounterID;
 
-        public class MapItem
+        internal CombatReplayMapViewpoint(double xTranslatePercent, double yTranslatePercent, double scale, long encounterID  )
         {
-            public string Link { get; internal set; }
-            public long Start { get; internal set; }
-            public long End { get; internal set; }
+            XTranslatePercent = xTranslatePercent;
+            YTranslatePercent = yTranslatePercent;
+            Scale = scale;
+            EncounterID = encounterID;
         }
+    }
 
-        public IReadOnlyList<MapItem> Maps => _maps;
-        private readonly List<MapItem> _maps = new List<MapItem>();
-        private (int width, int height) _urlPixelSize;
-        private (double topX, double topY, double bottomX, double bottomY) _rectInMap;
-        //private (int topX, int topY, int bottomX, int bottomY) _fullRect;
-        //private (int bottomX, int bottomY, int topX, int topY) _worldRect;
+    private readonly List<CombatReplayMapViewpoint> _defaultViewpoints = [];
+    public IReadOnlyList<CombatReplayMapViewpoint>? DefaultViewpoints => _defaultViewpoints.Count > 0 ? _defaultViewpoints : null;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="link">Url to the image</param>
-        /// <param name="urlPixelSize">Width and Height of the image in pixel</param>
-        /// <param name="rectInMap">The map rectangle region corresponding to the image in map coordinates</param>
-        internal CombatReplayMap(string link, (int width, int height) urlPixelSize, (double topX, double topY, double bottomX, double bottomY) rectInMap)
+    private (int topX, int topY, int bottomX, int bottomY) _mapRect;
+    private (int topX, int topY, int bottomX, int bottomY) _continentRect;
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="link">Url to the image</param>
+    /// <param name="urlPixelSize">Width and Height of the image in pixel</param>
+    /// <param name="rectInMap">The map rectangle region corresponding to the image in map coordinates</param>
+    internal CombatReplayMap((int width, int height) urlPixelSize, (double topX, double topY, double bottomX, double bottomY) rectInMap)
+    {
+        if (urlPixelSize.width <= 0 || urlPixelSize.height <= 0)
         {
-            _maps.Add(new MapItem()
-            {
-                Link = link,
-                Start = 0,
-                End = long.MaxValue
-            });
-            _urlPixelSize = urlPixelSize;
-            _rectInMap = rectInMap;
+            throw new InvalidDataException("Width and height must be strictly positive in CombatReplay map");
         }
+        _pixelSize = urlPixelSize;
+        _rectInMap = rectInMap;
+    }
 
-        /*/internal CombatReplayMap(string link, (int width, int height) size, (int topX, int topY, int bottomX, int bottomY) rect, (int topX, int topY, int bottomX, int bottomY) fullRect, (int bottomX, int bottomY, int topX, int topY) worldRect)
-        {
-            _maps.Add(new MapItem()
-            {
-                Link = link,
-                Start = -1,
-                End = -1
-            });
-            _size = size;
-            _rect = rect;
-            _fullRect = fullRect;
-            _worldRect = worldRect;
-        }*/
+    /// <summary>
+    /// Constructor with continentRect and mapRect. Use this contructor if you need to convert continent coordinates to map coordinates
+    /// </summary>
+    /// <param name="link">Url to the image</param>
+    /// <param name="urlPixelSize">Width and Height of the image in pixel</param>
+    /// <param name="rectInMap">The map rectangle region corresponding to the image in map coordinates</param>
+    /// <param name="mapRect">The full map rectangle region</param>
+    /// <param name="continentRect">The continent rectangle region corresponding to the image in map coordinates</param>
+    internal CombatReplayMap((int width, int height) urlPixelSize, (double topX, double topY, double bottomX, double bottomY) rectInMap, (int topX, int topY, int bottomX, int bottomY) mapRect, (int topX, int topY, int bottomX, int bottomY) continentRect) : this(urlPixelSize, rectInMap)
+    {
+        _mapRect = mapRect;
+        _continentRect = continentRect;
+    }
 
-        public (int width, int height) GetPixelMapSize()
+    private int _mapWidth => (_mapRect.topX - _mapRect.bottomX);
+    private int _mapHeight => (_mapRect.topY - _mapRect.bottomY);
+    private int _continentWidth => (_continentRect.topX - _continentRect.bottomX);
+    private int _continentHeight => (_continentRect.topY - _continentRect.bottomY);
+
+    internal Vector3 ContinentCoordToMapCoord(Vector3 iPos)
+    {
+        if (_mapWidth == 0 || _continentWidth == 0 || _continentHeight == 0 || _mapHeight == 0)
         {
-            double ratio = (double)_urlPixelSize.width / _urlPixelSize.height;
-            const int pixelSize = 750;
-            if (ratio > 1.0)
-            {
-                return (pixelSize, (int)Math.Round(pixelSize / ratio));
-            }
-            else if (ratio < 1.0)
-            {
-                return ((int)Math.Round(ratio * pixelSize), pixelSize);
-            }
-            else
-            {
-                return (pixelSize, pixelSize);
-            }
+            throw new InvalidOperationException("Missing continent data in CombatReplay map for conversion");
         }
+        return new Vector3(
+            (iPos.X - _continentRect.bottomX) / _continentWidth * _mapWidth + _mapRect.bottomX,
+            (-iPos.Y + _continentRect.bottomY) / _continentHeight * _mapHeight - _mapRect.bottomY, 
+            iPos.Z);
+    }
 
-        internal void ComputeBoundingBox(ParsedEvtcLog log)
+    public (int width, int height) GetPixelMapSize()
+    {
+        double ratio = (double)_pixelSize.width / _pixelSize.height;
+        const int pixelSize = 750;
+        if (ratio > 1.0)
         {
-            if (log.CanCombatReplay && _rectInMap.topX == _rectInMap.bottomX)
+            return (pixelSize, (int)Math.Round(pixelSize / ratio));
+        }
+        else if (ratio < 1.0)
+        {
+            return ((int)Math.Round(ratio * pixelSize), pixelSize);
+        }
+        else
+        {
+            return (pixelSize, pixelSize);
+        }
+    }
+    internal void AddDefaultViewpoint(double xTranslatePercent, double yTranslatePercent, double scale, long encounterID)
+    {
+        _defaultViewpoints.Add(new CombatReplayMapViewpoint(xTranslatePercent, yTranslatePercent, scale, encounterID));
+    }
+#if DEBUG
+    internal void ComputeBoundingBox(ParsedEvtcLog log, long start, long end)
+    {
+        if (log.CanCombatReplay && _rectInMap.topX == _rectInMap.bottomX)
+        {
+            _rectInMap.topX = int.MaxValue;
+            _rectInMap.topY = int.MaxValue;
+            _rectInMap.bottomX = int.MinValue;
+            _rectInMap.bottomY = int.MinValue;
+            foreach (Player p in log.PlayerList)
             {
-                _rectInMap.topX = int.MaxValue;
-                _rectInMap.topY = int.MaxValue;
-                _rectInMap.bottomX = int.MinValue;
-                _rectInMap.bottomY = int.MinValue;
-                foreach (Player p in log.PlayerList)
+                if (!p.HasCombatReplayPositions(log))
                 {
-                    if (!p.HasCombatReplayPositions(log))
-                    {
-                        continue;
-                    }
-                    IReadOnlyList<Point3D> pos = p.GetCombatReplayPolledPositions(log);
-                    _rectInMap.topX = Math.Min(Math.Floor(pos.Min(x => x.X)) - 250, _rectInMap.topX);
-                    _rectInMap.topY = Math.Min(Math.Floor(pos.Min(x => x.Y)) - 250, _rectInMap.topY);
-                    _rectInMap.bottomX = Math.Max(Math.Floor(pos.Max(x => x.X)) + 250, _rectInMap.bottomX);
-                    _rectInMap.bottomY = Math.Max(Math.Floor(pos.Max(x => x.Y)) + 250, _rectInMap.bottomY);
+                    continue;
+                }
+                var pos = p.GetCombatReplayPolledPositions(log).Where(x => x.Time >= start && x.Time <= end);
+                if (pos.Any())
+                {
+                    _rectInMap.topX = Math.Min(Math.Floor(pos.Min(x => x.XYZ.X)) - 250, _rectInMap.topX);
+                    _rectInMap.topY = Math.Min(Math.Floor(pos.Min(x => x.XYZ.Y)) - 250, _rectInMap.topY);
+                    _rectInMap.bottomX = Math.Max(Math.Floor(pos.Max(x => x.XYZ.X)) + 250, _rectInMap.bottomX);
+                    _rectInMap.bottomY = Math.Max(Math.Floor(pos.Max(x => x.XYZ.Y)) + 250, _rectInMap.bottomY);
                 }
             }
+            FixAspectRatio();
         }
-
-        internal (float x, float y) GetMapCoord(float realX, float realY)
+    }
+#endif
+    internal void ComputeBoundingBox(ParsedEvtcLog log)
+    {
+        if (log.CanCombatReplay && _rectInMap.topX == _rectInMap.bottomX)
         {
-            (int width, int height) = GetPixelMapSize();
-            double scaleX = (double)width / _urlPixelSize.width;
-            double scaleY = (double)height / _urlPixelSize.height;
-            double x = (realX - _rectInMap.topX) / (_rectInMap.bottomX - _rectInMap.topX);
-            double y = (realY - _rectInMap.topY) / (_rectInMap.bottomY - _rectInMap.topY);
-            return ((float)Math.Round(scaleX * _urlPixelSize.width * x, ParserHelper.CombatReplayDataDigit), (float)Math.Round(scaleY * (_urlPixelSize.height - _urlPixelSize.height * y), ParserHelper.CombatReplayDataDigit));
-        }
-
-        /// <summary>
-        /// This assumes that all urls are of the same size (or at least size ratio) and that they have the same map rectangle
-        /// </summary>
-        /// <param name="urls"></param>
-        /// <param name="phases"></param>
-        /// <param name="fightEnd"></param>
-        internal void MatchMapsToPhases(List<string> urls, List<PhaseData> phases, long fightEnd)
-        {
-            if (phases.Count - 1 > urls.Count)
+            _rectInMap.topX = int.MaxValue;
+            _rectInMap.topY = int.MaxValue;
+            _rectInMap.bottomX = int.MinValue;
+            _rectInMap.bottomY = int.MinValue;
+            foreach (Player p in log.PlayerList)
             {
-                return;
-            }
-            MapItem originalMap = _maps[0];
-            originalMap.Start = 0;
-            for (int i = 1; i < phases.Count; i++)
-            {
-                PhaseData phase = phases[i];
-                _maps.Last().End = phase.Start;
-                _maps.Add(new MapItem()
+                if (!p.HasCombatReplayPositions(log))
                 {
-                    Link = urls[i - 1],
-                    Start = phase.Start
-                });
+                    continue;
+                }
+                var pos = p.GetCombatReplayPolledPositions(log);
+                _rectInMap.topX = Math.Min(Math.Floor(pos.Min(x => x.XYZ.X)) - 250, _rectInMap.topX);
+                _rectInMap.topY = Math.Min(Math.Floor(pos.Min(x => x.XYZ.Y)) - 250, _rectInMap.topY);
+                _rectInMap.bottomX = Math.Max(Math.Floor(pos.Max(x => x.XYZ.X)) + 250, _rectInMap.bottomX);
+                _rectInMap.bottomY = Math.Max(Math.Floor(pos.Max(x => x.XYZ.Y)) + 250, _rectInMap.bottomY);
             }
-            _maps.Last().End = fightEnd;
-            _maps.RemoveAll(x => x.End - x.Start <= 0);
+            FixAspectRatio();
         }
+    }
 
-        public float GetInchToPixel()
+    internal void FixAspectRatio()
+    {
+        var width = _rectInMap.bottomX - _rectInMap.topX;
+        var height = _rectInMap.bottomY - _rectInMap.topY;
+        var pad = Math.Abs(width - height) / 2.0;
+        if (width > height)
         {
-            float ratio = (float)(_rectInMap.bottomX - _rectInMap.topX) / GetPixelMapSize().width;
-            return (float)Math.Round(1.0f / ratio, 3);
+            _rectInMap.topY -= pad;
+            _rectInMap.bottomY += pad;
         }
-
-        internal CombatReplayMap Translate(double x, double y)
+        else if (height > width)
         {
-            _rectInMap.bottomX -= x;
-            _rectInMap.topX -= x;
-            _rectInMap.bottomY -= y;
-            _rectInMap.topY -= y;
-            return this;
+            _rectInMap.topX -= pad;
+            _rectInMap.bottomX += pad;
         }
+    }
 
-        internal CombatReplayMap Scale(double scale)
+    internal Vector2 GetMapCoordRounded(float realX, float realY)
+    {
+        var (width, height) = GetPixelMapSize();
+        double scaleX = (double)width / _pixelSize.width;
+        double scaleY = (double)height / _pixelSize.height;
+        double x = (realX - _rectInMap.topX) / (_rectInMap.bottomX - _rectInMap.topX);
+        double y = (realY - _rectInMap.topY) / (_rectInMap.bottomY - _rectInMap.topY);
+        if (Double.IsNaN(x) || Double.IsNaN(y) || Double.IsInfinity(x) || Double.IsInfinity(y))
         {
-            double centerX = (_rectInMap.bottomX + _rectInMap.topX) / 2.0;
-            double halfWidth = scale * (_rectInMap.bottomX - centerX);
-            double centerY = (_rectInMap.bottomY + _rectInMap.topY) / 2.0;
-            double halfHeigth = scale * (_rectInMap.bottomY - centerY);
-            _rectInMap.bottomX = centerX + halfWidth;
-            _rectInMap.bottomY = centerY + halfHeigth;
-            _rectInMap.topX = centerX - halfWidth;
-            _rectInMap.topY = centerY - halfHeigth;
-            return this;
+            throw new InvalidOperationException("Positions are NaN");
         }
+        return new(
+            (float)Math.Round(scaleX * _pixelSize.width * x, ParserHelper.CombatReplayDataDigit), 
+            (float)Math.Round(scaleY * (_pixelSize.height - _pixelSize.height * y), ParserHelper.CombatReplayDataDigit)
+        );
+    }
+    internal Vector2 GetMapCoordRounded(in Vector2 realPos) => GetMapCoordRounded(realPos.X, realPos.Y);
 
-        internal CombatReplayMap AdjustForAspectRatio()
+    public float GetInchToPixel()
+    {
+        float ratio = (float)(_rectInMap.bottomX - _rectInMap.topX) / GetPixelMapSize().width;
+        return (float)Math.Round(1.0f / ratio, 3);
+    }
+
+    internal CombatReplayMap Translate(double x, double y)
+    {
+        _rectInMap.bottomX -= x;
+        _rectInMap.topX -= x;
+        _rectInMap.bottomY -= y;
+        _rectInMap.topY -= y;
+        return this;
+    }
+
+    internal CombatReplayMap Scale(double scale)
+    {
+        double centerX = (_rectInMap.bottomX + _rectInMap.topX) / 2.0;
+        double halfWidth = scale * (_rectInMap.bottomX - centerX);
+        double centerY = (_rectInMap.bottomY + _rectInMap.topY) / 2.0;
+        double halfHeigth = scale * (_rectInMap.bottomY - centerY);
+        _rectInMap.bottomX = centerX + halfWidth;
+        _rectInMap.bottomY = centerY + halfHeigth;
+        _rectInMap.topX = centerX - halfWidth;
+        _rectInMap.topY = centerY - halfHeigth;
+        return this;
+    }
+
+    internal CombatReplayMap AdjustForAspectRatio()
+    {
+        double ratio = (double)_pixelSize.width / _pixelSize.height;
+        double centerY = (_rectInMap.bottomY + _rectInMap.topY) / 2.0;
+        double halfHeigth = (_rectInMap.bottomY - centerY);
+        double centerX = (_rectInMap.bottomX + _rectInMap.topX) / 2.0;
+        double halfWidth = ratio * halfHeigth;
+        _rectInMap.bottomX = centerX + halfWidth;
+        _rectInMap.bottomY = centerY + halfHeigth;
+        _rectInMap.topX = centerX - halfWidth;
+        _rectInMap.topY = centerY - halfHeigth;
+        return this;
+    }
+
+    internal static CombatReplayMap CreateSquareMapFrom(CombatReplayMap other)
+    {
+        if (other._pixelSize.width == other._pixelSize.height)
         {
-            double ratio = (double)_urlPixelSize.width / _urlPixelSize.height;
-            double centerY = (_rectInMap.bottomY + _rectInMap.topY) / 2.0;
-            double halfHeigth = (_rectInMap.bottomY - centerY);
-            double centerX = (_rectInMap.bottomX + _rectInMap.topX) / 2.0;
-            double halfWidth = ratio * halfHeigth;
-            _rectInMap.bottomX = centerX + halfWidth;
-            _rectInMap.bottomY = centerY + halfHeigth;
-            _rectInMap.topX = centerX - halfWidth;
-            _rectInMap.topY = centerY - halfHeigth;
-            return this;
+            return other;
         }
-
+        if (other._pixelSize.width > other._pixelSize.height)
+        {
+            var height = other._pixelSize.width;
+            var ratio = (double)other._pixelSize.width / other._pixelSize.height;
+            var centerY = (other._rectInMap.topY + other._rectInMap.bottomY) / 2.0;
+            var topY = (other._rectInMap.topY - centerY) * ratio + centerY;
+            var bottomY = (other._rectInMap.bottomY - centerY) * ratio + centerY;
+            return new CombatReplayMap((other._pixelSize.width, height), (other._rectInMap.topX, topY, other._rectInMap.bottomX, bottomY));
+        }
+        else
+        {
+            var width = other._pixelSize.height;
+            var ratio = (double)other._pixelSize.height / other._pixelSize.width;
+            var centerX = (other._rectInMap.topX + other._rectInMap.bottomX) / 2.0;
+            var topX = (other._rectInMap.topX - centerX) * ratio + centerX;
+            var bottomX = (other._rectInMap.bottomX - centerX) * ratio + centerX;
+            return new CombatReplayMap((width, other._pixelSize.height), (topX, other._rectInMap.topY, bottomX, other._rectInMap.bottomY));
+        }
     }
 }

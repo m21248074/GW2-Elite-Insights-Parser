@@ -1,12 +1,11 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 /*jslint browser: true */
-/*global animator, animateCanvas, noUpdateTime, deadIcon, dcIcon, downIcon*/
+/*global animator, animateCanvas, noUpdateTime, deadIcon, dcIcon, downAllyIcon, downEnemyIcon*/
 "use strict";
 //// ACTORS
 
-function IsPresentInArray(array) {
-    var time = animator.reactiveDataStatus.time;
+function IsPresentInArray(array, time) {
     for (let i = 0; i < array.length; i += 2) {
         if (array[i] <= time && array[i + 1] >= time) {
             return true;
@@ -22,7 +21,7 @@ class IconDrawable {
         this.start = params.start;
         this.end = params.end;
         this.img = new Image();
-        this.img.src = params.img;
+        this.img.src = _buildFallBackURL(params.img);
         this.img.onload = function () {
             animateCanvas(noUpdateTime);
         };
@@ -35,8 +34,10 @@ class IconDrawable {
         this.breakbarActive = typeof params.breakbarActive !== "undefined" ? params.breakbarActive : null;
         this.hitboxWidth = InchToPixel * params.hitboxWidth;
         //
+        this.id = params.id;
+        this.parentID = params.parentID;
         uint32[0] = params.id;
-        this.pickingColor = `rgba(${uint32ToUint8[0]}, ${uint32ToUint8[1]}, ${uint32ToUint8[2]}, 1)`;
+        this.pickingColor = params.img && params.img.length > 0 ? `rgba(${uint32ToUint8[0]}, ${uint32ToUint8[1]}, ${uint32ToUint8[2]}, 1)` : null;
     }
 
     isSelected() {
@@ -51,28 +52,36 @@ class IconDrawable {
         if (this.dead === null || this.dead.length === 0) {
             return false;
         }
-        return IsPresentInArray(this.dead);
+        return IsPresentInArray(this.dead, animator.reactiveDataStatus.time);
     }
 
     downed() {
         if (this.down === null || this.down.length === 0) {
             return false;
         }
-        return IsPresentInArray(this.down);
+        return IsPresentInArray(this.down, animator.reactiveDataStatus.time);
     }
 
     disconnected() {
+        return this._disconnected(animator.reactiveDataStatus.time);
+    }
+
+    _disconnected(time) {
         if (this.dc === null || this.dc.length === 0) {
             return false;
         }
-        return IsPresentInArray(this.dc);
+        return IsPresentInArray(this.dc, time);
     }
 
     isBreakbarActive() {
         if (this.breakbarActive === null || this.breakbarActive.length === 0) {
             return false;
         }
-        return IsPresentInArray(this.breakbarActive);
+        return IsPresentInArray(this.breakbarActive, animator.reactiveDataStatus.time);
+    }
+
+    _isFriendly() {
+        return animator.playerData.has(this.id) || animator.friendlyMobData.has(this.id) || animator.friendlyPlayerData.has(this.id);
     }
 
     getIcon() {
@@ -80,7 +89,7 @@ class IconDrawable {
             return deadIcon;
         }
         if (this.downed()) {
-            return downIcon;
+            return this._isFriendly() ? downAllyIcon : downEnemyIcon;
         }
         if (this.disconnected()) {
             return dcIcon;
@@ -136,7 +145,7 @@ class IconDrawable {
     }
 
     canDraw() {
-        if (this.hide && this.hide.length > 0 && IsPresentInArray(this.hide)) {        
+        if (this.hide && this.hide.length > 0 && IsPresentInArray(this.hide, animator.reactiveDataStatus.time)) {        
             return false;
         }
         return true;
@@ -159,11 +168,10 @@ class IconDrawable {
         return this.getInterpolatedRotation(startIndex, Math.max(currentIndex, startIndex));
     }
 
-    getPosition() {
-        if (this.positions === null || this.positions.length === 0 || this.disconnected()) {
+    _getPosition(time) {
+        if (this.positions === null || this.positions.length === 0 || this._disconnected(time)) {
             return null;
         }
-        var time = animator.reactiveDataStatus.time;
         if (this.start !== -1 && (this.start > time || this.end < time)) {
             return null;
         }
@@ -179,6 +187,10 @@ class IconDrawable {
         return this.getInterpolatedPosition(startIndex, Math.max(currentIndex, startIndex));
     }
 
+    getPosition(_time) {
+        return this._getPosition(animator.reactiveDataStatus.time);
+    }
+
     getSize() {
         if (animator.displaySettings.useActorHitboxWidth && this.hitboxWidth > 0) {
             return this.hitboxWidth;
@@ -188,7 +200,7 @@ class IconDrawable {
     }
 
     draw() {
-        if (!this.canDraw()) {
+        if (!this.canDraw() || this.pickingColor == null) {
             return;
         }
         const pos = this.getPosition();
@@ -212,7 +224,10 @@ class IconDrawable {
             ctx.strokeStyle = 'green';
             ctx.rect(pos.x - halfSize, pos.y - halfSize, fullSize, fullSize);
             ctx.stroke();
-            animator.rangeControl.forEach(function (element) {
+        }     
+        if (animator.extraDecorationMap.has(this.id)) {
+            let rangeControls = animator.extraDecorationMap.get(this.id).rangeControls.ranges;
+            rangeControls.forEach(function (element) {
                 if (!element.enabled) {
                     return;
                 }
@@ -222,13 +237,12 @@ class IconDrawable {
                 ctx.arc(pos.x, pos.y, InchToPixel * element.radius, 0, 2 * Math.PI);
                 ctx.stroke();
             });
-        }
-        ctx.drawImage(this.getIcon(),
-            pos.x - halfSize, pos.y - halfSize, fullSize, fullSize);
+        } 
+        ctx.drawImage(this.getIcon(), pos.x - halfSize, pos.y - halfSize, fullSize, fullSize);
     }
 
     drawPicking() {
-        if (!this.canDraw()) {
+        if (!this.canDraw() || !this.pickingColor) {
             return;
         }
         const pos = this.getPosition();
@@ -249,7 +263,7 @@ class IconDrawable {
     }
 }
 
-class SquadIconDrawable extends IconDrawable {
+class PlayerIconDrawable extends IconDrawable {
     constructor(params, pixelSize) {
         super(params, pixelSize);
         this.group = params.group;
@@ -272,12 +286,147 @@ class NonSquadIconDrawable extends IconDrawable {
         if (!super.canDraw()) {
             return false;
         }
-        if (this.master === null) {
+        const perParentArray = animator.agentDataPerParentID.get(this.masterID);
+        if (perParentArray) {     
+            this.master = perParentArray.filter(x => x.getPosition() != null)[0];
+        } else if (this.master === null) {
             this.master = animator.getActorData(this.masterID);
         }
         if (this.master && !animator.displaySettings.displayAllMinions) {
             return (this.master.isSelected() || this.isSelected()) && animator.displaySettings.displaySelectedMinions;
         }
         return true;
+    }
+}
+
+class NPCIconDrawable extends NonSquadIconDrawable {
+    constructor(params, pixelSize) {
+        super(params, pixelSize);
+    }
+}
+
+let adjustedEnemyDeadIcon = null;
+let adjustedFriendlyDeadIcon = null;
+let adjustedFriendlyDownIcon = null;
+
+function adjustImageColor(image, colorAdjuster) {
+
+    const imageWidth = image.width;
+    const imageHeight = image.height;
+    const offscreen = new OffscreenCanvas(imageWidth, imageHeight);
+    const ctx = offscreen.getContext("2d");
+    ctx.drawImage(image, 0, 0);
+    const imageData = ctx.getImageData(0, 0, imageWidth, imageHeight);
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        let color = colorAdjuster(imageData.data[i + 0], imageData.data[i + 1], imageData.data[i + 2], imageData.data[i + 3]);
+        imageData.data[i + 0] = color.r;
+        imageData.data[i + 1] = color.g;
+        imageData.data[i + 2] = color.b;
+        imageData.data[i + 3] = color.a;
+    }
+    ctx.putImageData(imageData, 0, 0);
+    offscreen.complete = true;
+    offscreen.naturalWidth = imageWidth;
+    offscreen.naturalHeight = imageHeight;
+    return offscreen;
+}
+
+class NonSquadPlayerDrawable extends NonSquadIconDrawable {  
+    constructor(params, pixelSize) {
+        super(params, pixelSize);
+        this.adjustableImg = !(replaceImgur && this.img.src.includes("imgur"));
+        if (this.adjustableImg) {
+            this.img.crossOrigin = "Anonymous";
+        }
+        this.adjustedImg = null;
+        this.colorAdjuster = null;
+    }
+
+    _getDownIcon() {
+        return null;
+    }
+
+    _getDeadIcon() {
+        return null;
+    }
+
+    getIcon() {
+        if (this.died()) {
+            return this._getDeadIcon();
+        }
+        if (this.downed()) {   
+            return this._getDownIcon();
+        }
+        if (this.disconnected()) {
+            return dcIcon;
+        }
+        if (!this.adjustableImg) {
+            return this.img;
+        }
+        if (!this.adjustedImg && this.img.complete) {
+            this.adjustedImg = adjustImageColor(this.img, this.colorAdjuster)
+        }
+        return this.adjustedImg;
+    }
+}
+
+class EnemyPlayerDrawable extends NonSquadPlayerDrawable {
+    constructor(params, pixelSize) {
+        super(params, pixelSize);
+        this.colorAdjuster = (r, g, b, a) => {
+            let grayScale = 0.299 * r + 0.587 * g + 0.114*b;
+            return {
+                r: grayScale,
+                g: 0.3 * grayScale,
+                b: 0.3 * grayScale,
+                a: a
+            };
+        }
+    }
+    _getDownIcon() {
+        return downEnemyIcon;
+    }
+
+    _getDeadIcon() {
+        if (replaceImgur) {
+            return deadIcon;
+        }
+        if (!adjustedEnemyDeadIcon && deadIcon.complete) {
+            adjustedEnemyDeadIcon = adjustImageColor(deadIcon, this.colorAdjuster);
+        }
+        return adjustedEnemyDeadIcon;
+    }
+}
+
+class FriendlyPlayerDrawable extends NonSquadPlayerDrawable {
+    constructor(params, pixelSize) {
+        super(params, pixelSize);
+        this.colorAdjuster = (r, g, b, a) => {
+            let grayScale = 0.299 * r + 0.587 * g + 0.114*b;
+            return {
+                r: 0.3 * grayScale,
+                g: grayScale,
+                b: 0.3 * grayScale,
+                a: a
+            };
+        }
+    }
+    _getDownIcon() {  
+        if (replaceImgur) {
+            return downAllyIcon;
+        }
+        if (!adjustedFriendlyDownIcon && downAllyIcon.complete) {
+            adjustedFriendlyDownIcon = adjustImageColor(downAllyIcon, this.colorAdjuster);
+        }
+        return adjustedFriendlyDownIcon;
+    }
+    _getDeadIcon() {
+        if (replaceImgur) {
+            return deadIcon;
+        }
+        if (!adjustedFriendlyDeadIcon && deadIcon.complete) {
+            adjustedFriendlyDeadIcon = adjustImageColor(deadIcon, this.colorAdjuster);
+        }
+        return adjustedFriendlyDeadIcon;
     }
 }

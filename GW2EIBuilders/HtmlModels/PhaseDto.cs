@@ -1,384 +1,531 @@
-﻿using System;
-using System.Collections.Generic;
-using GW2EIBuilders.HtmlModels.HTMLCharts;
+﻿using GW2EIBuilders.HtmlModels.HTMLCharts;
 using GW2EIBuilders.HtmlModels.HTMLStats;
 using GW2EIEvtcParser;
 using GW2EIEvtcParser.EIData;
+using GW2EIEvtcParser.ParsedData;
 using static GW2EIEvtcParser.ParserHelper;
 
-namespace GW2EIBuilders.HtmlModels
+namespace GW2EIBuilders.HtmlModels;
+
+using GameplayStatDataItem = List<double>;
+/*(
+    double timeWasted, // 0
+    int wasted, // 1
+    double timeSaved, // 2
+    int saved, // 3
+    int swap, // 4
+    double distToStack, // 5
+    double distToCom, // 6
+    double castUptime, // 7
+    double castUptimeNoAA // 8
+);
+*/
+
+using OffensiveStatDataItem = List<double>;
+/*(
+    int directDamageCount, // 0
+    int critableDirectDamageCount,
+    int criticalCount,
+    int criticalDamage,
+    int flanking,
+    int glance, // 5
+    int missed,
+    int interrupts,
+    int invulned,
+    int evaded,
+    int blocked, // 10
+    int connectedDirectDamageCount,
+    int killed,
+    int downed,
+    int againstMoving,
+    int connectedDamageCount, // 15
+    int totalDamageCount,
+    int downContribution,
+    int connectedDamage,
+    int connectedDirectDamage,
+    int connectedPowerCount, // 20
+    int connectedPowerAbove90HPCount,
+    int connectedConditionCount,
+    int connectedConditionAbove90HPCount,
+    int againstDownedCount,
+    int againstDownedDamage, // 25
+    int totalDamage,
+    int appliedCrowdControl,
+    double appliedCrowdControlDuration
+);*/
+
+using DPSStatDataItem = List<double>;
+/*(
+    int damage, // 0
+    int powerDamage,
+    int conditionDamage,
+    double breakbarDamage
+);*/
+
+using DefensiveStatDataItem = object[];
+/*(
+    int damageTaken, // 0
+    int damageBarrier,
+    int missedCount,
+    int interruptCount,
+    int invulnedCount,
+    int evadedCound, // 5
+    int blockedCount,
+    int dodgeCount,
+    int conditionCleanses,
+    double conditionCleansesTime,
+    int boonStrips, // 10,
+    double boonStripsTime,
+    int downCount,
+    string downTooltip,
+    int deadCount,
+    string deadTooltip, // 15
+    int downedDamageTaken,
+    int receivedCrowdControl,
+    double receivedCrowdControlDuration
+);*/
+
+using SupportStatDataItem = List<double>;
+/*(
+    int conditionCleanse, // 0
+    double conditionCleanseTime,
+    int conditionCleanseSelf,
+    double conditionCleanseSelfTime,
+    int boonStrips,
+    double boonStripsTime, // 5
+    int ressurects,
+    double ressurectsTime,
+    int stunBreak,
+    double removedStunDuration
+);*/
+
+//TODO_PERF(Rennorb) @IF we wanted more performance we could try to just get rid of this json data step all together.
+// It should be doable to just merge it with existing structures, as to not need to copy everything..
+// If this is reasonably possible it should give time savings around 20-30%
+internal class PhaseDto
 {
+    public string? Name;
+    public long Duration;
+    public double Start;
+    public double End;
+    public int Type;
+    public string? NameNoMode;
+    public string? Icon;
+    public string? Mode;
+    public string? EncounterDuration;
+    public string? StartStatus;
+    public bool? Success;
+    public int EncounterPhase = -1;
+    public long EIID = -1;
 
-    internal class PhaseDto
+    public List<int> Targets;
+    public List<int> TargetPriorities;
+    public bool BreakbarPhase;
+    public double BreakbarRecovered;
+    public double BreakbarStart;
+
+    public List<DPSStatDataItem> DpsStats;
+    public List<List<DPSStatDataItem>> DpsStatsTargets;
+    public List<List<OffensiveStatDataItem>> OffensiveStatsTargets;
+    public List<OffensiveStatDataItem> OffensiveStats;
+    public List<GameplayStatDataItem> GameplayStats;
+    public List<DefensiveStatDataItem> DefStats;
+    public List<SupportStatDataItem> SupportStats;
+
+    public BuffsContainerDto BuffsStatContainer;
+    public BuffVolumesContainerDto BuffVolumesStatContainer;
+
+    public List<DamageModData> DmgModifiersCommon;
+    public List<DamageModData> DmgModifiersItem;
+    public List<DamageModData> DmgModifiersPers;
+
+
+    public List<DamageModData> DmgIncModifiersCommon;
+    public List<DamageModData> DmgIncModifiersItem;
+    public List<DamageModData> DmgIncModifiersPers;
+
+
+    public List<List<double[]>> MechanicStats;
+    public List<List<double[]>> EnemyMechanicStats;
+    public List<long> PlayerActiveTimes;
+
+    public List<double>? MarkupLines;
+    public List<AreaLabelDto>? MarkupAreas;
+    public List<int>? SubPhases;
+
+    public PhaseDto(PhaseData phase, IReadOnlyList<PhaseData> phases, ParsedEvtcLog log, IReadOnlyDictionary<Spec, IReadOnlyList<Buff>> persBuffDict,
+        IReadOnlyList<OutgoingDamageModifier> commonOutDamageModifiers, IReadOnlyList<OutgoingDamageModifier> itemOutDamageModifiers, IReadOnlyDictionary<Spec, IReadOnlyList<OutgoingDamageModifier>> persOutDamageModDict,
+        IReadOnlyList<IncomingDamageModifier> commonIncDamageModifiers, IReadOnlyList<IncomingDamageModifier> itemIncDamageModifiers, IReadOnlyDictionary<Spec, IReadOnlyList<IncomingDamageModifier>> persIncDamageModDict)
     {
-        public string Name { get; set; }
-        public long Duration { get; set; }
-        public double Start { get; set; }
-        public double End { get; set; }
-        public List<int> Targets { get; set; } = new List<int>();
-        public List<bool> SecondaryTargets { get; set; } = new List<bool>();
-        public bool BreakbarPhase { get; set; }
-
-        public List<List<object>> DpsStats { get; set; }
-        public List<List<List<object>>> DpsStatsTargets { get; set; }
-        public List<List<List<object>>> OffensiveStatsTargets { get; set; }
-        public List<List<object>> OffensiveStats { get; set; }
-        public List<List<object>> GameplayStats { get; set; }
-        public List<List<object>> DefStats { get; set; }
-        public List<List<object>> SupportStats { get; set; }
-
-        public BuffsContainerDto BuffsStatContainer { get; set; }
-        public BuffVolumesContainerDto BuffVolumesStatContainer { get; set; }
-
-        public List<DamageModData> DmgModifiersCommon { get; set; }
-        public List<DamageModData> DmgModifiersItem { get; set; }
-        public List<DamageModData> DmgModifiersPers { get; set; }
-
-
-        public List<DamageModData> DmgIncModifiersCommon { get; set; }
-        public List<DamageModData> DmgIncModifiersItem { get; set; }
-        public List<DamageModData> DmgIncModifiersPers { get; set; }
-
-
-        public List<List<int[]>> MechanicStats { get; set; }
-        public List<List<int[]>> EnemyMechanicStats { get; set; }
-        public List<long> PlayerActiveTimes { get; set; }
-
-        public List<double> MarkupLines { get; set; }
-        public List<AreaLabelDto> MarkupAreas { get; set; }
-        public List<int> SubPhases { get; set; }
-
-        public PhaseDto(PhaseData phase, IReadOnlyList<PhaseData> phases, ParsedEvtcLog log, IReadOnlyDictionary<Spec, IReadOnlyList<Buff>> persBuffDict,
-            IReadOnlyList<OutgoingDamageModifier> commonOutDamageModifiers, IReadOnlyList<OutgoingDamageModifier> itemOutDamageModifiers, IReadOnlyDictionary<Spec, IReadOnlyList<OutgoingDamageModifier>> persOutDamageModDict,
-            IReadOnlyList<IncomingDamageModifier> commonIncDamageModifiers, IReadOnlyList<IncomingDamageModifier> itemIncDamageModifiers, IReadOnlyDictionary<Spec, IReadOnlyList<IncomingDamageModifier>> persIncDamageModDict)
+        Name          = phase.Name;
+        Duration      = phase.DurationInMS;
+        Start         = phase.Start / 1000.0;
+        End           = phase.End / 1000.0;
+        BreakbarPhase = phase.BreakbarPhase;
+        Type = (int)phase.Type;
+        if (phase is PhaseDataWithMetaData phaseWithMetaData)
         {
-            Name = phase.Name;
-            Duration = phase.DurationInMS;
-            Start = phase.Start / 1000.0;
-            End = phase.End / 1000.0;
-            BreakbarPhase = phase.BreakbarPhase;
-            foreach (AbstractSingleActor target in phase.AllTargets)
+            NameNoMode = phaseWithMetaData.NameNoMode;
+            Icon = phaseWithMetaData.Icon;
+            Success = phaseWithMetaData.Success;
+            EncounterDuration = phaseWithMetaData.DurationString;
+            EIID = phaseWithMetaData.ID;
+            switch (phaseWithMetaData.Mode)
             {
-                Targets.Add(log.FightData.Logic.Targets.IndexOf(target));
-                SecondaryTargets.Add(phase.IsSecondaryTarget(target));
+                case LogData.Mode.Unknown:
+                    Mode = "Unknown";
+                    break;
+                case LogData.Mode.Story:
+                    Mode = "Story Mode";
+                    break;
+                case LogData.Mode.Normal:
+                    Mode = log.LogData.Logic.GetInstanceBuffs(log).Any(x => x.Buff.ID == SkillIDs.Emboldened && x.AttachedPhase == phase) ? 
+                        "Emboldened Normal Mode" : 
+                        log.LogData.Logic.GetInstanceBuffs(log).Any(x => x.Buff.ID == SkillIDs.QuickplayBoost || x.Buff.ID == SkillIDs.QuickplayMorale) ? 
+                            "Quickplay Normal Mode" 
+                            : 
+                            "Normal Mode";
+                    break;
+                case LogData.Mode.CM:
+                case LogData.Mode.CMNoName:
+                    Mode = "Challenge Mode";
+                    break;
+                case LogData.Mode.LegendaryCM:
+                    Mode = "Legendary Challenge Mode";
+                    break;
+                default:
+                    break;
             }
-            PlayerActiveTimes = new List<long>();
-            foreach (AbstractSingleActor actor in log.Friendlies)
+            switch (phaseWithMetaData.StartStatus)
             {
-                PlayerActiveTimes.Add(actor.GetActiveDuration(log, phase.Start, phase.End));
+                case LogData.StartStatus.Normal:
+                    break;
+                case LogData.StartStatus.NotSet:
+                    break;
+                case LogData.StartStatus.Late:
+                    StartStatus = "Late Start";
+                    break;
+                case LogData.StartStatus.NoPreEvent:
+                    StartStatus = "No Pre-Event";
+                    break;
+                default:
+                    break;
             }
-            // add phase markup
-            MarkupLines = new List<double>();
-            MarkupAreas = new List<AreaLabelDto>();
-            if (!BreakbarPhase)
+        } 
+        else
+        {
+            var subPhase = (SubPhasePhaseData)phase;
+            if (subPhase.EncounterPhase != null)
             {
-                for (int j = 1; j < phases.Count; j++)
+                EncounterPhase = phases.IndexOf(subPhase.EncounterPhase);
+            }
+        }
+
+        var allTargets = phase.Targets;
+        Targets          = new(allTargets.Count);
+        TargetPriorities = new(allTargets.Count);
+        foreach (var pair in allTargets)
+        {
+            var target = pair.Key;
+            Targets.Add(log.LogData.Logic.Targets.IndexOf(target));
+            TargetPriorities.Add((int)pair.Value.Priority);
+        }
+
+        PlayerActiveTimes = new(log.Friendlies.Count);
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            PlayerActiveTimes.Add(actor.GetActiveDuration(log, phase.Start, phase.End));
+        }
+
+        // add phase markup
+        
+        if (!BreakbarPhase)
+        {
+            MarkupLines = new(phases.Count);
+            MarkupAreas = new(phases.Count);
+            for (int j = 1; j < phases.Count; j++)
+            {
+                PhaseData curPhase = phases[j];
+                if (curPhase.Start < phase.Start || curPhase.End > phase.End ||
+                    (curPhase == phase) || !curPhase.CanBeASubPhaseOf(phase))
                 {
-                    PhaseData curPhase = phases[j];
-                    if (curPhase.Start < phase.Start || curPhase.End > phase.End ||
-                        (curPhase.Start == phase.Start && curPhase.End == phase.End) || !curPhase.CanBeSubPhase)
-                    {
-                        continue;
-                    }
-                    if (SubPhases == null)
-                    {
-                        SubPhases = new List<int>();
-                    }
-                    SubPhases.Add(j);
-                    long start = curPhase.Start - phase.Start;
-                    long end = curPhase.End - phase.Start;
-                    if (curPhase.DrawStart)
-                    {
-                        MarkupLines.Add(start / 1000.0);
-                    }
-
-                    if (curPhase.DrawEnd)
-                    {
-                        MarkupLines.Add(end / 1000.0);
-                    }
-
-                    var phaseArea = new AreaLabelDto
-                    {
-                        Start = start / 1000.0,
-                        End = end / 1000.0,
-                        Label = curPhase.DrawLabel ? curPhase.Name : null,
-                        Highlight = curPhase.DrawArea
-                    };
-                    MarkupAreas.Add(phaseArea);
+                    continue;
                 }
-            }
-            if (MarkupAreas.Count == 0)
-            {
-                MarkupAreas = null;
-            }
 
-            if (MarkupLines.Count == 0)
-            {
-                MarkupLines = null;
-            }
-            BuffsStatContainer = new BuffsContainerDto(phase, log, persBuffDict);
-            BuffVolumesStatContainer = new BuffVolumesContainerDto(phase, log, persBuffDict);
-            //
-            DpsStats = BuildDPSData(log, phase);
-            DpsStatsTargets = BuildDPSTargetsData(log, phase);
-            OffensiveStatsTargets = BuildOffensiveStatsTargetsData(log, phase);
-            OffensiveStats = BuildOffensiveStatsData(log, phase);
-            GameplayStats = BuildGameplayStatsData(log, phase);
-            DefStats = BuildDefenseData(log, phase);
-            SupportStats = BuildSupportData(log, phase);
-            //
-            DmgModifiersCommon = DamageModData.BuildOutgoingDmgModifiersData(log, phase, commonOutDamageModifiers);
-            DmgModifiersItem = DamageModData.BuildOutgoingDmgModifiersData(log, phase, itemOutDamageModifiers);
-            DmgModifiersPers = DamageModData.BuildPersonalOutgoingDmgModifiersData(log, phase, persOutDamageModDict);
-            DmgIncModifiersCommon = DamageModData.BuildIncomingDmgModifiersData(log, phase, commonIncDamageModifiers);
-            DmgIncModifiersItem = DamageModData.BuildIncomingDmgModifiersData(log, phase, itemIncDamageModifiers);
-            DmgIncModifiersPers = DamageModData.BuildPersonalIncomingDmgModifiersData(log, phase, persIncDamageModDict);
-            MechanicStats = MechanicDto.BuildPlayerMechanicData(log, phase);
-            EnemyMechanicStats = MechanicDto.BuildEnemyMechanicData(log, phase);
-        }
+                SubPhases ??= new List<int>(phases.Count);
+                SubPhases.Add(j);
 
-        private static bool HasBoons(ParsedEvtcLog log, PhaseData phase, AbstractSingleActor target)
-        {
-            IReadOnlyDictionary<long, FinalActorBuffs> conditions = target.GetBuffs(BuffEnum.Self, log, phase.Start, phase.End);
-            foreach (Buff boon in log.StatisticsHelper.PresentBoons)
-            {
-                if (conditions.TryGetValue(boon.ID, out FinalActorBuffs uptime))
+                long start = curPhase.Start - phase.Start;
+                long end = curPhase.End - phase.Start;
+                if (curPhase.DrawStart)
                 {
-                    if (uptime.Uptime > 0.0)
-                    {
-                        return true;
-                    }
+                    MarkupLines.Add(start / 1000.0);
                 }
-            }
-            return false;
-        }
 
-
-        // helper methods
-
-        private static List<object> GetGameplayStatData(FinalGameplayStats stats)
-        {
-            var data = new List<object>
+                if (curPhase.DrawEnd)
                 {
-                    // commons
-                    stats.TimeWasted, // 0
-                    stats.Wasted, // 1
-
-                    stats.TimeSaved, // 2
-                    stats.Saved, // 3
-
-                    stats.SwapCount, // 4
-                    Math.Round(stats.StackDist, 2), // 5
-                    Math.Round(stats.DistToCom, 2), // 6
-                    stats.SkillCastUptime, // 7
-                    stats.SkillCastUptimeNoAA, // 8
-                };
-            return data;
-        }
-
-        private static List<object> GetOffensiveStatData(FinalOffensiveStats stats)
-        {
-            var data = new List<object>
-                {
-                    stats.DirectDamageCount, // 0
-                    stats.CritableDirectDamageCount, // 1
-                    stats.CriticalCount, // 2
-                    stats.CriticalDmg, // 3
-
-                    stats.FlankingCount, // 4
-
-                    stats.GlanceCount, // 5
-
-                    stats.Missed,// 6
-                    stats.Interrupts, // 7
-                    stats.Invulned, // 8
-                    stats.Evaded,// 9
-                    stats.Blocked,// 10
-                    stats.ConnectedDirectDamageCount, // 11
-                    stats.Killed, // 12
-                    stats.Downed, // 13
-                    stats.AgainstMovingCount, // 14
-                    stats.ConnectedDamageCount, // 15
-                    stats.TotalDamageCount, // 16
-                    stats.DownContribution, // 17
-                    stats.ConnectedDmg, // 18
-                    stats.ConnectedDirectDmg, // 19
-
-                    stats.ConnectedPowerCount, // 20
-                    stats.ConnectedPowerAbove90HPCount, // 21
-                    stats.ConnectedConditionCount, // 22
-                    stats.ConnectedConditionAbove90HPCount, // 23
-                    stats.AgainstDownedCount, // 24
-                    stats.AgainstDownedDamage, // 25
-                    stats.TotalDmg, // 26
-                    stats.AppliedCrowdControl,//27
-                    stats.AppliedCrowdControlDuration,//28
-                };
-            return data;
-        }
-
-        private static List<object> GetDPSStatData(FinalDPS dpsAll)
-        {
-            var data = new List<object>
-                {
-                    dpsAll.Damage,
-                    dpsAll.PowerDamage,
-                    dpsAll.CondiDamage,
-                    dpsAll.BreakbarDamage,
-                };
-            return data;
-        }
-
-        private static List<object> GetSupportStatData(FinalToPlayersSupport support)
-        {
-            var data = new List<object>()
-                {
-                    support.CondiCleanse,
-                    support.CondiCleanseTime,
-                    support.CondiCleanseSelf,
-                    support.CondiCleanseTimeSelf,
-                    support.BoonStrips,
-                    support.BoonStripsTime,
-                    support.Resurrects,
-                    support.ResurrectTime,
-                    support.StunBreak,
-                    support.RemovedStunDuration,
-                };
-            return data;
-        }
-
-        private static List<object> GetDefenseStatData(FinalDefensesAll defenses, PhaseData phase)
-        {
-            int downCount = 0;
-            string downTooltip = "0% 倒地";
-            if (defenses.DownCount > 0)
-            {
-                var downDuration = TimeSpan.FromMilliseconds(defenses.DownDuration);
-                downCount = (defenses.DownCount);
-                downTooltip = ("倒地" + downDuration.TotalSeconds + " 秒, " + Math.Round((downDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1) + "% 倒地");
-            }
-            int deadCount = 0;
-            string deadTooltip = "100% 存活";
-            if (defenses.DeadCount > 0)
-            {
-                var deathDuration = TimeSpan.FromMilliseconds(defenses.DeadDuration);
-                deadCount = (defenses.DeadCount);
-                deadTooltip = ("死亡" + deathDuration.TotalSeconds + " 秒, " + (100.0 - Math.Round((deathDuration.TotalMilliseconds / phase.DurationInMS) * 100, 1)) + "% 存活");
-            }
-            var data = new List<object>
-                {
-                    defenses.DamageTaken, // 0
-                    defenses.DamageBarrier,// 1
-                    defenses.MissedCount,// 2
-                    defenses.InterruptedCount,// 3
-                    defenses.InvulnedCount,// 4
-                    defenses.EvadedCount,// 5
-                    defenses.BlockedCount,// 6
-                    defenses.DodgeCount,// 7
-                    defenses.ConditionCleanses,// 8
-                    defenses.ConditionCleansesTime,// 9
-                    defenses.BoonStrips,// 10
-                    defenses.BoonStripsTime,// 11
-                    downCount, // 12
-                    downTooltip,// 13
-                    deadCount,// 14
-                    deadTooltip,// 15
-                    defenses.DownedDamageTaken, // 16
-                    defenses.ReceivedCrowdControl, // 17
-                    defenses.ReceivedCrowdControlDuration, // 18
-                };
-            return data;
-        }
-        public static List<List<object>> BuildDPSData(ParsedEvtcLog log, PhaseData phase)
-        {
-            var list = new List<List<object>>(log.Friendlies.Count);
-            foreach (AbstractSingleActor actor in log.Friendlies)
-            {
-                FinalDPS dpsAll = actor.GetDPSStats(log, phase.Start, phase.End);
-                list.Add(GetDPSStatData(dpsAll));
-            }
-            return list;
-        }
-
-        public static List<List<List<object>>> BuildDPSTargetsData(ParsedEvtcLog log, PhaseData phase)
-        {
-            var list = new List<List<List<object>>>(log.Friendlies.Count);
-
-            foreach (AbstractSingleActor actor in log.Friendlies)
-            {
-                var playerData = new List<List<object>>();
-
-                foreach (AbstractSingleActor target in phase.AllTargets)
-                {
-                    playerData.Add(GetDPSStatData(actor.GetDPSStats(target, log, phase.Start, phase.End)));
+                    MarkupLines.Add(end / 1000.0);
                 }
-                list.Add(playerData);
-            }
-            return list;
-        }
 
-        public static List<List<object>> BuildGameplayStatsData(ParsedEvtcLog log, PhaseData phase)
-        {
-            var list = new List<List<object>>();
-            foreach (AbstractSingleActor actor in log.Friendlies)
-            {
-                FinalGameplayStats stats = actor.GetGameplayStats(log, phase.Start, phase.End);
-                list.Add(GetGameplayStatData(stats));
-            }
-            return list;
-        }
-
-        public static List<List<object>> BuildOffensiveStatsData(ParsedEvtcLog log, PhaseData phase)
-        {
-            var list = new List<List<object>>();
-            foreach (AbstractSingleActor actor in log.Friendlies)
-            {
-                FinalOffensiveStats stats = actor.GetOffensiveStats(null, log, phase.Start, phase.End);
-                list.Add(GetOffensiveStatData(stats));
-            }
-            return list;
-        }
-
-        public static List<List<List<object>>> BuildOffensiveStatsTargetsData(ParsedEvtcLog log, PhaseData phase)
-        {
-            var list = new List<List<List<object>>>();
-
-            foreach (AbstractSingleActor actor in log.Friendlies)
-            {
-                var playerData = new List<List<object>>();
-                foreach (AbstractSingleActor target in phase.AllTargets)
+                var phaseArea = new AreaLabelDto
                 {
-                    FinalOffensiveStats statsTarget = actor.GetOffensiveStats(target, log, phase.Start, phase.End);
-                    playerData.Add(GetOffensiveStatData(statsTarget));
-                }
-                list.Add(playerData);
-            }
-            return list;
-        }
+                    Start = start / 1000.0,
+                    End = end / 1000.0,
+                    Label = curPhase.DrawLabel ? curPhase.Name : null,
+                    Highlight = curPhase.DrawArea
+                };
 
-        public static List<List<object>> BuildDefenseData(ParsedEvtcLog log, PhaseData phase)
+                MarkupAreas.Add(phaseArea);
+            }
+        } 
+        else
         {
-            var list = new List<List<object>>();
-
-            foreach (AbstractSingleActor actor in log.Friendlies)
-            {
-                FinalDefensesAll defenses = actor.GetDefenseStats(log, phase.Start, phase.End);
-                list.Add(GetDefenseStatData(defenses, phase));
-            }
-
-            return list;
+            BreakbarRecovered = ((BreakbarPhaseData)phase).BreakbarRecovered;
+            BreakbarStart = Start + ((BreakbarPhaseData)phase).Offset / 1000.0;
         }
 
-        public static List<List<object>> BuildSupportData(ParsedEvtcLog log, PhaseData phase)
+        if (MarkupAreas?.Count == 0)
         {
-            var list = new List<List<object>>();
-
-            foreach (AbstractSingleActor actor in log.Friendlies)
-            {
-                FinalToPlayersSupport support = actor.GetToPlayerSupportStats(log, phase.Start, phase.End);
-                list.Add(GetSupportStatData(support));
-            }
-            return list;
+            MarkupAreas = null;
         }
+
+        if (MarkupLines?.Count == 0)
+        {
+            MarkupLines = null;
+        }
+
+        BuffsStatContainer       = new BuffsContainerDto(phase, log, persBuffDict);
+        BuffVolumesStatContainer = new BuffVolumesContainerDto(phase, log, persBuffDict);
+        
+        DpsStats              = BuildDPSData(log, phase);
+        DpsStatsTargets       = BuildDPSTargetsData(log, phase);
+        OffensiveStatsTargets = BuildOffensiveStatsTargetsData(log, phase);
+        OffensiveStats        = BuildOffensiveStatsData(log, phase);
+        GameplayStats         = BuildGameplayStatsData(log, phase);
+        DefStats              = BuildDefenseData(log, phase);
+        SupportStats          = BuildSupportData(log, phase);
+        
+        DmgModifiersCommon    = DamageModData.BuildOutgoingDmgModifiersData(log, phase, commonOutDamageModifiers);
+        DmgModifiersItem      = DamageModData.BuildOutgoingDmgModifiersData(log, phase, itemOutDamageModifiers);
+        DmgModifiersPers      = DamageModData.BuildPersonalOutgoingDmgModifiersData(log, phase, persOutDamageModDict);
+        DmgIncModifiersCommon = DamageModData.BuildIncomingDmgModifiersData(log, phase, commonIncDamageModifiers);
+        DmgIncModifiersItem   = DamageModData.BuildIncomingDmgModifiersData(log, phase, itemIncDamageModifiers);
+        DmgIncModifiersPers   = DamageModData.BuildPersonalIncomingDmgModifiersData(log, phase, persIncDamageModDict);
+        MechanicStats         = MechanicDto.BuildPlayerMechanicData(log, phase);
+        EnemyMechanicStats    = MechanicDto.BuildEnemyMechanicData(log, phase);
+    }
+
+    // helper methods
+
+    private static GameplayStatDataItem GetGameplayStatData(GameplayStatistics stats)
+    {
+        return [
+                stats.SkillAnimationInterruptedDuration,
+                stats.SkillAnimationInterruptedCount,
+                stats.SkillAnimationAfterCastInterruptedDuration,
+                stats.SkillAnimationAfterCastInterruptedCount,
+                stats.WeaponSwapCount,
+                Math.Round(stats.DistanceToCenterOfSquad, 2),
+                Math.Round(stats.DistanceToCommander, 2),
+                stats.SkillCastUptime,
+                stats.SkillCastUptimeNoAutoAttack
+        ];
+    }
+
+    private static OffensiveStatDataItem GetOffensiveStatData(OffensiveStatistics stats)
+    {
+        return [
+                stats.DirectDamageEventCount,
+                stats.CritableDirectDamageCount,
+                stats.CriticalDamageCount,
+                stats.CriticalDamage,
+                stats.FlankingCount,
+                stats.GlancingCount,
+                stats.MissedCount,
+                stats.InterruptCount,
+                stats.InvulnedCount,
+                stats.EvadedCount,
+                stats.BlockedCount,
+                stats.DirectDamageCount,
+                stats.KilledCount,
+                stats.DownedCount,
+                stats.AgainstMovingCount,
+                stats.DamageCount,
+                stats.TotalDamageEventCount,
+                stats.DownContribution,
+                stats.Damage,
+                stats.DirectDamage,
+                stats.PowerDamageCount,
+                stats.PowerDamageAbove90HPCount,
+                stats.ConditionDamageCount,
+                stats.ConditionDamageAbove90HPCount,
+                stats.AgainstDownedDamageCount,
+                stats.AgainstDownedDamage,
+                stats.TotalDamageEventDamage,
+                stats.AppliedCrowdControl,
+                stats.AppliedCrowdControlDuration
+            ];
+    }
+
+    private static DPSStatDataItem GetDPSStatData(DamageStatistics dpsAll)
+    {
+        return [
+                dpsAll.Damage,
+                dpsAll.PowerDamage,
+                dpsAll.ConditionDamage,
+                dpsAll.BreakbarDamage
+            ];
+    }
+
+    private static SupportStatDataItem GetSupportStatData(SupportStatistics support)
+    {
+        return [
+                support.ConditionCleanseCount,
+                support.ConditionCleanseTime,
+                support.ConditionCleanseSelfCount,
+                support.ConditionCleanseTimeSelf,
+                support.BoonStripCount,
+                support.BoonStripTime,
+                support.ResurrectCount,
+                support.ResurrectTime,
+                support.StunBreakCount,
+                support.RemovedStunDuration,
+                support.StunBreakSelfCount,
+                support.RemovedStunSelfDuration
+        ];
+    }
+
+    private static DefensiveStatDataItem GetDefenseStatData(DefenseAllStatistics defenses, PhaseData phase)
+    {
+        int downCount = 0;
+        string downTooltip = "0% Downed";
+        if (defenses.DownCount > 0)
+        {
+            var downDuration = TimeSpan.FromMilliseconds(defenses.DownDuration);
+            downCount = (defenses.DownCount);
+            downTooltip = (downDuration.TotalSeconds + " seconds downed, " + Math.Round(downDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% Downed");
+        }
+        int deadCount = 0;
+        string deadTooltip = "100% Alive";
+        if (defenses.DeadCount > 0)
+        {
+            var deathDuration = TimeSpan.FromMilliseconds(defenses.DeadDuration);
+            deadCount = (defenses.DeadCount);
+            deadTooltip = (deathDuration.TotalSeconds + " seconds dead, " + Math.Round(100.0 - deathDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% Alive");
+        }
+        return [
+                defenses.DamageTaken, 
+                defenses.DamageBarrier,
+                defenses.MissedCount,
+                defenses.InterruptedCount,
+                defenses.InvulnedCount,
+                defenses.EvadedCount,
+                defenses.BlockedCount,
+                defenses.DodgeCount,
+                defenses.ConditionCleanses,
+                defenses.ConditionCleansesTime,
+                defenses.BoonStrips,
+                defenses.BoonStripsTime,
+                downCount,
+                downTooltip,
+                deadCount,
+                deadTooltip,
+                defenses.DownedDamageTaken, 
+                defenses.ReceivedCrowdControl,
+                defenses.ReceivedCrowdControlDuration,
+                defenses.StunBreakCount,
+                defenses.RemovedStunDuration,
+            ];
+    }
+    public static List<DPSStatDataItem> BuildDPSData(ParsedEvtcLog log, PhaseData phase)
+    {
+        var list = new List<DPSStatDataItem>(log.Friendlies.Count);
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            DamageStatistics dpsAll = actor.GetDamageStats(log, phase.Start, phase.End);
+            list.Add(GetDPSStatData(dpsAll));
+        }
+        return list;
+    }
+
+    public static List<List<DPSStatDataItem>> BuildDPSTargetsData(ParsedEvtcLog log, PhaseData phase)
+    {
+        var list = new List<List<DPSStatDataItem>>(log.Friendlies.Count);
+
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            var playerData = new List<DPSStatDataItem>(phase.Targets.Count);
+
+            foreach (SingleActor target in phase.Targets.Keys)
+            {
+                playerData.Add(GetDPSStatData(actor.GetDamageStats(target, log, phase.Start, phase.End)));
+            }
+            list.Add(playerData);
+        }
+        return list;
+    }
+
+    public static List<GameplayStatDataItem> BuildGameplayStatsData(ParsedEvtcLog log, PhaseData phase)
+    {
+        var list = new List<GameplayStatDataItem>(log.Friendlies.Count);
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            GameplayStatistics stats = actor.GetGameplayStats(log, phase.Start, phase.End);
+            list.Add(GetGameplayStatData(stats));
+        }
+        return list;
+    }
+
+    public static List<OffensiveStatDataItem> BuildOffensiveStatsData(ParsedEvtcLog log, PhaseData phase)
+    {
+        var list = new List<OffensiveStatDataItem>(log.Friendlies.Count);
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            OffensiveStatistics stats = actor.GetOffensiveStats(null, log, phase.Start, phase.End);
+            list.Add(GetOffensiveStatData(stats));
+        }
+        return list;
+    }
+
+    public static List<List<OffensiveStatDataItem>> BuildOffensiveStatsTargetsData(ParsedEvtcLog log, PhaseData phase)
+    {
+        var list = new List<List<OffensiveStatDataItem>>(log.Friendlies.Count);
+
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            var playerData = new List<OffensiveStatDataItem>(phase.Targets.Count);
+            foreach (SingleActor target in phase.Targets.Keys)
+            {
+                OffensiveStatistics statsTarget = actor.GetOffensiveStats(target, log, phase.Start, phase.End);
+                playerData.Add(GetOffensiveStatData(statsTarget));
+            }
+            list.Add(playerData);
+        }
+        return list;
+    }
+
+    public static List<DefensiveStatDataItem> BuildDefenseData(ParsedEvtcLog log, PhaseData phase)
+    {
+        var list = new List<DefensiveStatDataItem>(log.Friendlies.Count);
+
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            DefenseAllStatistics defenses = actor.GetDefenseStats(log, phase.Start, phase.End);
+            list.Add(GetDefenseStatData(defenses, phase));
+        }
+
+        return list;
+    }
+
+    public static List<SupportStatDataItem> BuildSupportData(ParsedEvtcLog log, PhaseData phase)
+    {
+        var list = new List<SupportStatDataItem>(log.Friendlies.Count);
+
+        foreach (SingleActor actor in log.Friendlies)
+        {
+            SupportStatistics support = actor.GetToAllySupportStats(log, phase.Start, phase.End);
+            list.Add(GetSupportStatData(support));
+        }
+        return list;
     }
 }

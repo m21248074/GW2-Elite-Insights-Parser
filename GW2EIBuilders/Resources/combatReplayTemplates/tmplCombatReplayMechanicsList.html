@@ -1,74 +1,96 @@
 ﻿<template>
     <div class="d-flex flex-row flex-wrap justify-content-center align-items-center">
+        <div class="d-flex align-items-center mb-2 scale85">
+            <input id="followTimeline" type="checkbox" v-model="followTimeline" class="mr-1" />
+            <label for="followTimeline" class="mb-0 ml-1">Scroll with timeline</label>
+            <div v-if="!isTouchDevice"
+                 @click="resetMechanic()" class="ml-3 btn btn-small"
+                 :class="{'btn-dark': !light, 'btn-light': light}">
+                 Reset Mechanic Selection
+            </div>
+        </div>
         <div id="combat-replay-mechanics-list" class="combat-replay-mechanics-list-container d-flex d-flex-row justify-content-center w-100 scrollable-y"
-            style="max-width:450px">
-            <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%">
+             style="max-width:450px; overflow-y:auto;">
+            <table class="table table-sm table-striped table-hover mb-0" cellspacing="0" width="100%">
                 <thead>
                     <tr>
-                        <th style="width:100px">時間</th>
-                        <th style="width:200px"
-                            class="text-left combat-replay-mechanics-list-header position-relative">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Filter Mechanics">
-                                機制 <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu p-2 font-weight-normal scrollabledropdown"
-                                style="width: 200px;">
-                                <div class="d-flex flex-column justify-content-center align-items-center mb-1"
-                                    style="border-bottom: 2px solid #bbb;">
-                                    <li>
-                                        <button style="width:165px;" type="button" class="btn btn-primary btn-sm"
-                                            @click="selectAllMechanics()" @click.stop="stopClickEvent">選擇全部機制</button>
-                                    </li>
-                                    <li class="mb-1">
-                                        <button style="width:165px;" type="button" class="btn btn-primary btn-sm"
-                                            @click="deselectAllMechanics()" @click.stop="stopClickEvent">取消選擇全部機制</button>
-                                    </li>
-                                </div>
-
-                                <li v-for="(mechanic, index) in mechanicsList" :key="index">
-                                    <input :id="'crml-mechanic-' + index" type="checkbox" v-model="mechanic.included"
-                                        @click.stop="stopClickEvent" />
-                                    <label :for="'crml-mechanic-' + index" @click.stop="stopClickEvent">
-                                        {{mechanic.shortName}}
-                                    </label>
-                                </li>
-                            </ul>
+                        <th class="sticky-header wd-100px">
+                            <div class="position-relative">時間</div>
                         </th>
-                        <th style="width:150px;"
-                            class="text-left combat-replay-mechanics-list-header position-relative">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Filter Actors">
-                                角色 <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu p-2 font-weight-normal scrollabledropdown"
-                                style="width:150px;">
-                                <div class="d-flex flex-column justify-content-center align-items-center mb-1"
-                                    style="border-bottom: 2px solid #bbb;">
-                                    <li>
-                                        <button style="width:140px;" type="button" class="btn btn-primary btn-sm"
-                                            @click="selectAllActors()" @click.stop="stopClickEvent">選擇全部角色</button>
+                        <th class="sticky-header text-left combat-replay-mechanics-list-header wd-200px">
+                            <div class="position-relative">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Filter Mechanics">
+                                    機制 <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu p-2 font-weight-normal scrollabledropdown wd-200px">
+                                    <li class="d-flex flex-column justify-content-center align-items-center mb-1">
+                                        <button style="width:165px;padding: 0.25rem 1rem;" type="button" class="btn btn-primary btn-sm"
+                                                @click="selectAllMechanics()" @click.stop="stopClickEvent">
+                                            選擇全部機制
+                                        </button>
                                     </li>
-                                    <li class="mb-1">
-                                        <button style="width:140px;" type="button" class="btn btn-primary btn-sm"
-                                            @click="deselectAllActors()" @click.stop="stopClickEvent">取消選擇全部角色</button>
+                                    <li class="d-flex flex-column justify-content-center align-items-center mb-1 separator-border-bottom">
+                                        <button style="width:165px;padding: 0.25rem 1rem;" type="button" class="btn btn-primary btn-sm"
+                                                @click="deselectAllMechanics()" @click.stop="stopClickEvent">
+                                            取消選擇全部機制
+                                        </button>
                                     </li>
-                                </div>
-                                <li v-for="(actor, index) in actorsList" :key="index">
-                                    <input :id="'crml-actor-' + index" type="checkbox" v-model="actor.included"
-                                        @click.stop="stopClickEvent" />
-                                    <label :for="'crml-actor-' + index" @click.stop="stopClickEvent">
-                                        {{actor.name}}
-                                    </label>
-                                </li>
-                            </ul>
+                                    <li v-for="(mechanic, index) in mechanicsList" :key="index">
+                                        <input :id="'crml-mechanic-' + index" type="checkbox" v-model="mechanic.included"
+                                               @click.stop="stopClickEvent" />
+                                        <label :for="'crml-mechanic-' + index" @click.stop="stopClickEvent">
+                                            {{mechanic.shortName}}
+                                        </label>
+                                    </li>
+                                </ul>
+                            </div>
+                        </th>
+                        <th class="sticky-header text-left combat-replay-mechanics-list-header wd-150px">
+                            <div class="position-relative">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Filter Actors">
+                                    角色 <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu p-2 font-weight-normal scrollabledropdown wd-150px">
+                                    <li class="d-flex flex-column justify-content-center align-items-center mb-1">
+                                        <button style="width:140px;padding: 0.25rem 1rem;" type="button" class="btn btn-primary btn-sm"
+                                                @click="selectAllActors()" @click.stop="stopClickEvent">
+                                            選擇全部角色
+                                        </button>
+                                    </li>
+                                    <li class="d-flex flex-column justify-content-center align-items-center mb-1 separator-border-bottom">
+                                        <button style="width:140px;padding: 0.25rem 1rem;" type="button" class="btn btn-primary btn-sm"
+                                                @click="deselectAllActors()" @click.stop="stopClickEvent">
+                                            取消選擇全部角色
+                                        </button>
+                                    </li>
+                                    <li v-for="(actor, index) in actorsList" :key="index">
+                                        <input :id="'crml-actor-' + index" type="checkbox" v-model="actor.included"
+                                               @click.stop="stopClickEvent" />
+                                        <label :for="'crml-actor-' + index" @click.stop="stopClickEvent">
+                                            {{actor.name}}
+                                        </label>
+                                    </li>
+                                </ul>
+                            </div>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="event in filteredMechanicEvents" class="combat-replay-mechanics-list-row"
-                        :class="{active: event.actor.id === selectedplayerid}" @click="selectMechanic(event)">
-                        <td :data-original-title="'Timestamp'">{{(event.time / 1000).toFixed(2)}}秒</td>
-                        <td class="text-left" :data-original-title="event.mechanic.name">{{event.mechanic.shortName}}</td>
-                        <td class="text-left">
+                        :class="{active: event.actor.id === selectedactorid}" @click="selectMechanic(event)">
+                        <td :class="{'mech-actor-active': reactiveAnimationData.selectedMechanic.name === event.mechanic.name &&
+                                    reactiveAnimationData.selectedMechanic.actorId === event.actor.id}" 
+                                :data-original-title="'Timestamp'">
+                                {{(event.time / 1000).toFixed(2)}}秒
+                        </td>
+                        <td class="text-left" 
+                            :class="{'mech-active': reactiveAnimationData.selectedMechanic.name === event.mechanic.name}" 
+                            :data-original-title="event.mechanic.name">
+                            {{event.mechanic.shortName}}
+                        </td>
+                        <td class="text-left"
+                            :class="{'mech-actor-active': reactiveAnimationData.selectedMechanic.name === event.mechanic.name &&
+                                reactiveAnimationData.selectedMechanic.actorId === event.actor.id}">
                             <span class="cr-ellipsis" :data-original-title="event.actor.name">
                                 {{event.actor.name}}
                             </span>
@@ -82,7 +104,7 @@
 
 <script>
     Vue.component("combat-replay-mechanics-list-component", {
-        props: ['selectedplayerid'],
+        props: ['time', 'light', 'selectedactorid'],
         template: `${template}`,
         data: function () {
             var mechanicEvents = [];
@@ -101,7 +123,7 @@
                         var points = pointsArray[playerI];
                         var player = logData.players[playerI];
                         for (var i = 0; i < points.length; i++) {
-                            var time = points[i] * 1000; // when mechanic occured in seconds
+                            var time = points[i][0] * 1000; // when mechanic occured in seconds
                             if (icd === 0 || (time - lastTime > icd)) {
                                 mechanicEvents.push({
                                     time: time,
@@ -121,10 +143,10 @@
                         if (tarId >= 0) {
                             var target = logData.targets[tarId];
                             for (var i = 0; i < points.length; i++) {
-                                var time = points[i]; // when mechanic occured in seconds
+                                var time = points[i][0]; // when mechanic occured in seconds
                                 mechanicEvents.push({
                                     time: time * 1000,
-                                    actor: { name: target.name, enemy: true, id: -1 }, // target selection not supported
+                                    actor: { name: target.name, enemy: true, id: target.uniqueID }, // target selection not supported
                                     mechanic: mechData,
                                 });
                             }
@@ -134,7 +156,7 @@
                                 var time = points[i][0]; // when mechanic occured in seconds
                                 mechanicEvents.push({
                                     time: time * 1000,
-                                    actor: { name: points[i][1], enemy: true, id: -1 },
+                                    actor: { name: points[i][1], enemy: true, id: points[i][2] },
                                     mechanic: mechData,
                                 });
                             }
@@ -176,6 +198,7 @@
             });
 
             return {
+                isTouchDevice: isTouchDevice,
                 mechanicEvents: mechanicEvents,
                 actors: actors,
                 actorsList: actorsList,
@@ -183,6 +206,8 @@
                 mechanicsList: mechanicsList,
                 scrollTop: 0,
                 div: null,
+                followTimeline: false,
+                reactiveAnimationData: reactiveAnimationData,
             };
         },
         activated() {
@@ -198,7 +223,27 @@
         },
         methods: {
             selectMechanic: function (mechanic) {
+                this.followTimeline = false;
+                animator.stopAnimate(true);
                 animator.updateTime(mechanic.time);
+
+                // Deselection
+                if (reactiveAnimationData.selectedMechanic.actorId == mechanic.actor.id &&
+                    reactiveAnimationData.selectedMechanic.name == mechanic.mechanic.name) {
+                    this.resetMechanic();
+                    return;
+                }
+
+                // Selection
+                reactiveAnimationData.selectedMechanic.actorId = mechanic.actor.id;
+                reactiveAnimationData.selectedMechanic.name = mechanic.mechanic.name;
+                reactiveAnimationData.selectedMechanic.times =
+                    this.mechanicEvents
+                        .filter(event =>
+                            event.actor.id === mechanic.actor.id &&
+                            event.mechanic.name === mechanic.mechanic.name)
+                        .map(event => event.time);
+                reactiveAnimationData.selectedMechanic.actorName = mechanic.actor.name;
             },
             stopClickEvent: function (event) {
                 event.stopPropagation();
@@ -223,6 +268,42 @@
                     this.actorsList[i].included = false;
                 }
             },
+            scrollToClosestEvent: function (time) {
+                const events = this.filteredMechanicEvents;
+                const container = this.div;
+
+                // find closest event index
+                let closestIndex = 0;
+                let minDiff = Math.abs(events[0].time - time);
+
+                for (let i = 1; i < events.length; i++) {
+                    const diff = Math.abs(events[i].time - time);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestIndex = i;
+                    }
+                }
+
+                // scroll to that row
+                const rows = container.getElementsByTagName("tr");
+                const targetRow = rows[closestIndex + 1]; // +1 skips header row
+
+                const containerRect = container.getBoundingClientRect();
+                const rowRect = targetRow.getBoundingClientRect();
+
+                const offset = rowRect.top - containerRect.top;
+                const targetScroll = container.scrollTop + offset - container.clientHeight / 2;
+
+                container.scrollTop = targetScroll;
+            },
+            resetMechanic() {
+                reactiveAnimationData.selectedMechanic = {
+                    actorId: null,
+                    actorName: null,
+                    name: null,
+                    times: [],
+                };
+            },
         },
         computed: {
             filteredMechanicEvents: function () {
@@ -238,6 +319,16 @@
                     return true;
                 }.bind(this))
             },
+        },
+        watch: {
+            time: function (newTime) {
+                if (!this.followTimeline) return;
+                this.scrollToClosestEvent(newTime);
+            },      
+            followTimeline: function (newValue) {
+                if (!newValue) return;
+                this.scrollToClosestEvent(this.time);
+            }
         },
     });
 </script>

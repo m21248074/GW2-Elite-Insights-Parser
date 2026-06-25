@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <div v-if="playerColPageCount > 0">
-            <table-scroll-component :min="0" :max="playerColPageCount" :width="'600px'" :height="'10px'" :transform="'translate(500px)'" :pagestructure="playerColStructure"></table-scroll-component>
+            <table-scroll-component :min="0" :max="playerColPageCount" :width="'600px'" :height="'10px'" :transform="transFormString" :pagestructure="playerColStructure"></table-scroll-component>
         </div>
         <table v-if="playerMechHeader.length > 0" class="table table-sm table-striped table-hover" cellspacing="0" :id="tablePid">
             <thead>
@@ -27,13 +27,13 @@
                     <td v-for="(mech, index) in row.mechs" :class="getPlayerBodyClass('Data', index)" 
                         v-show="isInPlayerColPage(index)"
                         :data-original-title="mech[1] !== mech[0] ? mech[1] + ' times (multi hits)' : false">
-                        {{ playerMechHeader[index].isAchievementEligibility ? (mech[0] ? 'Non Eligible' : 'Eligible') : (mech[0] ? mech[0] : '-')}}
+                        {{ (mech[0] ? mech[0] : '-')}}
                     </td>
                 </tr>
             </tbody>
         </table>
         <div v-if="enemyColPageCount > 0">
-            <table-scroll-component :min="0" :max="enemyColPageCount" :width="'600px'" :height="'10px'" :transform="'translate(500px)'" :pagestructure="enemyColStructure"></table-scroll-component>
+            <table-scroll-component :min="0" :max="enemyColPageCount" :width="'600px'" :height="'10px'" :transform="transFormString" :pagestructure="enemyColStructure"></table-scroll-component>
         </div>
         <table v-if="enemyMechHeader.length > 0" class="table table-sm table-striped table-hover" cellspacing="0" :id="tableEid">
             <thead>
@@ -48,8 +48,13 @@
             </thead>
             <tbody>
                 <tr v-for="row in sortEnemyData(enemyMechRows)">
-                    <td :class="getEnemyBodyClass('Name')" class="text-left">{{row.enemy}}</td>
-                    <td v-for="(mech, index) in row.mechs" :class="getEnemyBodyClass('Data', index)"                 
+                    <td :class="getEnemyBodyClass('Name')" 
+                        class="text-left">
+                        {{row.enemy}}
+                    </td>
+                    <td v-for="(mech, index) in row.mechs" 
+                        class="stat-cell" 
+                        :class="getEnemyBodyClass('Data', index)"                 
                         v-show="isInEnemyColPage(index)"
                         :data-original-title="mech[1] !== mech[0] ? mech[1] + ' times (multi hits)' : false">
                         {{mech[0] ? mech[0] : '-'}}
@@ -57,32 +62,75 @@
                 </tr>
             </tbody>
         </table>
+        <div v-if="enemyMechHeader.length === 0 && playerMechHeader.length === 0">
+            <h2>No tracked mechanics for this phase.</h2>
+        </div>
     </div>
 </template>
 
 <script>
-    Vue.component("mechanics-stats-component", {
+    Vue.component("mechanics-table-component", {
         props: ["phaseindex", "playerindex"],
         template: `${template}`,
-        mixins: [numberComponent, sortedTableComponent, colSliderComponent(10, ["player", "enemy"])],
+        mixins: [encounterPhaseComponent, numberComponent, sortedTableComponent, colSliderComponent(maxMechColumns, ["player", "enemy"])],
         data: function () {
             return {
-                cacheP: new Map(),
-                cacheE: new Map(),
                 sortEdata: {
                     order: "asc",
                     index: -1,
                     key: "Name",
+                    mechIndex: -1,
                 },
                 sortPdata: {
                     order: "asc",
                     index: -1,
                     key: "Sub",
+                    mechIndex: -1,
                 }
             };
         },
+        watch: {
+            encounters: {
+                deep: true,
+                handler: function () {
+                    const mechPIndex = this.sortPdata.mechIndex;
+                    if (mechPIndex >= 0) {
+                        const mech = this.playerMechHeader.filter(x => x._index === mechPIndex)[0];
+                        if (!mech) {
+                            // Reset sort if mechanic is gone
+                            this.sortPdata.order = "asc";
+                            this.sortPdata.index = -1;
+                            this.sortPdata.key = "Sub";
+                            this.sortPdata.mechIndex = -1;
+                        } else {
+                            // Otherwise sort by its new position
+                            this.sortPdata.index = this.playerMechHeader.indexOf(mech);
+                        }
+                    }
+                    const mechEIndex = this.sortEdata.mechIndex;
+                    if (mechEIndex >= 0) {
+                        const mech = this.enemyMechHeader.filter(x => x._index === mechEIndex)[0];
+                        if (!mech) {
+                            // Reset sort if mechanic is gone
+                            this.sortEdata.order = "asc";
+                            this.sortEdata.index = -1;
+                            this.sortEdata.key = "Name";
+                            this.sortEdata.mechIndex = -1;
+                        } else {
+                            // Otherwise sort by its new position
+                            this.sortEdata.index = this.enemyMechHeader.indexOf(mech);
+                        }
+                    }
+                }
+            }
+        },
         methods: {
             sortPlayerBy: function(key, index) {
+                if (key === "Data" && index >= 0) {
+                    this.sortPdata.mechIndex = this.playerMechHeader[index]._index;
+                } else {
+                    this.sortPdata.mechIndex = -1;
+                }
                 this.sortByBase(this.sortPdata, key, index);
             },
             getPlayerHeaderClass: function(key, index) {
@@ -114,7 +162,12 @@
                 }
                 return rows;
             },
-            sortEnemyBy: function(key, index) {
+            sortEnemyBy: function(key, index) {      
+                if (key === "Data" && index >= 0) {
+                    this.sortEdata.mechIndex = this.enemyMechHeader[index]._index;
+                } else {
+                    this.sortEdata.mechIndex = -1;
+                }
                 this.sortByBase(this.sortEdata, key, index);
             },
             getEnemyHeaderClass: function(key, index) {
@@ -142,6 +195,10 @@
             },
         },
         computed: {
+            transFormString: function() {
+                const translateValue = mainComponentWidth * 0.34;
+                return `translate(${translateValue}px)`;
+            },
             playerColPageCount: function() {
                 return this.playerMechHeader.length - this.playerColStructure.perpage;
             },
@@ -149,53 +206,92 @@
                 return this.enemyMechHeader.length - this.enemyColStructure.perpage;
             },
             tablePid: function() {
-                return "playermechs";
+                return "playermechs-" + this.phaseindex;
             },
             tableEid: function() {
-                return "enemymechs";
+                return "enemymechs-" + this.phaseindex;
             },
             phase: function() {
                 return logData.phases[this.phaseindex];
             },
             playerMechHeader: function () {
-                return playerMechanics();
+                const allPlayerMechs = playerMechanics();
+                var res = [];   
+                const players = getActiveNonFakePlayersForPhase(this.encounterPhase);
+                for (let j = 0; j < allPlayerMechs.length; j++) {
+                    allPlayerMechs[j]._index = j;
+                    for (var i = 0; i < players.length; i++) {
+                        var player = players[i];
+                        if (!player) {
+                            continue;
+                        }
+                        if (this.phase.mechanicStats[i][j][0] > 0) {
+                            res.push(allPlayerMechs[j]);
+                            break;
+                        }
+                    }
+                }
+                return res;
             },
             playerMechRows: function () {
-                if (this.cacheP.has(this.phaseindex)) {
-                    return this.cacheP.get(this.phaseindex);
-                }
-                var players = logData.players;
+                const players = getActiveNonFakePlayersForPhase(this.encounterPhase);
                 var rows = [];
                 for (var i = 0; i < players.length; i++) {
                     var player = players[i];
-                    if (player.isFake) {
+                    if (!player) {
                         continue;
+                    }
+                    let mechs = [];
+                    for (let j = 0; j < this.playerMechHeader.length; j++) {
+                        let mechIndex = this.playerMechHeader[j]._index;
+                        mechs.push(this.phase.mechanicStats[i][mechIndex]);
                     }
                     rows.push({
                         player: player,
-                        mechs: this.phase.mechanicStats[i]
+                        mechs: mechs
                     });
                 }
-                this.cacheP.set(this.phaseindex, rows);
                 return rows;
             },
-            enemyMechHeader: function () {
-                return enemyMechanics();
+            enemyMechHeader: function () { 
+                const allEnemyMechs = enemyMechanics();
+                var res = [];
+                var enemies = logData.enemies;
+                let encounterPhase = this.encounterPhase;
+                for (let j = 0; j < allEnemyMechs.length; j++) {
+                    allEnemyMechs[j]._index = j;
+                    for (var i = 0; i < enemies.length; i++) {
+                        var enemy = enemies[i];
+                        if (enemy.firstAware >= encounterPhase.end || enemy.lastAware <=  encounterPhase.start) {
+                            continue;
+                        }
+                        if (this.phase.enemyMechanicStats[i][j][0] > 0) {
+                            res.push(allEnemyMechs[j]);
+                            break;
+                        }
+                    }
+                }
+                return res;
             },
             enemyMechRows: function () {
-                if (this.cacheE.has(this.phaseindex)) {
-                    return this.cacheE.get(this.phaseindex);
-                }
                 var enemies = logData.enemies;
                 var rows = [];
+                let encounterPhase = this.encounterPhase;
                 for (var i = 0; i < enemies.length; i++) {
                     var enemy = enemies[i];
+                    if (enemy.firstAware >= encounterPhase.end || enemy.lastAware <= encounterPhase.start) {
+                        continue;
+                    }
+                    let mechs = [];
+                    for (let j = 0; j < this.enemyMechHeader.length; j++) {
+                        let mechIndex = this.enemyMechHeader[j]._index;
+                        mechs.push(this.phase.enemyMechanicStats[i][mechIndex]);
+                    }
                     rows.push({
                         enemy: enemy.name,
-                        mechs: this.phase.enemyMechanicStats[i]
+                        mechs: mechs
                     });
                 }
-                this.cacheE.set(this.phaseindex, rows);
                 return rows;
             }
         }

@@ -13,10 +13,12 @@
         </ul>
         <ul v-if="!targetless" class="nav nav-pills d-flex flex-row justify-content-center mt-1 mb-1 scale85">
             <li class="nav-item">
-                <a class="nav-link" @click="mode = 1" :class="{active: mode}">目標</a>
+                <a class="nav-link" @click="mode = 1" data-original-title="Against selected target(s)."
+                   :class="{active: mode}">目標</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" @click="mode = 0" :class="{active: !mode }">全部</a>
+                <a class="nav-link" @click="mode = 0" data-original-title="Against all enemies."
+                   :class="{active: !mode }">全部</a>
             </li>
         </ul>
         <keep-alive>

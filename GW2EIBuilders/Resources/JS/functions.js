@@ -30,18 +30,32 @@ function computeSliderGradient(color, fillColor, startPercent, endPercent) {
     return template;
 };
 
+const duckify = url => 'https://external-content.duckduckgo.com/iu/?u=' + encodeURIComponent(url);
+
+function _buildFallBackURL(url) {
+    if (replaceImgur && url.startsWith("https://i.imgur.com")) {
+        return duckify(url);
+    }
+    if (!url.includes("render") || apiRenderServiceOkay) {
+        // not using API render service
+        return url;
+    }
+    var splitIcon = url.split('/');
+    var id = splitIcon[splitIcon.length - 1];
+    if (useDarthmaim) {
+        var signature = splitIcon[splitIcon.length - 2];
+        return "https://icons-gw2.darthmaim-cdn.com/" + signature + "/" + id;
+    } else {
+        return "https://assets.gw2dat.com/"+ id;
+    }
+}
+
 function buildFallBackURL(skill) {
     if (!skill.icon || skill.fallBack) {
         return;
     }
     var apiIcon = skill.icon;
-    if (!apiIcon.includes("render")) {
-        return;
-    }
-    var splitIcon = apiIcon.split('/');
-    var signature = splitIcon[splitIcon.length - 2];
-    var id = splitIcon[splitIcon.length - 1].split('.')[0] + "-64px.png";
-    skill.icon = "https://darthmaim-cdn.de/gw2treasures/icons/" + signature + "/" + id;
+    skill.icon = _buildFallBackURL(apiIcon);
     skill.fallBack = true;
 }
 
@@ -126,7 +140,7 @@ function addMechanicsToGraph(data, phase, phaseIndex) {
                 if (tarId >= 0) {
                     var target = logData.targets[tarId];
                     for (var k = 0; k < pts.length; k++) {
-                        var time = pts[k];
+                        var time = pts[k][0];
                         chart.x.push(time);
                         chart.text.push(time + 's: ' + target.name);
                     }
@@ -143,7 +157,7 @@ function addMechanicsToGraph(data, phase, phaseIndex) {
                 var pts = mech.points[phaseIndex][j];
                 var player = logData.players[j];
                 for (var k = 0; k < pts.length; k++) {
-                    var time = pts[k];
+                    var time = pts[k][0];
                     chart.x.push(time);
                     chart.text.push(time + 's: ' + player.name);
                 }
@@ -153,7 +167,7 @@ function addMechanicsToGraph(data, phase, phaseIndex) {
     }
 }
 
-function updateMechanicsYValues(res, phase, phaseIndex, phaseGraphData, max) {
+function updateMechanicsYValues(res, phase, phaseIndex, phaseGraphData, activePlayers, max) {
     for (var i = 0; i < graphData.mechanics.length; i++) {
         var mech = graphData.mechanics[i];
         var mechData = logData.mechanicMap[i];
@@ -166,7 +180,7 @@ function updateMechanicsYValues(res, phase, phaseIndex, phaseGraphData, max) {
                 if (tarId >= 0) {
                     var health = phaseGraphData.targets[j].healthStates;
                     for (var k = 0; k < pts.length; k++) {
-                        chart.push(findState(health, pts[k], 0, health.length - 1) * max / 100.0);
+                        chart.push(findState(health, pts[k][0], 0, health.length - 1) * max / 100.0);
                     }
                 } else {
                     for (var k = 0; k < pts.length; k++) {
@@ -175,15 +189,20 @@ function updateMechanicsYValues(res, phase, phaseIndex, phaseGraphData, max) {
                 }
             }
         } else {
+            let indexInGraph = 0;
             for (var j = 0; j < mech.points[phaseIndex].length; j++) {
+                if (!activePlayers[j]) {
+                    continue;
+                }
                 var pts = mech.points[phaseIndex][j];
                 for (var k = 0; k < pts.length; k++) {
-                    var time = pts[k];
+                    var time = pts[k][0];
                     var ftime = Math.floor(time);
-                    var y = res[j][ftime];
-                    var yp1 = res[j][ftime + 1];
+                    var y = res[indexInGraph][ftime];
+                    var yp1 = res[indexInGraph][ftime + 1];
                     chart.push(interpolatePoint(ftime, ftime + 1, y, yp1, time));
                 }
+                indexInGraph++;
             }
         }
     }
@@ -268,7 +287,7 @@ function computeRotationData(rotationData, images, data, phase, actor, yAxis) {
                 name = skill.name;
             }
 
-            if (!icon.includes("render") && !icon.includes("darthmaim")) {
+            if (!icon.includes("render") && !icon.includes("darthmaim") && !icon.includes("gw2dat")) {
                 icon = null;
             }
 
@@ -546,7 +565,7 @@ function getActorGraphLayout(images, color, hasBuffs, noIncoming) {
             fixedrange: true,
             side: 'right',
             range: [0, 1.5],
-            nticks: 1
+            nticks: 2
         },
         yaxis4: {
             title: '增益強度',
@@ -577,7 +596,6 @@ function getActorGraphLayout(images, color, hasBuffs, noIncoming) {
         shapes: [],
         annotations: [],
         autosize: true,
-        width: 1300,
         height: 850,
         datarevision: new Date().getTime(),
     };
@@ -587,6 +605,7 @@ function getActorGraphLayout(images, color, hasBuffs, noIncoming) {
                 title: 'Outgoing',
                 domain: hasBuffs ? [0.55, 1.0] : [0.1, 1.0],
                 color: color,
+                fixedrange: true,
                 gridcolor: color,
                 tickformat: ",d",
             },
@@ -597,6 +616,7 @@ function getActorGraphLayout(images, color, hasBuffs, noIncoming) {
                 title: 'Outgoing',
                 domain: hasBuffs ? [0.68, 1.0] : [0.23, 1.0],
                 color: color,
+                fixedrange: true,
                 gridcolor: color,
                 tickformat: ",d",
             },
@@ -604,6 +624,7 @@ function getActorGraphLayout(images, color, hasBuffs, noIncoming) {
                 title: 'Incoming',
                 domain: hasBuffs ? [0.55, 0.67] : [0.1, 0.22],
                 color: color,
+                fixedrange: true,
                 gridcolor: color,
                 tickformat: ",d",
                 nticks: 2,
@@ -708,7 +729,7 @@ function computeBuffData(buffData, data) {
                 text: [],
                 yaxis: boon.stacking ? 'y4' : 'y',
                 type: 'scatter',
-                visible: boonItem.visible ? null : 'legendonly',
+                visible: 'legendonly',
                 line: {
                     color: boonItem.color,
                     shape: 'hv'
@@ -842,7 +863,6 @@ function addTargetLayout(data, target, states, percentName, graphName, visible) 
         shapes: [],
         annotations: [],
         autosize: true,
-        width: 1100,
         height: 1100,
         datarevision: new Date().getTime(),
     };
@@ -890,7 +910,7 @@ function computeBuffData(buffData, data) {
                 y: [],
                 yaxis: boon.stacking ? 'stacking' : 'y' + (2 + ystart++),
                 type: 'scatter',
-                visible: boonItem.visible || !boon.stacking ? null : 'legendonly',
+                visible: 'legendonly',
                 line: {
                     color: boonItem.color,
                     shape: 'hv'
@@ -1035,4 +1055,148 @@ function validateStartPath(path) {
         return false;
     }
     return setting.startsWith(path);
+}
+
+function getActivePlayers(time) {
+    let res = [];
+    for (let i = 0; i < logData.players.length; i++) {
+        const player = logData.players[i];
+        if ( 
+            (
+                player.notInSquad && 
+                (
+                    player.firstAware > time || 
+                    player.lastAware < time
+                )
+            ) || 
+            (
+                    player.isEnglobed && 
+                (
+                    (!player.isFirstEnglobed && player.firstAware > time) ||
+                    (!player.isLastEnglobed && player.lastAware < time)
+                )
+            )
+        ) {
+            res.push(null);
+        } else {
+            res.push(player);
+        }
+    }
+    return res;
+}
+
+function getActiveNonFakePlayers(time) {
+    let res = [];
+    for (let i = 0; i < logData.players.length; i++) {
+        const player = logData.players[i];
+        if (player.isFake || 
+            (
+                player.notInSquad && 
+                (
+                    player.firstAware > time || 
+                    player.lastAware < time
+                )
+            ) || 
+            (
+                player.isEnglobed && 
+                (            
+                    (!player.isFirstEnglobed && player.firstAware > time) ||
+                    (!player.isLastEnglobed && player.lastAware < time)
+                )
+            )
+        ) {
+            res.push(null);
+        } else {
+            res.push(player);
+        }
+    }
+    return res;
+}
+
+function getActivePlayersForPhase(phase) {
+    if (phase.type !== PhaseTypes.INSTANCE && phase.type !== PhaseTypes.ENCOUNTER) {
+        throw "Expected an instance or encounter phase";
+    }
+    let res = [];
+    const start = phase.start;
+    const end = phase.end;
+    for (let i = 0; i < logData.players.length; i++) {
+        const player = logData.players[i];
+        if ((player.lastAware <= start || player.firstAware >= end)) {
+            res.push(null);
+        } else {
+            res.push(player);
+        }
+    }
+    return res;
+}
+
+function getActiveNonFakePlayersForPhase(phase) {
+    if (phase.type !== PhaseTypes.INSTANCE && phase.type !== PhaseTypes.ENCOUNTER) {
+        throw "Expected an instance or encounter phase";
+    }
+    let res = [];
+    const start = phase.start;
+    const end = phase.end;
+    for (let i = 0; i < logData.players.length; i++) {
+        const player = logData.players[i];
+        if (player.isFake || ((player.lastAware <= start || player.firstAware >= end))) {
+            res.push(null);
+        } else {
+            res.push(player);
+        }
+    }
+    return res;
+}
+
+function getPhasesForSelectedEncounter(phases, encounters) {
+    for (let i = 0; i < encounters.length; i++) {
+        const encounter = encounters[i];
+        if (encounter.active) {
+            const phase = logData.phases[encounter.index];
+            let resPhases = [];
+            if (phase.type === PhaseTypes.INSTANCE) {
+                if (IsMultiEncounterLog) {
+                    for (let j = 0; j < phases.length; j++) {
+                        const subPhase = logData.phases[j];
+                        if (subPhase === phase || subPhase.type === PhaseTypes.ENCOUNTER) {
+                            resPhases.push(phases[j]);
+                        }
+                    }
+                } else {
+                    return phases;
+                }
+            } else {
+                if (IsMultiEncounterLog) {
+                    for (let j = 0; j < phases.length; j++) {
+                        const subPhase = logData.phases[j];
+                        if (subPhase === phase || subPhase.encounterPhase === encounter.index) {
+                            resPhases.push(phases[j]);
+                        }
+                    }
+                } else {
+                    return phases;
+                }
+            }
+            return resPhases;
+        }
+    }
+    return phases;
+}
+
+function playerIsRunningHealingExtension(playerData) {
+    if (!logData.usedExtensions) {
+        return false;
+    }
+    for (var j = 0; j < logData.usedExtensions.length; j++) {
+        var usedExtension = logData.usedExtensions[j];
+        if (!usedExtension.includes("Healing Stats")) {
+            continue;
+        }
+        var playersRunning = logData.playersRunningExtensions[j];
+        if (playersRunning.includes(playerData.name)) {
+            return true;
+        }
+    }
+    return false;
 }

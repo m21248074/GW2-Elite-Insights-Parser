@@ -1,70 +1,55 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using GW2EIEvtcParser.EIData;
+﻿using GW2EIEvtcParser.EIData;
+using GW2EIEvtcParser.ParsedData;
 
-namespace GW2EIEvtcParser.Extensions
+namespace GW2EIEvtcParser.Extensions;
+
+public class EXTMinionsHealingHelper : EXTActorHealingHelper
 {
-    public class EXTMinionsHealingHelper : EXTActorHealingHelper
+    private readonly Minions _minions;
+    private IReadOnlyList<NPC> _minionList => _minions.MinionList;
+    private SingleActor Master => _minions.Master;
+
+    internal EXTMinionsHealingHelper(Minions minions) : base()
     {
-        private readonly Minions _minions;
-        private IReadOnlyList<NPC> _minionList => _minions.MinionList;
+        _minions = minions;
+    }
 
-        internal EXTMinionsHealingHelper(Minions minions) : base()
+    protected override AgentItem GetAgentItemForCachingSrc()
+    {
+        return Master.AgentItem;
+    }
+
+    protected override void InitHealEvents(ParsedEvtcLog log)
+    {
+        if (HealEventsByDst == null)
         {
-            _minions = minions;
-        }
-
-
-        public override IReadOnlyList<EXTAbstractHealingEvent> GetOutgoingHealEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (HealEvents == null)
+            //TODO_PERF(Rennorb): find average complexity
+            var healEvents = new List<EXTHealingEvent>(_minionList.Count * 10);
+            foreach (NPC minion in _minionList)
             {
-                HealEvents = new List<EXTAbstractHealingEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    HealEvents.AddRange(minion.EXTHealing.GetOutgoingHealEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                HealEvents = HealEvents.OrderBy(x => x.Time).ToList();
-                HealEventsByDst = HealEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
+                healEvents.AddRange(minion.EXTHealing.GetOutgoingHealEvents(null, log, Master.FirstAware, Master.LastAware));
             }
-            if (target != null)
-            {
-                if (HealEventsByDst.TryGetValue(target.AgentItem, out List<EXTAbstractHealingEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<EXTAbstractHealingEvent>();
-                }
-            }
-            return HealEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
-        }
-
-        public override IReadOnlyList<EXTAbstractHealingEvent> GetIncomingHealEvents(AbstractSingleActor target, ParsedEvtcLog log, long start, long end)
-        {
-            if (HealReceivedEvents == null)
-            {
-                HealReceivedEvents = new List<EXTAbstractHealingEvent>();
-                foreach (NPC minion in _minionList)
-                {
-                    HealReceivedEvents.AddRange(minion.EXTHealing.GetIncomingHealEvents(null, log, log.FightData.FightStart, log.FightData.FightEnd));
-                }
-                HealReceivedEvents = HealReceivedEvents.OrderBy(x => x.Time).ToList();
-                HealReceivedEventsBySrc = HealReceivedEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
-            }
-            if (target != null)
-            {
-                if (HealReceivedEventsBySrc.TryGetValue(target.AgentItem, out List<EXTAbstractHealingEvent> list))
-                {
-                    return list.Where(x => x.Time >= start && x.Time <= end).ToList();
-                }
-                else
-                {
-                    return new List<EXTAbstractHealingEvent>();
-                }
-            }
-            return HealReceivedEvents.Where(x => x.Time >= start && x.Time <= end).ToList();
+            healEvents.SortByTime();
+            HealEventsByDst = healEvents.GroupBy(x => x.To).ToDictionary(x => x.Key, x => x.ToList());
+            HealEventsByDst[ParserHelper._nullAgent] = healEvents;
         }
     }
+
+#pragma warning disable CS8774 // must have non null value when exiting
+    protected override void InitIncomingHealEvents(ParsedEvtcLog log)
+    {
+        if (HealReceivedEventsBySrc == null)
+        {
+            //TODO_PERF(Rennorb): find average complexity
+            var healReceivedEvents = new List<EXTHealingEvent>(_minionList.Count * 10);
+            foreach (NPC minion in _minionList)
+            {
+                healReceivedEvents.AddRange(minion.EXTHealing.GetIncomingHealEvents(null, log, Master.FirstAware, Master.LastAware));
+            }
+            healReceivedEvents.SortByTime();
+            HealReceivedEventsBySrc = healReceivedEvents.GroupBy(x => x.From).ToDictionary(x => x.Key, x => x.ToList());
+            HealReceivedEventsBySrc[ParserHelper._nullAgent] = healReceivedEvents;
+        }
+    }
+#pragma warning restore CS8774 // must have non null value when exiting
 }

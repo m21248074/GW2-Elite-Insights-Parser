@@ -3,22 +3,24 @@
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="buffMode = 0" :class="{active: buffMode === 0}">Incoming</a>
+                    <a class="nav-link" @click="buffMode = 0" :class="{active: buffMode === 0}"
+                       data-original-title="Incoming buffs applications.">Incoming</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="buffMode = 1" :class="{active: buffMode === 1 }">Outgoing Self</a>
+                    <a class="nav-link" @click="buffMode = 1" :class="{active: buffMode === 1 }"
+                       data-original-title="Outgoing buffs applications to yourself.">Outgoing Self</a>
                 </li>
                 <li v-if="!singlePlayer" class="nav-item">
                     <a class="nav-link" @click="buffMode = 2" :class="{active: buffMode === 2 }"
-                        data-original-title="Self excluded">Outgoing Group</a>
+                        data-original-title="Outgoing buffs applications to your group members. Self excluded.">Outgoing Group</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 3" :class="{active: buffMode === 3 }"
-                        data-original-title="Self excluded">Outgoing Off-Group</a>
+                        data-original-title="Outgoing buffs applications to your non-group members. Self excluded.">Outgoing Off-Group</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 4" :class="{active: buffMode === 4 }"
-                        data-original-title="Self excluded">Outgoing Squad</a>
+                        data-original-title="Outgoing buffs applications to your squad. Self excluded.">Outgoing Squad</a>
                 </li>
             </ul>
         </div>
@@ -49,8 +51,8 @@
 
 <script>
     Vue.component("buff-volume-stats-component", {
-        props: ['type', 'phaseindex', 'playerindex', 'activeduration'],
-        mixins: [buffComponent],
+        props: ['type','playerindex', 'activeduration'],
+        mixins: [buffComponent, encounterPhaseComponent],
         template: `${template}`,
         data: function () {
             return {
@@ -81,9 +83,10 @@
                 let groupCount = [];
                 let totalCount = 0;
                 //
-                for (var i = 0; i < logData.players.length; i++) {
-                    const player = logData.players[i];
-                    if (player.isFake) {
+                const players = getActiveNonFakePlayersForPhase(this.encounterPhase);
+                for (var i = 0; i < players.length; i++) {
+                    const player = players[i];
+                    if (!player) {
                         continue;
                     }
                     incoming.push({
@@ -153,11 +156,8 @@
             singlePlayer: function () {
                 return logData.players.filter(x => !x.notInSquad).length <= 1;
             },
-            phase: function () {
-                return logData.phases[this.phaseindex];
-            },
             buffData: function () {
-                const id = this.phaseindex + '-' + this.activeduration;
+                const id = this.encounterPhase.id + '-' + this.phaseindex + '-' + this.activeduration;
                 if (this.cache.has(id)) {
                     return this.cache.get(id);
                 }

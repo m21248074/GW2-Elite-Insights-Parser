@@ -1,20 +1,21 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using GW2EIEvtcParser.ParsedData;
+﻿using GW2EIEvtcParser.ParsedData;
 using static GW2EIEvtcParser.EIData.IconDecoration;
 
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+public class IconDecorationRenderingDescription : ImageDecorationRenderingDescription
 {
-    internal class IconDecorationRenderingDescription : GenericIconDecorationRenderingDescription
+    public readonly string? Text;
+    internal IconDecorationRenderingDescription(ParsedEvtcLog log, IconDecorationRenderingData decoration, CombatReplayMap map, Dictionary<long, SkillItem> usedSkills, Dictionary<long, Buff> usedBuffs, string metadataSignature) : base(log, decoration, map, usedSkills, usedBuffs, metadataSignature)
     {
-        internal IconDecorationRenderingDescription(ParsedEvtcLog log, IconDecorationRenderingData decoration, CombatReplayMap map, Dictionary<long, SkillItem> usedSkills, Dictionary<long, Buff> usedBuffs, string metadataSignature) : base(log, decoration, map, usedSkills, usedBuffs, metadataSignature)
+        Type = Types.Icon;
+        if (decoration.IsSquadMarker)
         {
-            Type = "IconDecoration";
-            if (decoration.IsSquadMarker)
-            {
-                Type = "SquadMarkerDecoration";
-            }
+            Type = Types.SquadMarker;
+        }
+        if (decoration.Text != null)
+        {
+            Text = decoration.Text;
         }
     }
-
 }

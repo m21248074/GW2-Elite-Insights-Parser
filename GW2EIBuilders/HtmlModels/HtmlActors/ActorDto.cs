@@ -1,42 +1,57 @@
-﻿using System.Collections.Generic;
-using GW2EIEvtcParser;
+﻿using GW2EIEvtcParser;
 using GW2EIEvtcParser.EIData;
 
-namespace GW2EIBuilders.HtmlModels.HTMLActors
+namespace GW2EIBuilders.HtmlModels.HTMLActors;
+
+
+internal abstract class ActorDto
 {
+    public int UniqueID;
+    public int InstID;
+    public string Name;
+    public uint Tough;
+    public uint Condi;
+    public uint Conc;
+    public uint Heal;
+    public string Icon;
+    public long Health;
+    public double FirstAware;
+    public double LastAware;
+    public bool IsEnglobed;
+    public bool IsFirstEnglobed;
+    public bool IsLastEnglobed;
+    public List<MinionDto> Minions;
+    public ActorDetailsDto Details;
 
-    internal abstract class ActorDto
+    protected ActorDto(SingleActor actor, ParsedEvtcLog log, ActorDetailsDto details)
     {
-        public int UniqueID { get; set; }
-        public string Name { get; set; }
-        public uint Tough { get; set; }
-        public uint Condi { get; set; }
-        public uint Conc { get; set; }
-        public uint Heal { get; set; }
-        public string Icon { get; set; }
-        public long Health { get; set; }
-        public List<MinionDto> Minions { get; } = new List<MinionDto>();
-        public ActorDetailsDto Details { get; set; }
-
-        protected ActorDto(AbstractSingleActor actor, ParsedEvtcLog log, ActorDetailsDto details)
+        Health = actor.GetHealth(log.CombatData);
+        Condi = actor.Condition;
+        Conc = actor.Concentration;
+        Heal = actor.Healing;
+        Icon = actor.GetIcon();
+        Name = actor.Character;
+        Tough = actor.Toughness;
+        Details = details;
+        UniqueID = actor.UniqueID;
+        InstID = actor.InstID;
+        FirstAware = actor.FirstAware / 1000.0;
+        LastAware = actor.LastAware / 1000.0;
+        IsEnglobed = actor.AgentItem.IsEnglobedAgent;
+        if (IsEnglobed)
         {
-            Health = actor.GetHealth(log.CombatData);
-            Condi = actor.Condition;
-            Conc = actor.Concentration;
-            Heal = actor.Healing;
-            Icon = actor.GetIcon();
-            Name = actor.Character;
-            Tough = actor.Toughness;
-            Details = details;
-            UniqueID = actor.UniqueID;
-            foreach (KeyValuePair<long, Minions> pair in actor.GetMinions(log))
+            IsFirstEnglobed = actor.EnglobingAgentItem.EnglobedAgentItems.First() == actor.AgentItem;
+            IsLastEnglobed = actor.EnglobingAgentItem.EnglobedAgentItems.Last() == actor.AgentItem;
+        }
+        var minions = actor.GetMinions(log);
+        Minions = new(minions.Count);
+        for (var i = 0; i < minions.Count; i++)
+        {
+            Minions.Add(new MinionDto()
             {
-                Minions.Add(new MinionDto()
-                {
-                    Id = pair.Key,
-                    Name = pair.Value.Character
-                });
-            }
+                Id = i,
+                Name = minions[i].Character
+            });
         }
     }
 }

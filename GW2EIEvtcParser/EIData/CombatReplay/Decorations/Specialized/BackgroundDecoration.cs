@@ -1,19 +1,18 @@
 ﻿
-namespace GW2EIEvtcParser.EIData
+namespace GW2EIEvtcParser.EIData;
+
+internal abstract class BackgroundDecoration : Decoration
 {
-    internal abstract class BackgroundDecoration : GenericDecoration
+    public abstract class BackgroundDecorationMetadata : _DecorationMetadata
     {
-        internal abstract class BackgroundDecorationMetadata : GenericDecorationMetadata
+    }
+    public abstract class BackgroundDecorationRenderingData : _DecorationRenderingData
+    {
+        protected BackgroundDecorationRenderingData((long, long) lifespan) : base(lifespan)
         {
         }
-        internal abstract class BackgroundDecorationRenderingData : GenericDecorationRenderingData
-        {
-            protected BackgroundDecorationRenderingData((long, long) lifespan) : base(lifespan)
-            {
-            }
-        }
-        internal BackgroundDecoration(BackgroundDecorationMetadata metadata, BackgroundDecorationRenderingData renderingData) : base(metadata, renderingData)
-        {
-        }
+    }
+    protected BackgroundDecoration(BackgroundDecorationMetadata metadata, BackgroundDecorationRenderingData renderingData) : base(metadata, renderingData)
+    {
     }
 }

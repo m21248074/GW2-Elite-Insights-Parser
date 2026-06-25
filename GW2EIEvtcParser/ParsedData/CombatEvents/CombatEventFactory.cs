@@ -1,399 +1,687 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using GW2EIGW2API;
+using Tracing;
 using static GW2EIEvtcParser.ArcDPSEnums;
 using static GW2EIEvtcParser.ParserHelper;
 
-namespace GW2EIEvtcParser.ParsedData
-{
-    internal static class CombatEventFactory
-    {
+namespace GW2EIEvtcParser.ParsedData;
 
-        public static void AddStateChangeEvent(CombatItem stateChangeEvent, AgentData agentData, SkillData skillData, MetaEventsContainer metaDataEvents, StatusEventsContainer statusEvents, List<RewardEvent> rewardEvents, List<WeaponSwapEvent> wepSwaps, List<AbstractBuffEvent> buffEvents, EvtcVersionEvent evtcVersion)
+partial class CombatData
+{
+
+    internal void AddStateChangeEvent(long logStart, CombatItem stateChangeEvent, AgentData agentData, 
+        SkillData skillData, List<WeaponSwapEvent> wepSwaps,
+        List<BuffEvent> buffEvents, List<StunBreakEvent> stunBreakEvents,
+        EvtcVersionEvent evtcVersion, EvtcParserSettings settings,
+        GW2APIController apiController)
+    {
+        var statusEvents = _statusEvents;
+        var metaDataEvents = _metaDataEvents;
+        switch (stateChangeEvent.IsStateChange)
         {
-            switch (stateChangeEvent.IsStateChange)
-            {
-                case StateChange.EnterCombat:
-                    var enterCombatEvt = new EnterCombatEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.EnterCombatEvents, enterCombatEvt.Src, enterCombatEvt);
+            case StateChange.EnterCombat:
+                var enterCombatEvt = new EnterCombatEvent(stateChangeEvent, agentData);
+                Add(statusEvents.EnterCombatEvents, enterCombatEvt.Src, enterCombatEvt);
+                break;
+            case StateChange.ExitCombat:
+                var exitCombatEvt = new ExitCombatEvent(stateChangeEvent, agentData);
+                Add(statusEvents.ExitCombatEvents, exitCombatEvt.Src, exitCombatEvt);
+                break;
+            case StateChange.ChangeUp:
+                var aliveEvt = new AliveEvent(stateChangeEvent, agentData);
+                Add(statusEvents.AliveEvents, aliveEvt.Src, aliveEvt);
+                break;
+            case StateChange.ChangeDead:
+                var deadEvt = new DeadEvent(stateChangeEvent, agentData);
+                Add(statusEvents.DeadEvents, deadEvt.Src, deadEvt);
+                break;
+            case StateChange.ChangeDown:
+                var downEvt = new DownEvent(stateChangeEvent, agentData);
+                Add(statusEvents.DownEvents, downEvt.Src, downEvt);
+                break;
+            case StateChange.Spawn:
+                var spawnEvt = new SpawnEvent(stateChangeEvent, agentData);
+                Add(statusEvents.SpawnEvents, spawnEvt.Src, spawnEvt);
+                break;
+            case StateChange.Despawn:
+                var despawnEvt = new DespawnEvent(stateChangeEvent, agentData);
+                Add(statusEvents.DespawnEvents, despawnEvt.Src, despawnEvt);
+                break;
+            case StateChange.HealthUpdate:
+                var healthEvt = new HealthUpdateEvent(stateChangeEvent, agentData);
+                Add(statusEvents.HealthUpdateEvents, healthEvt.Src, healthEvt);
+                break;
+            case StateChange.BarrierUpdate:
+                var barrierEvt = new BarrierUpdateEvent(stateChangeEvent, agentData);
+                Add(statusEvents.BarrierUpdateEvents, barrierEvt.Src, barrierEvt);
+                break;
+            case StateChange.InstanceStart:
+                metaDataEvents.InstanceStartEvent = new InstanceStartEvent(stateChangeEvent, logStart);
+                break;
+            case StateChange.SquadCombatStart:
+                if (stateChangeEvent.Value == 0 || stateChangeEvent.BuffDmg == 0)
+                {
                     break;
-                case StateChange.ExitCombat:
-                    var exitCombatEvt = new ExitCombatEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.ExitCombatEvents, exitCombatEvt.Src, exitCombatEvt);
+                }
+                var squadCombatStart = new SquadCombatStartEvent(stateChangeEvent);
+                metaDataEvents.SquadCombatStartEvents.Add(squadCombatStart);
+                if (metaDataEvents.LogStartEvent != null || (metaDataEvents.LogEndEvent != null && metaDataEvents.LogEndEvent.ServerUnixTimeStamp <= squadCombatStart.ServerUnixTimeStamp))
+                {
                     break;
-                case StateChange.ChangeUp:
-                    var aliveEvt = new AliveEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.AliveEvents, aliveEvt.Src, aliveEvt);
+                }
+                metaDataEvents.LogStartEvent = new SquadCombatStartEvent(stateChangeEvent);
+                break;
+            case StateChange.LogNPCUpdate:
+                metaDataEvents.LogNPCUpdateEvents.Add(new LogNPCUpdateEvent(stateChangeEvent, agentData));
+                break;
+            case StateChange.SquadCombatEnd:
+                if (stateChangeEvent.Value == 0 || stateChangeEvent.BuffDmg == 0)
+                {
                     break;
-                case StateChange.ChangeDead:
-                    var deadEvt = new DeadEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.DeadEvents, deadEvt.Src, deadEvt);
+                }
+                var squadCombatEndEvent = new SquadCombatEndEvent(stateChangeEvent);
+                metaDataEvents.LogEndEvent = squadCombatEndEvent;
+                metaDataEvents.SquadCombatEndEvents.Add(squadCombatEndEvent);
+                break;
+            case StateChange.MaxHealthUpdate:
+                var maxHealthEvt = new MaxHealthUpdateEvent(stateChangeEvent, agentData);
+                Add(statusEvents.MaxHealthUpdateEvents, maxHealthEvt.Src, maxHealthEvt);
+                Add(statusEvents.MaxHealthUpdateEventsByMaxHP, maxHealthEvt.MaxHealth, maxHealthEvt);
+                break;
+            case StateChange.PointOfView:
+                if (settings.AnonymousPlayers || stateChangeEvent.SrcAgent == 0)
+                {
                     break;
-                case StateChange.ChangeDown:
-                    var downEvt = new DownEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.DownEvents, downEvt.Src, downEvt);
+                }
+                metaDataEvents.PointOfViewEvent = new PointOfViewEvent(stateChangeEvent, agentData);
+                break;
+            case StateChange.Language:
+                metaDataEvents.LanguageEvent = new LanguageEvent(stateChangeEvent);
+                break;
+            case StateChange.GWBuild:
+                if (stateChangeEvent.SrcAgent == 0)
+                {
                     break;
-                case StateChange.Spawn:
-                    var spawnEvt = new SpawnEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.SpawnEvents, spawnEvt.Src, spawnEvt);
-                    break;
-                case StateChange.Despawn:
-                    var despawnEvt = new DespawnEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.DespawnEvents, despawnEvt.Src, despawnEvt);
-                    break;
-                case StateChange.HealthUpdate:
-                    var healthEvt = new HealthUpdateEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.HealthUpdateEvents, healthEvt.Src, healthEvt);
-                    break;
-                case StateChange.BarrierUpdate:
-                    var barrierEvt = new BarrierUpdateEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.BarrierUpdateEvents, barrierEvt.Src, barrierEvt);
-                    break;
-                case StateChange.InstanceStart:
-                    metaDataEvents.InstanceStartEvent = new InstanceStartEvent(stateChangeEvent);
-                    break;
-                case StateChange.SquadCombatStart:
-                    if (stateChangeEvent.Value == 0 || stateChangeEvent.BuffDmg == 0)
-                    {
-                        return;
-                    }
-                    metaDataEvents.LogStartEvent = new LogStartEvent(stateChangeEvent);
-                    break;
-                case StateChange.LogNPCUpdate:
-                    metaDataEvents.LogNPCUpdateEvents.Add(new LogNPCUpdateEvent(stateChangeEvent, agentData));
-                    break;
-                case StateChange.SquadCombatEnd:
-                    if (stateChangeEvent.Value == 0 || stateChangeEvent.BuffDmg == 0)
-                    {
-                        return;
-                    }
-                    metaDataEvents.LogEndEvent = new LogEndEvent(stateChangeEvent);
-                    break;
-                case StateChange.MaxHealthUpdate:
-                    var maxHealthEvt = new MaxHealthUpdateEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.MaxHealthUpdateEvents, maxHealthEvt.Src, maxHealthEvt);
-                    break;
-                case StateChange.PointOfView:
-                    if (stateChangeEvent.SrcAgent == 0)
-                    {
-                        return;
-                    }
-                    metaDataEvents.PointOfViewEvent = new PointOfViewEvent(stateChangeEvent, agentData);
-                    break;
-                case StateChange.Language:
-                    metaDataEvents.LanguageEvent = new LanguageEvent(stateChangeEvent);
-                    break;
-                case StateChange.GWBuild:
-                    if (stateChangeEvent.SrcAgent == 0)
-                    {
-                        return;
-                    }
-                    metaDataEvents.GW2BuildEvent = new GW2BuildEvent(stateChangeEvent);
-                    break;
-                case StateChange.ShardId:
-                    metaDataEvents.ShardEvents.Add(new ShardEvent(stateChangeEvent));
-                    break;
-                case StateChange.Reward:
+                }
+                metaDataEvents.GW2BuildEvent = new GW2BuildEvent(stateChangeEvent);
+                break;
+            case StateChange.ShardID:
+                metaDataEvents.ShardEvent = new ShardEvent(stateChangeEvent, metaDataEvents.MapIDEvent, apiController);
+                break;
+            case StateChange.Reward:
 #if !NO_REWARDS
-                    rewardEvents.Add(new RewardEvent(stateChangeEvent));
+                _rewardEvents.Add(new RewardEvent(stateChangeEvent));
 #endif
-                    break;
-                case StateChange.TeamChange:
-                    var tcEvt = new TeamChangeEvent(stateChangeEvent, agentData, evtcVersion);
-                    Add(statusEvents.TeamChangeEvents, tcEvt.Src, tcEvt);
-                    break;
-                case StateChange.AttackTarget:
-                    var aTEvt = new AttackTargetEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.AttackTargetEvents, aTEvt.Src, aTEvt);
-                    Add(statusEvents.AttackTargetEventsByAttackTarget, aTEvt.AttackTarget, aTEvt);
-                    break;
-                case StateChange.Targetable:
+                break;
+            case StateChange.TeamChange:
+                var tcEvt = new TeamChangeEvent(stateChangeEvent, agentData, evtcVersion);
+                Add(statusEvents.TeamChangeEvents, tcEvt.Src, tcEvt);
+                break;
+            case StateChange.AttackTarget:
+                var aTEvt = new AttackTargetEvent(stateChangeEvent, agentData);
+                metaDataEvents.AttackTargetEvents.Add(aTEvt);
+                Add(metaDataEvents.AttackTargetEventsBySrc, aTEvt.Src, aTEvt);
+                metaDataEvents.AttackTargetEventByAttackTarget[aTEvt.AttackTarget] = aTEvt;
+                break;
+            case StateChange.Targetable:
+                if (stateChangeEvent.DstAgent < 2) // 2 means unsupported, we ignore those
+                {
                     var tarEvt = new TargetableEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.TargetableEvents, tarEvt.Src, tarEvt);
-                    break;
-                case StateChange.MapID:
-                    metaDataEvents.MapIDEvents.Add(new MapIDEvent(stateChangeEvent));
-                    break;
-                case StateChange.Guild:
-                    var gEvt = new GuildEvent(stateChangeEvent, agentData);
-                    Add(metaDataEvents.GuildEvents, gEvt.Src, gEvt);
-                    break;
-                case StateChange.BuffInfo:
-                case StateChange.BuffFormula:
-                    if (metaDataEvents.BuffInfoEvents.TryGetValue(stateChangeEvent.SkillID, out BuffInfoEvent buffInfoEvent))
+                    if (statusEvents.TargetableEventsBySrc.TryGetValue(tarEvt.Src, out var targetableEvents))
                     {
-                        buffInfoEvent.CompleteBuffInfoEvent(stateChangeEvent, evtcVersion);
+                        var lastTargetable = targetableEvents[^1];
+                        if (lastTargetable.Targetable != tarEvt.Targetable)
+                        {
+                            targetableEvents.Add(tarEvt);
+                        }
                     }
                     else
                     {
-                        buffInfoEvent = new BuffInfoEvent(stateChangeEvent, evtcVersion);
-                        metaDataEvents.BuffInfoEvents[stateChangeEvent.SkillID] = buffInfoEvent;
+                        Add(statusEvents.TargetableEventsBySrc, tarEvt.Src, tarEvt);
                     }
-                    if (stateChangeEvent.IsStateChange == StateChange.BuffInfo)
+                }
+                if (evtcVersion.Build >= ArcDPSBuilds.VisibilityInTargetableStateChange && evtcVersion.Build < ArcDPSBuilds.VisibilityOnStateChange && stateChangeEvent.Value < 2) // 2 means unsupported, we ignore those
+                {
+                    var visEvt = new VisibilityEvent(stateChangeEvent, agentData);
+                    if (statusEvents.VisibilityEventsBySrc.TryGetValue(visEvt.Src, out var visibilityEvents))
                     {
-                        if (metaDataEvents.BuffInfoEventsByCategory.TryGetValue(buffInfoEvent.CategoryByte, out List<BuffInfoEvent> bdEvtList))
+                        var lastVisibility = visibilityEvents[^1];
+                        if (lastVisibility.Visible != visEvt.Visible)
                         {
-                            bdEvtList.Add(buffInfoEvent);
+                            visibilityEvents.Add(visEvt);
                         }
-                        else
-                        {
-                            metaDataEvents.BuffInfoEventsByCategory[buffInfoEvent.CategoryByte] = new List<BuffInfoEvent> { buffInfoEvent };
-                        }
-                    }
-                    break;
-                case StateChange.SkillInfo:
-                case StateChange.SkillTiming:
-                    if (metaDataEvents.SkillInfoEvents.TryGetValue(stateChangeEvent.SkillID, out SkillInfoEvent skillInfoEvent))
-                    {
-                        skillInfoEvent.CompleteSkillInfoEvent(stateChangeEvent);
                     }
                     else
                     {
-                        skillInfoEvent = new SkillInfoEvent(stateChangeEvent);
-                        metaDataEvents.SkillInfoEvents[stateChangeEvent.SkillID] = skillInfoEvent;
+                        Add(statusEvents.VisibilityEventsBySrc, visEvt.Src, visEvt);
                     }
+                }
+                break;
+            case StateChange.MapID:
+                metaDataEvents.MapIDEvent = new MapIDEvent(stateChangeEvent);
+                break;
+            case StateChange.MapChange:
+                metaDataEvents.MapChangeEvents.Add(new MapChangeEvent(stateChangeEvent));
+                break;
+            case StateChange.Guild:
+                if (settings.AnonymousPlayers)
+                {
                     break;
-                case StateChange.BreakbarState:
-                    var bSEvt = new BreakbarStateEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.BreakbarStateEvents, bSEvt.Src, bSEvt);
-                    break;
-                case StateChange.BreakbarPercent:
-                    var bPEvt = new BreakbarPercentEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.BreakbarPercentEvents, bPEvt.Src, bPEvt);
-                    break;
-                case StateChange.Integrity:
-                    metaDataEvents.ErrorEvents.Add(new ErrorEvent(stateChangeEvent));
-                    break;
-                case StateChange.Marker:
-                    var markerEvent = new MarkerEvent(stateChangeEvent, agentData);
-                    if (evtcVersion.Build >= ArcDPSBuilds.NewMarkerEventBehavior)
+                }
+                var gEvt = new GuildEvent(stateChangeEvent, agentData);
+                Add(metaDataEvents.GuildEvents, gEvt.Src, gEvt);
+                break;
+            case StateChange.BuffInfo:
+            case StateChange.BuffFormula:
+                if (metaDataEvents.BuffInfoEvents.TryGetValue(stateChangeEvent.SkillID, out var buffInfoEvent))
+                {
+                    buffInfoEvent.CompleteBuffInfoEvent(stateChangeEvent, evtcVersion);
+                }
+                else
+                {
+                    buffInfoEvent = new BuffInfoEvent(stateChangeEvent, evtcVersion);
+                    metaDataEvents.BuffInfoEvents[stateChangeEvent.SkillID] = buffInfoEvent;
+                }
+                if (stateChangeEvent.IsStateChange == StateChange.BuffInfo)
+                {
+                    if (metaDataEvents.BuffInfoEventsByCategory.TryGetValue(buffInfoEvent.CategoryByte, out var bdEvtList))
                     {
-                        // End event
-                        if (markerEvent.IsEnd)
-                        {
-                            // An end event ends all previous markers
-                            if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out List<MarkerEvent> markers))
-                            {
-                                for (int i = markers.Count - 1; i >= 0; i--)
-                                {
-                                    MarkerEvent preMarker = markers[i];
-                                    if (!preMarker.EndNotSet)
-                                    {
-                                        break;
-                                    }
-                                    preMarker.SetEndTime(markerEvent.Time);
-                                }
-                            }
-                            break;
-                        }
-                        else if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out List<MarkerEvent> markers))
+                        bdEvtList.Add(buffInfoEvent);
+                    }
+                    else
+                    {
+                        metaDataEvents.BuffInfoEventsByCategory[buffInfoEvent.CategoryByte] = [buffInfoEvent];
+                    }
+                }
+                break;
+            case StateChange.SkillInfo:
+            case StateChange.SkillTiming:
+                if (metaDataEvents.SkillInfoEvents.TryGetValue(stateChangeEvent.SkillID, out var skillInfoEvent))
+                {
+                    skillInfoEvent.CompleteSkillInfoEvent(stateChangeEvent);
+                }
+                else
+                {
+                    skillInfoEvent = new SkillInfoEvent(stateChangeEvent);
+                    metaDataEvents.SkillInfoEvents[stateChangeEvent.SkillID] = skillInfoEvent;
+                }
+                break;
+            case StateChange.BreakbarState:
+                var bSEvt = new BreakbarStateEvent(stateChangeEvent, agentData);
+                Add(statusEvents.BreakbarStateEvents, bSEvt.Src, bSEvt);
+                break;
+            case StateChange.BreakbarPercent:
+                var bPEvt = new BreakbarPercentEvent(stateChangeEvent, agentData);
+                Add(statusEvents.BreakbarPercentEvents, bPEvt.Src, bPEvt);
+                break;
+            case StateChange.Integrity:
+                metaDataEvents.ErrorEvents.Add(new ErrorEvent(stateChangeEvent));
+                break;
+            case StateChange.Marker:
+                var markerEvent = new MarkerEvent(stateChangeEvent, agentData, metaDataEvents.MarkerGUIDEventsByMarkerID);
+                if (evtcVersion.Build >= ArcDPSBuilds.NewMarkerEventBehavior)
+                {
+                    // End event
+                    if (markerEvent.IsEnd)
+                    {
+                        // An end event ends all previous markers
+                        if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out var markers))
                         {
                             for (int i = markers.Count - 1; i >= 0; i--)
                             {
                                 MarkerEvent preMarker = markers[i];
-                                // We can't have the same markers active at the same time on one Src
-                                if (preMarker.MarkerID == markerEvent.MarkerID)
+                                if (!preMarker.EndNotSet)
                                 {
-                                    if (preMarker.Time <= markerEvent.Time && preMarker.EndTime > markerEvent.Time)
-                                    {
-                                        preMarker.SetEndTime(markerEvent.Time);
-                                    }
                                     break;
                                 }
+                                preMarker.SetEndTime(markerEvent.Time);
                             }
+                        }
+                        break;
+                    }
+                    else if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out var markers))
+                    {
+                        for (int i = markers.Count - 1; i >= 0; i--)
+                        {
+                            MarkerEvent preMarker = markers[i];
+                            // We can't have the same markers active at the same time on one Src
+                            if (preMarker.MarkerID == markerEvent.MarkerID)
+                            {
+                                if (preMarker.Time <= markerEvent.Time && preMarker.EndTime > markerEvent.Time)
+                                {
+                                    preMarker.SetEndTime(markerEvent.Time);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // End event
+                    if (markerEvent.IsEnd)
+                    {
+                        // Find last marker on agent and set an end time on it
+                        if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out var markers))
+                        {
+                            markers.LastOrDefault()?.SetEndTime(markerEvent.Time);
+                        }
+                        break;
+                    }
+                    else if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out var markers))
+                    {
+                        MarkerEvent? lastMarker = markers.LastOrDefault();
+                        if (lastMarker != null)
+                        {
+                            // Ignore current if last marker on agent is the same and end not set
+                            if (lastMarker.MarkerID == markerEvent.MarkerID && lastMarker.EndNotSet)
+                            {
+                                break;
+                            }
+                            // Otherwise update end time and put current in the event pool
+                            lastMarker.SetEndTime(markerEvent.Time);
+                        }
+                    }
+                }
+                statusEvents.MarkerEvents.Add(markerEvent);
+                Add(statusEvents.MarkerEventsBySrc, markerEvent.Src, markerEvent);
+                Add(statusEvents.MarkerEventsByID, markerEvent.MarkerID, markerEvent);
+                break;
+            case StateChange.Velocity:
+                var velEvt = new VelocityEvent(stateChangeEvent, agentData);
+                Add(statusEvents.MovementEvents, velEvt.Src, velEvt);
+                break;
+            case StateChange.Rotation:
+                var rotEvt = new RotationEvent(stateChangeEvent, agentData);
+                Add(statusEvents.MovementEvents, rotEvt.Src, rotEvt);
+                break;
+            case StateChange.Position:
+                var posEvt = new PositionEvent(stateChangeEvent, agentData);
+                Add(statusEvents.MovementEvents, posEvt.Src, posEvt);
+                break;
+            case StateChange.WeaponSwap:
+                wepSwaps.Add(new WeaponSwapEvent(stateChangeEvent, agentData, skillData, evtcVersion));
+                break;
+            case StateChange.StackActive:
+                buffEvents.Add(new BuffStackActiveEvent(stateChangeEvent, agentData, skillData));
+                break;
+            case StateChange.StackDeactive:
+                buffEvents.Add(new BuffStackDeactiveEvent(stateChangeEvent, agentData, skillData));
+                break;
+            case StateChange.TickRate:
+                metaDataEvents.TickRateEvents.Add(new TickRateEvent(stateChangeEvent));
+                break;
+            case StateChange.Last90BeforeDown:
+                var last90Evt = new Last90BeforeDownEvent(stateChangeEvent, agentData);
+                statusEvents.Last90BeforeDownEvents.Add(last90Evt);
+                Add(statusEvents.Last90BeforeDownEventsBySrc, last90Evt.Src, last90Evt);
+                break;
+            case StateChange.Effect_45:
+            case StateChange.Effect_51:
+                EffectEvent? effectEvt = null;
+                switch (stateChangeEvent.IsStateChange)
+                {
+                    case StateChange.Effect_45:
+                        // End event, not supported for 45
+                        if (stateChangeEvent.SkillID == 0)
+                        {
+                            return;
+                        }
+                        effectEvt = new EffectEventCBTS45(stateChangeEvent, agentData, metaDataEvents.EffectGUIDEventsByEffectID);
+                        break;
+                    case StateChange.Effect_51:
+                        if (stateChangeEvent.SkillID == 0)
+                        {
+                            var endEvent = new EffectEndEventCBTS51(stateChangeEvent, agentData, statusEvents.EffectEventsByTrackingID);
+                            return;
+                        }
+                        else
+                        {
+                            effectEvt = new EffectEventCBTS51(stateChangeEvent, agentData, metaDataEvents.EffectGUIDEventsByEffectID, statusEvents.EffectEventsByTrackingID);
+                        }
+                        break;
+                    default:
+                        throw new InvalidDataException("Invalid effect state change");
+                }
+#if !DEBUG
+                if (effectEvt.OnNonStaticPlatform)
+                {
+                    break;
+                }
+#endif
+                statusEvents.EffectEvents.Add(effectEvt);
+                Add(statusEvents.EffectEventsBySrc, effectEvt.Src, effectEvt);
+                Add(statusEvents.EffectEventsByEffectID, effectEvt.EffectID, effectEvt);
+                if (effectEvt.IsAroundDst)
+                {
+                    Add(statusEvents.EffectEventsByDst!, effectEvt.Dst, effectEvt);
+                }
+                break;
+            case StateChange.IDToGUID:
+                if (evtcVersion.Build >= ArcDPSBuilds.FunctionalIDToGUIDEvents)
+                {
+                    switch (GetContentLocal((byte)stateChangeEvent.OverstackValue))
+                    {
+                        case ContentLocal.Effect:
+                            var effectGUID = new EffectGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.EffectGUIDEventsByEffectID[effectGUID.EffectID] = effectGUID;
+                            metaDataEvents.EffectGUIDEventsByGUID[effectGUID.GUID] = effectGUID;
+                            break;
+                        case ContentLocal.Marker:
+                            var markerGUID = new MarkerGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.MarkerGUIDEventsByMarkerID[markerGUID.MarkerID] = markerGUID;
+                            metaDataEvents.MarkerGUIDEventsByGUID[markerGUID.GUID] = markerGUID;
+                            break;
+                        case ContentLocal.Skill:
+                            var skillGUID = new SkillGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.SkillGUIDEventsBySkillID[skillGUID.SkillID] = skillGUID;
+                            metaDataEvents.SkillGUIDEventsByGUID[skillGUID.GUID] = skillGUID;
+                            break;
+                        case ContentLocal.Species:
+                            var speciesGUID = new SpeciesGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.SpeciesGUIDEventsBySpeciesID[speciesGUID.SpeciesID] = speciesGUID;
+                            metaDataEvents.SpeciesGUIDEventsByGUID[speciesGUID.GUID] = speciesGUID;
+                            break;
+                        case ContentLocal.Team:
+                            var teamGUID = new TeamGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.TeamGUIDEventsByTeamID[teamGUID.TeamID] = teamGUID;
+                            metaDataEvents.TeamGUIDEventsByGUID[teamGUID.GUID] = teamGUID;
+                            break;
+                        case ContentLocal.Emote:
+                            var emoteGUID = new EmoteGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.EmoteGUIDEventsByEmoteID[emoteGUID.EmoteID] = emoteGUID;
+                            metaDataEvents.EmoteGUIDEventsByGUID[emoteGUID.GUID] = emoteGUID;
+                            break;
+                        case ContentLocal.Transformation:
+                            var transformationGUID = new TransformationGUIDEvent(stateChangeEvent, evtcVersion);
+                            metaDataEvents.TransformationGUIDEventsByTransformationID[transformationGUID.TransformationID] = transformationGUID;
+                            metaDataEvents.TransformationGUIDEventsByGUID[transformationGUID.GUID] = transformationGUID;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                break;
+            case StateChange.FractalScale:
+                // Sanity check
+                if (stateChangeEvent.SrcAgent == 0)
+                {
+                    break;
+                }
+                metaDataEvents.FractalScaleEvent = new FractalScaleEvent(stateChangeEvent);
+                break;
+            case StateChange.SquadMarker:
+                var squadMarkerEvent = new SquadMarkerEvent(stateChangeEvent, agentData);
+                if (squadMarkerEvent.IsEnd)
+                {
+                    // Find last marker of given index and set an end event on it
+                    if (statusEvents.SquadMarkerEventsByIndex.TryGetValue(squadMarkerEvent.MarkerIndex, out var squadMarkers))
+                    {
+                        squadMarkers.LastOrDefault()?.SetEndTime(squadMarkerEvent.Time);
+                    }
+                    break;
+                }
+                else if (statusEvents.SquadMarkerEventsByIndex.TryGetValue(squadMarkerEvent.MarkerIndex, out var squadMarkers))
+                {
+                    SquadMarkerEvent? lastSquadMarker = squadMarkers.LastOrDefault();
+                    if (lastSquadMarker != null)
+                    {
+                        // End previous if position has changed
+                        if ((lastSquadMarker.Position - squadMarkerEvent.Position).Length() > 1e-6)
+                        {
+                            lastSquadMarker.SetEndTime(squadMarkerEvent.Time);
+                        }
+                        else
+                        // Ignore current if last marker does not have an end set
+                        if (lastSquadMarker.EndNotSet)
+                        {
+                            break;
+                        }
+                    }
+                }
+                Add(statusEvents.SquadMarkerEventsByIndex, squadMarkerEvent.MarkerIndex, squadMarkerEvent);
+                break;
+            case StateChange.Glider:
+                var gliderEvent = new GliderEvent(stateChangeEvent, agentData);
+                Add(statusEvents.GliderEventsBySrc, gliderEvent.Src, gliderEvent);
+                break;
+            case StateChange.StunBreak:
+                stunBreakEvents.Add(new StunBreakEvent(stateChangeEvent, agentData, skillData));
+                break;
+            case StateChange.MissileCreate:
+                var missileEvent = new MissileEvent(stateChangeEvent, agentData, skillData);
+                statusEvents.MissileEvents.Add(missileEvent);
+                Add(statusEvents.MissileEventsBySrc, missileEvent.Src, missileEvent);
+                Add(statusEvents.MissileEventsBySkillID, missileEvent.SkillID, missileEvent);
+                var missileTrackingID = stateChangeEvent.Pad;
+                Add(statusEvents.MissileEventsByTrackingID, missileTrackingID, missileEvent);
+                break;
+            case StateChange.MissileLaunch:
+                var missileLaunchEvent = new MissileLaunchEvent(stateChangeEvent, agentData);
+                var missileLaunchTrackingID = stateChangeEvent.Pad;
+                if (statusEvents.MissileEventsByTrackingID.TryGetValue(missileLaunchTrackingID, out var missileEvents))
+                {
+                    MissileEvent? startEvent = missileEvents.LastOrDefault(x => x.Time <= missileLaunchEvent.Time);
+                    if (startEvent != null)
+                    {
+                        startEvent.AddLaunchEvent(missileLaunchEvent);
+                        if (missileLaunchEvent.HasTargetAgent)
+                        {
+                            Add(statusEvents.MissileLaunchEventsByDst, missileLaunchEvent.TargetedAgent, missileLaunchEvent);
+                        }
+                    }
+                }
+                break;
+            case StateChange.MissileRemove:
+                var missileRemoveEvent = new MissileRemoveEvent(stateChangeEvent, agentData);
+                var missileRemoveTrackingID = stateChangeEvent.Pad;
+                if (statusEvents.MissileEventsByTrackingID.TryGetValue(missileRemoveTrackingID, out missileEvents))
+                {
+                    MissileEvent? startEvent = missileEvents.LastOrDefault(x => x.Time <= missileRemoveEvent.Time);
+                    if (startEvent != null)
+                    {
+                        startEvent.SetRemoveEvent(missileRemoveEvent);
+                        if (missileRemoveEvent.DidHit)
+                        {
+                            Add(statusEvents.MissileDamagingEventsBySrc, missileRemoveEvent.DamagingAgent, startEvent);
+                        }
+                    }
+                }
+                break;
+            case StateChange.EffectGroundCreate:
+                var effectGroundEvt = new EffectEventGroundCreate(stateChangeEvent, agentData, metaDataEvents.EffectGUIDEventsByEffectID, statusEvents.GroundEffectEventsByTrackingID);
+#if !DEBUG
+                if (effectGroundEvt.OnNonStaticPlatform)
+                {
+                    break;
+                }
+#endif
+                statusEvents.EffectEvents.Add(effectGroundEvt);
+                Add(statusEvents.EffectEventsBySrc, effectGroundEvt.Src, effectGroundEvt);
+                Add(statusEvents.EffectEventsByEffectID, effectGroundEvt.EffectID, effectGroundEvt);
+                break;
+            case StateChange.EffectGroundRemove:
+                _ = new EffectEventGroundRemove(stateChangeEvent, agentData, statusEvents.GroundEffectEventsByTrackingID);
+                break;
+            case StateChange.EffectAgentCreate:
+                var effectAgentEvt = new EffectEventAgentCreate(stateChangeEvent, agentData, metaDataEvents.EffectGUIDEventsByEffectID, statusEvents.AgentEffectEventsByTrackingID);
+#if !DEBUG
+                if (effectAgentEvt.OnNonStaticPlatform)
+                {
+                    break;
+                }
+#endif
+                statusEvents.EffectEvents.Add(effectAgentEvt);
+                Add(statusEvents.EffectEventsBySrc, effectAgentEvt.Src, effectAgentEvt);
+                Add(statusEvents.EffectEventsByDst, effectAgentEvt.Dst, effectAgentEvt);
+                Add(statusEvents.EffectEventsByEffectID, effectAgentEvt.EffectID, effectAgentEvt);
+                break;
+            case StateChange.EffectAgentRemove:
+                _ = new EffectEventAgentRemove(stateChangeEvent, agentData, statusEvents.AgentEffectEventsByTrackingID);
+                break;
+            case StateChange.Transformation:
+                var transformationEvent = new TransformationEvent(stateChangeEvent, agentData, metaDataEvents.TransformationGUIDEventsByTransformationID);
+                if (transformationEvent.IsEnd)
+                {
+                    // Set end to transformation
+                    if (statusEvents.TransformationEventsBySrc.TryGetValue(transformationEvent.Src, out var srcTransformations))
+                    {
+                        var last = srcTransformations.LastOrDefault();
+                        last?.SetEndTime(transformationEvent.Time);
+                    }
+                } 
+                else
+                {
+                    if (statusEvents.TransformationEventsBySrc.TryGetValue(transformationEvent.Src, out var srcTransformations))
+                    {
+                        // sanity check
+                        // A new transformation but the previous one did not get an end event, set it to end at new transformation time
+                        var last = srcTransformations.LastOrDefault();
+                        if (last != null && last.EndNotSet)
+                        {
+                            last.SetEndTime(transformationEvent.Time);
+                        }
+                    }
+                    Add(statusEvents.TransformationEventsBySrc, transformationEvent.Src, transformationEvent);
+                    Add(statusEvents.TransformationEventsByTransformationID, transformationEvent.TransformationID, transformationEvent);
+                }
+                break;
+            case StateChange.WvWTeams:
+                metaDataEvents.WvWTeamsEvent = new WvWTeamsEvent(stateChangeEvent);
+                break;
+            case StateChange.WvWObjectiveStatus:
+                var wvwObjectiveStatus = new WvWObjectiveStatusEvent(stateChangeEvent);
+                if (wvwObjectiveStatus.IsUnknown)
+                {
+                    break;
+                }
+                long key = (wvwObjectiveStatus.MapID << 16) + wvwObjectiveStatus.ObjectiveID;
+                if (statusEvents.WvWObjectiveStatusEventsByKey.TryGetValue(key, out var existingStatus))
+                {
+                    existingStatus.AddOwners(wvwObjectiveStatus);
+                } 
+                else
+                {
+                    statusEvents.WvWObjectiveStatusEventsByKey[key] = wvwObjectiveStatus;
+                    statusEvents.WvWObjectiveStatusEvents.Add(wvwObjectiveStatus);
+                }
+                break;
+            case StateChange.StealthChange:
+                if (stateChangeEvent.DstAgent < 2) // 2 means unsupported, we ignore those
+                {
+                    var visEvt = new VisibilityEvent(stateChangeEvent, agentData);
+                    if (statusEvents.VisibilityEventsBySrc.TryGetValue(visEvt.Src, out var visibilityEvents))
+                    {
+                        var lastVisibility = visibilityEvents[^1];
+                        if (lastVisibility.Visible != visEvt.Visible)
+                        {
+                            visibilityEvents.Add(visEvt);
                         }
                     }
                     else
                     {
-                        // End event
-                        if (markerEvent.IsEnd)
-                        {
-                            // Find last marker on agent and set an end time on it
-                            if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out List<MarkerEvent> markers))
-                            {
-                                markers.LastOrDefault()?.SetEndTime(markerEvent.Time);
-                            }
-                            break;
-                        }
-                        else if (statusEvents.MarkerEventsBySrc.TryGetValue(markerEvent.Src, out List<MarkerEvent> markers))
-                        {
-                            MarkerEvent lastMarker = markers.LastOrDefault();
-                            if (lastMarker != null)
-                            {
-                                // Ignore current if last marker on agent is the same and end not set
-                                if (lastMarker.MarkerID == markerEvent.MarkerID && lastMarker.EndNotSet)
-                                {
-                                    break;
-                                }
-                                // Otherwise update end time and put current in the event pool
-                                lastMarker.SetEndTime(markerEvent.Time);
-                            }
-                        }
+                        Add(statusEvents.VisibilityEventsBySrc, visEvt.Src, visEvt);
                     }
-                    statusEvents.MarkerEvents.Add(markerEvent);
-                    Add(statusEvents.MarkerEventsBySrc, markerEvent.Src, markerEvent);
-                    Add(statusEvents.MarkerEventsByID, markerEvent.MarkerID, markerEvent);
-                    break;
-                case StateChange.Velocity:
-                    var velEvt = new VelocityEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.MovementEvents, velEvt.Src, velEvt);
-                    break;
-                case StateChange.Rotation:
-                    var rotEvt = new RotationEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.MovementEvents, rotEvt.Src, rotEvt);
-                    break;
-                case StateChange.Position:
-                    var posEvt = new PositionEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.MovementEvents, posEvt.Src, posEvt);
-                    break;
-                case StateChange.WeaponSwap:
-                    wepSwaps.Add(new WeaponSwapEvent(stateChangeEvent, agentData, skillData, evtcVersion));
-                    break;
-                case StateChange.StackActive:
-                    buffEvents.Add(new BuffStackActiveEvent(stateChangeEvent, agentData, skillData));
-                    break;
-                case StateChange.StackReset:
-                    buffEvents.Add(new BuffStackResetEvent(stateChangeEvent, agentData, skillData));
-                    break;
-                case StateChange.BuffInitial:
-                    buffEvents.Add(new BuffApplyEvent(stateChangeEvent, agentData, skillData, evtcVersion));
-                    break;
-                case StateChange.TickRate:
-                    metaDataEvents.TickRateEvents.Add(new TickRateEvent(stateChangeEvent));
-                    break;
-                case StateChange.Last90BeforeDown:
-                    var last90Evt = new Last90BeforeDownEvent(stateChangeEvent, agentData);
-                    statusEvents.Last90BeforeDownEvents.Add(last90Evt);
-                    Add(statusEvents.Last90BeforeDownEventsBySrc, last90Evt.Src, last90Evt);
-                    break;
-                case StateChange.Effect_45:
-                case StateChange.Effect_51:
-                    EffectEvent effectEvt = null;
-                    switch (stateChangeEvent.IsStateChange)
+                }
+                break;
+            case StateChange.GadgetNameVisible:
+                // Ignore for now
+                break;
+            case StateChange.GadgetAnimation:
+                var gadgetAnimation = new GadgetAnimationEvent(stateChangeEvent, agentData);
+                Add(_gadgetAnimationEventsByToken, gadgetAnimation.AnimationToken, gadgetAnimation);
+                Add(_gadgetAnimationEventsByGadget, gadgetAnimation.Gadget, gadgetAnimation);
+                break;
+            case StateChange.EffectMissileCreate:
+                // Ignore for now
+                break;
+            case StateChange.GadgetCaptureOutlineShow:
+                var gadgetCaptureEvent = new GadgetCaptureEvent(stateChangeEvent, agentData);
+                statusEvents.GadgetCaptureEvents.Add(gadgetCaptureEvent);
+                Add(statusEvents.GadgetCaptureEventsBySrc, gadgetCaptureEvent.Src, gadgetCaptureEvent);
+                if (statusEvents.GadgetCapturePointCombatItemsBySrc.TryGetValue(gadgetCaptureEvent.Src, out var gadgetCapturePoints))
+                {
+                    foreach (var gadgetCapturePoint in gadgetCapturePoints)
                     {
-                        case StateChange.Effect_45:
-                            // End event, not supported for 45
-                            if (stateChangeEvent.SkillID == 0)
-                            {
-                                return;
-                            }
-                            effectEvt = new EffectEventCBTS45(stateChangeEvent, agentData);
-                            break;
-                        case StateChange.Effect_51:
-                            if (stateChangeEvent.SkillID == 0)
-                            {
-                                var endEvent = new EffectEndEventCBTS51(stateChangeEvent, agentData, statusEvents.EffectEventsByTrackingID);
-                                return;
-                            }
-                            else
-                            {
-                                effectEvt = new EffectEventCBTS51(stateChangeEvent, agentData, statusEvents.EffectEventsByTrackingID);
-                            }
-                            break;
-                        default:
-                            throw new InvalidDataException("Invalid effect state change");
+                        gadgetCaptureEvent.AddPoint(gadgetCapturePoint);
                     }
-#if !DEBUG
-                    if (effectEvt.OnNonStaticPlatform)
-                    {
-                        break;
-                    }
-#endif
-                    statusEvents.EffectEvents.Add(effectEvt);
-                    Add(statusEvents.EffectEventsBySrc, effectEvt.Src, effectEvt);
-                    Add(statusEvents.EffectEventsByEffectID, effectEvt.EffectID, effectEvt);
-                    if (effectEvt.IsAroundDst)
-                    {
-                        Add(statusEvents.EffectEventsByDst, effectEvt.Dst, effectEvt);
-                    }
-                    break;
-                case StateChange.EffectIDToGUID:
-                    if (evtcVersion.Build >= ArcDPSBuilds.FunctionalIDToGUIDEvents)
-                    {
-                        switch (GetContentLocal((byte)stateChangeEvent.OverstackValue))
-                        {
-                            case ContentLocal.Effect:
-                                var effectGUID = new EffectGUIDEvent(stateChangeEvent);
-                                metaDataEvents.EffectGUIDEventsByEffectID[effectGUID.ContentID] = effectGUID;
-                                metaDataEvents.EffectGUIDEventsByGUID[effectGUID.HexContentGUID] = effectGUID;
-                                metaDataEvents.EffectGUIDEventsByGUID[effectGUID.Base64ContentGUID] = effectGUID;
-                                break;
-                            case ContentLocal.Marker:
-                                var markerGUID = new MarkerGUIDEvent(stateChangeEvent);
-                                metaDataEvents.MarkerGUIDEventsByMarkerID[markerGUID.ContentID] = markerGUID;
-                                metaDataEvents.MarkerGUIDEventsByGUID[markerGUID.HexContentGUID] = markerGUID;
-                                metaDataEvents.MarkerGUIDEventsByGUID[markerGUID.Base64ContentGUID] = markerGUID;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    break;
-                case StateChange.FractalScale:
-                    // Sanity check
-                    if (stateChangeEvent.SrcAgent == 0)
-                    {
-                        return;
-                    }
-                    metaDataEvents.FractalScaleEvent = new FractalScaleEvent(stateChangeEvent);
-                    break;
-                case StateChange.SquadMarker:
-                    var squadMarkerEvent = new SquadMarkerEvent(stateChangeEvent, agentData);
-                    if (squadMarkerEvent.IsEnd)
-                    {
-                        // Find last marker of given index and set an end event on it
-                        if (statusEvents.SquadMarkerEventsByIndex.TryGetValue(squadMarkerEvent.MarkerIndex, out List<SquadMarkerEvent> squadMarkers))
-                        {
-                            squadMarkers.LastOrDefault()?.SetEndTime(squadMarkerEvent.Time);
-                        }
-                        break;
-                    }
-                    else if (statusEvents.SquadMarkerEventsByIndex.TryGetValue(squadMarkerEvent.MarkerIndex, out List<SquadMarkerEvent> squadMarkers))
-                    {
-                        SquadMarkerEvent lastSquadMarker = squadMarkers.LastOrDefault();
-                        if (lastSquadMarker != null)
-                        {
-                            // End previous if position has changed
-                            if (lastSquadMarker.Position.DistanceToPoint(squadMarkerEvent.Position) > 1e-6)
-                            {
-                                lastSquadMarker.SetEndTime(squadMarkerEvent.Time);
-                            }
-                            else
-                            // Ignore current if last marker does not have an end set
-                            if (lastSquadMarker.EndNotSet)
-                            {
-                                break;
-                            }
-                        }
-                    }
-                    Add(statusEvents.SquadMarkerEventsByIndex, squadMarkerEvent.MarkerIndex, squadMarkerEvent);
-                    break;
-                case StateChange.Glider:
-                    var gliderEvent = new GliderEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.GliderEventsBySrc, gliderEvent.Src, gliderEvent);
-                    break;
-                case StateChange.StunBreak:
-                    var stunbreakEvent = new StunBreakEvent(stateChangeEvent, agentData);
-                    Add(statusEvents.StunBreakEventsBySrc, stunbreakEvent.Src, stunbreakEvent);
-                    break;
-                default:
-                    break;
-            }
+                    statusEvents.GadgetCapturePointCombatItemsBySrc.Remove(gadgetCaptureEvent.Src);
+                }
+                break;
+            case StateChange.GadgetCaptureSplitPercent:
+                var progressingGadgetCapture = agentData.GetAgent(stateChangeEvent.SrcAgent, stateChangeEvent.Time);
+                if (statusEvents.GadgetCaptureEventsBySrc.TryGetValue(progressingGadgetCapture, out var captureEventsToProgress))
+                {
+                    captureEventsToProgress.Last().AddProgress(stateChangeEvent);
+                }
+                break;
+            case StateChange.GadgetCaptureOutlineHide:
+                var removedGadgetCapture = agentData.GetAgent(stateChangeEvent.SrcAgent, stateChangeEvent.Time);
+                if (statusEvents.GadgetCaptureEventsBySrc.TryGetValue(removedGadgetCapture, out var captureEventsToRemove))
+                {
+                    captureEventsToRemove.Last().SetEnd(stateChangeEvent);
+                }
+                break;
+            case StateChange.GadgetCaptureOutlinePoint:
+                var pointGadgetCapture = agentData.GetAgent(stateChangeEvent.SrcAgent, stateChangeEvent.Time);
+                Add(statusEvents.GadgetCapturePointCombatItemsBySrc, pointGadgetCapture, stateChangeEvent);
+                break;
+            default:
+                break;
         }
+    }
 
-        public static void AddBuffApplyEvent(CombatItem buffEvent, List<AbstractBuffEvent> buffEvents, AgentData agentData, SkillData skillData, EvtcVersionEvent evtcVersion)
+    internal static void AddBuffApplyEvent(CombatItem buffEvent, List<BuffEvent> buffEvents, AgentData agentData, SkillData skillData, EvtcVersionEvent evtcVersion)
+    {
+        if (evtcVersion.Build >= ArcDPSBuilds.BuffAppliesAndRemovesAsStateChanges)
+        {
+            if (buffEvent.IsStateChange == StateChange.BuffChange)
+            {
+                buffEvents.Add(new BuffExtensionEvent(buffEvent, agentData, skillData));
+            } 
+            else
+            {
+                buffEvents.Add(new BuffApplyEvent(buffEvent, agentData, skillData, evtcVersion));
+            }
+        } 
+        else
         {
             if (buffEvent.IsOffcycle > 0)
             {
-                buffEvents.Add(new BuffExtensionEvent(buffEvent, agentData, skillData));
+                var extensionEvent = new BuffExtensionEvent(buffEvent, agentData, skillData);
+                if (evtcVersion.Build > ArcDPSBuilds.BuffExtensionBroken || extensionEvent.ExtendedDuration > 0)
+                {
+                    buffEvents.Add(extensionEvent);
+                }
             }
             else
             {
                 buffEvents.Add(new BuffApplyEvent(buffEvent, agentData, skillData, evtcVersion));
             }
         }
+    }
 
-        public static void AddBuffRemoveEvent(CombatItem buffEvent, List<AbstractBuffEvent> buffEvents, AgentData agentData, SkillData skillData)
+    internal static void AddBuffRemoveEvent(CombatItem buffEvent, List<BuffEvent> buffEvents, AgentData agentData, SkillData skillData, EvtcVersionEvent evtcVersion)
+    {
+        if (evtcVersion.Build >= ArcDPSBuilds.BuffAppliesAndRemovesAsStateChanges)
+        {
+            if (buffEvent.IsStateChange == StateChange.BuffRemoveAll)
+            {
+                buffEvents.Add(new BuffRemoveAllEvent(buffEvent, agentData, skillData));
+            }
+            else
+            {
+                switch (buffEvent.IsBuffRemove)
+                {
+                    case BuffRemove.Single:
+                        buffEvents.Add(new BuffRemoveSingleEvent(buffEvent, agentData, skillData));
+                        break;
+                    case BuffRemove.Manual:
+                        buffEvents.Add(new BuffRemoveManualEvent(buffEvent, agentData, skillData));
+                        break;
+                }
+            }
+        }
+        else
         {
             switch (buffEvent.IsBuffRemove)
             {
@@ -408,91 +696,182 @@ namespace GW2EIEvtcParser.ParsedData
                     break;
             }
         }
+    }
 
-        public static List<AnimatedCastEvent> CreateCastEvents(Dictionary<ulong, List<CombatItem>> castEventsBySrcAgent, AgentData agentData, SkillData skillData, FightData fightData)
+    private static AnimatedCastEvent CreateAnimatedCastEvent(EvtcVersionEvent evtcVersion, CombatItem? startItem, AgentData agentData, SkillData skillData, LogData logData, CombatItem? endItem, long id, IReadOnlyDictionary<long, EmoteGUIDEvent> emoteGUIDict)
+    {
+        if (evtcVersion.Build < ArcDPSBuilds.EmoteAndGadgetInteractionAdded)
         {
-            var res = new List<AnimatedCastEvent>();
-            foreach (KeyValuePair<ulong, List<CombatItem>> pairBySrcAgent in castEventsBySrcAgent)
-            {
-                var resBySrcAgent = new List<AnimatedCastEvent>();
-                var castEventsBySrcAgentBySkillID = pairBySrcAgent.Value.GroupBy(x => x.SkillID).ToDictionary(x => x.Key, x => x.ToList());
-                foreach (KeyValuePair<uint, List<CombatItem>> pairBySrcAgentBySkillID in castEventsBySrcAgentBySkillID)
-                {
-                    var resBySrcAgentBySkillID = new List<AnimatedCastEvent>();
-                    CombatItem startItem = null;
-                    foreach (CombatItem c in pairBySrcAgentBySkillID.Value)
-                    {
-                        if (c.StartCasting())
-                        {
-                            // missing end
-                            if (startItem != null)
-                            {
-                                resBySrcAgentBySkillID.Add(new AnimatedCastEvent(startItem, agentData, skillData, fightData.LogEnd));
-                            }
-                            startItem = c;
-                        }
-                        else if (c.EndCasting())
-                        {
-                            if (startItem != null && startItem.SkillID == c.SkillID)
-                            {
-                                resBySrcAgentBySkillID.Add(new AnimatedCastEvent(startItem, agentData, skillData, c));
-                                startItem = null;
-                            }
-                            // missing start
-                            else
-                            {
-                                var toCheck = new AnimatedCastEvent(agentData, skillData, c);
-                                // we are only interested in animations started before log starts
-                                if (toCheck.Time < fightData.LogStart)
-                                {
-                                    resBySrcAgentBySkillID.Add(toCheck);
-                                }
-                            }
-                        }
-                    }
-                    // missing end
-                    if (startItem != null)
-                    {
-                        resBySrcAgentBySkillID.Add(new AnimatedCastEvent(startItem, agentData, skillData, fightData.LogEnd));
-                    }
-                    resBySrcAgentBySkillID.RemoveAll(x => x.Caster.IsPlayer && x.ActualDuration <= 1);
-                    resBySrcAgent.AddRange(resBySrcAgentBySkillID);
-                }
-                resBySrcAgent = resBySrcAgent.OrderBy(x => x.Time).ToList();
-                // sanitize 
-                for (int i = 0; i < resBySrcAgent.Count - 1; i++)
-                {
-                    resBySrcAgent[i].CutAt(resBySrcAgent[i + 1].Time + ParserHelper.ServerDelayConstant);
-                }
-                res.AddRange(resBySrcAgent);
-            }
-            res = res.OrderBy(x => x.Time).ToList();
-            return res;
+            return new AnimatedCastEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd);
         }
-
-        public static void AddDirectDamageEvent(CombatItem damageEvent, List<AbstractHealthDamageEvent> hpDamage, List<BreakbarDamageEvent> brkBarDamage, List<CrowdControlEvent> crowdControlEvents, AgentData agentData, SkillData skillData)
+        return id switch
         {
-            ArcDPSEnums.PhysicalResult result = GetPhysicalResult(damageEvent.Result);
+            SkillIDs.ArcDPSGenericEmote => new EmoteEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd, emoteGUIDict),
+            SkillIDs.ArcDPSGenericGadgetInteract => new GadgetInteractEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd),
+            SkillIDs.ArcDPSGenericPickUp => new BundlePickUpEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd),
+            _ => new AnimatedCastEvent(startItem, agentData, skillData, endItem, logData.EvtcLogEnd),
+        };
+    }
+
+    internal static List<AnimatedCastEvent> CreateCastEvents(EvtcVersionEvent evtcVersion, Dictionary<ulong, List<CombatItem>> castEventsBySrcAgent, AgentData agentData, SkillData skillData, LogData logData, IReadOnlyDictionary<long, EmoteGUIDEvent> emoteGUIDict)
+    {
+        using var _t = new AutoTrace("CreateCastEvents");
+        //TODO_PERF(Rennorb)
+        var res = new List<AnimatedCastEvent>();
+        foreach (var castEvents in castEventsBySrcAgent.Values)
+        {
+            var resBySrcAgent = new List<AnimatedCastEvent>();
+            foreach (var castEventsBySkillID in castEvents.GroupBy(x => (long)x.SkillID))
+            {
+                var resBySrcAgentBySkillID = new List<AnimatedCastEvent>();
+                CombatItem? startItem = null;
+                var skillID = castEventsBySkillID.Key;
+                foreach (CombatItem c in castEventsBySkillID)
+                {
+                    if (c.IsStartCastEvent())
+                    {
+                        // missing end
+                        if (startItem != null)
+                        {
+                            resBySrcAgentBySkillID.Add(CreateAnimatedCastEvent(evtcVersion, startItem, agentData, skillData, logData, null, skillID, emoteGUIDict));
+                        }
+                        startItem = c;
+                    }
+                    else if (c.IsEndCastEvent())
+                    {
+                        if (startItem != null && startItem.SkillID == c.SkillID)
+                        {
+                            resBySrcAgentBySkillID.Add(CreateAnimatedCastEvent(evtcVersion, startItem, agentData, skillData, logData, c, skillID, emoteGUIDict));
+                            startItem = null;
+                        }
+                        // missing start
+                        else
+                        {
+                            var toCheck = CreateAnimatedCastEvent(evtcVersion, null, agentData, skillData, logData, c, skillID, emoteGUIDict);
+                            // we are only interested in animations started before log starts
+                            if (toCheck.Time < logData.EvtcLogStart)
+                            {
+                                resBySrcAgentBySkillID.Add(toCheck);
+                            }
+                        }
+                    }
+                }
+
+                // missing end
+                if (startItem != null)
+                {
+                    resBySrcAgentBySkillID.Add(CreateAnimatedCastEvent(evtcVersion, startItem, agentData, skillData, logData, null, skillID, emoteGUIDict));
+                }
+                resBySrcAgentBySkillID.RemoveAll(x => x.Caster.IsPlayer && x.ActualDuration <= 1);
+                resBySrcAgent.AddRange(resBySrcAgentBySkillID);
+            }
+            resBySrcAgent.SortByTime();
+
+            // sanitize 
+            for (int i = 0; i < resBySrcAgent.Count - 1; i++)
+            {
+                resBySrcAgent[i].CutAt(resBySrcAgent[i + 1].Time + ServerDelayConstant);
+            }
+            res.AddRange(resBySrcAgent);
+        }
+        res.SortByTime();
+        return res;
+    }
+
+    private static void AddNonDamageDamageEvent(CombatItem damageEvent, DamageResult result, 
+        List<HealthDamageEvent> hpDamage, List<BreakbarDamageEvent> brkBarDamage,
+        List<BreakbarRecoveryEvent> brkBarRecovered, List<CrowdControlEvent> crowdControlEvents,
+        List<StunBreakEvent> stunBreakEvents,
+        AgentData agentData, SkillData skillData)
+    {
+        switch (result)
+        {
+            case DamageResult.BreakbarDamage:
+                var brkChange = new BreakbarChangeEvent(damageEvent, agentData, skillData);
+                // Change from unknown with generic id is recovery when positive, soft cc will cause negative values to appear
+                if (brkChange.SkillID == skillData.GenericBreakbarID && brkChange.From.IsUnknown)
+                {
+                    brkBarRecovered.Add(new BreakbarRecoveryEvent(damageEvent, agentData, skillData));
+                }
+                else
+                {
+                    brkBarDamage.Add(new BreakbarDamageEvent(damageEvent, agentData, skillData));
+                }
+                break;
+            case DamageResult.CrowdControl:
+                crowdControlEvents.Add(new CrowdControlEvent(damageEvent, agentData, skillData));
+                break;
+            case DamageResult.Interrupt:
+            case DamageResult.KillingBlow:
+            case DamageResult.Downed:
+                hpDamage.Add(new NoDamageHealthDamageEvent(damageEvent, agentData, skillData, result));
+                break;
+        }
+    }
+
+    internal static void AddDirectDamageEvent(CombatItem damageEvent, List<HealthDamageEvent> hpDamage, List<BreakbarDamageEvent> brkBarDamage, 
+        List<BreakbarRecoveryEvent> brkBarRecovered, List<CrowdControlEvent> crowdControlEvents,
+        List<StunBreakEvent> stunBreakEvents,
+        AgentData agentData, SkillData skillData)
+    {
+        DamageResult result = GetDamageResult(damageEvent.Result);
+        switch (result)
+        {
+            case DamageResult.BreakbarDamage:
+            case DamageResult.CrowdControl:
+            case DamageResult.Interrupt:
+            case DamageResult.KillingBlow:
+            case DamageResult.Downed:
+                AddNonDamageDamageEvent(damageEvent, result, hpDamage, brkBarDamage, brkBarRecovered, crowdControlEvents, stunBreakEvents, agentData, skillData);
+                break;
+            case DamageResult.DirectNormal:
+            case DamageResult.DirectCrit:
+            case DamageResult.DirectGlance:
+            case DamageResult.DirectBlock:
+            case DamageResult.DirectEvade:
+            case DamageResult.DirectOrBuffAbsorb:
+            case DamageResult.DirectBlind:
+            case DamageResult.DirectOrBuffInvert:
+                hpDamage.Add(new DirectHealthDamageEvent(damageEvent, agentData, skillData, result));
+                break;
+            default:
+                break;
+        }
+    }
+
+    internal static void AddBuffDamageDamageEvent(CombatItem damageEvent, List<HealthDamageEvent> hpDamage, List<BreakbarDamageEvent> brkBarDamage, 
+        List<BreakbarRecoveryEvent> brkBarRecovered, List<CrowdControlEvent> crowdControlEvents,
+        List<StunBreakEvent> stunBreakEvents,
+        AgentData agentData, SkillData skillData, EvtcVersionEvent evtcVersion)
+    {
+        if (evtcVersion.Build >= ArcDPSBuilds.ResultEnumRework)
+        {
+            DamageResult result = GetDamageResult(damageEvent.Result);
             switch (result)
             {
-                case PhysicalResult.BreakbarDamage:
-                    brkBarDamage.Add(new BreakbarDamageEvent(damageEvent, agentData, skillData));
+                case DamageResult.BreakbarDamage:
+                case DamageResult.CrowdControl:
+                case DamageResult.Interrupt:
+                case DamageResult.KillingBlow:
+                case DamageResult.Downed:
+                    AddNonDamageDamageEvent(damageEvent, result, hpDamage, brkBarDamage, brkBarRecovered, crowdControlEvents, stunBreakEvents, agentData, skillData);
                     break;
-                case PhysicalResult.CrowdControl:
-                    crowdControlEvents.Add(new CrowdControlEvent(damageEvent, agentData, skillData));
-                    break;
-                case PhysicalResult.Activation:
-                case PhysicalResult.Unknown:
+                case DamageResult.BuffNotCycle:
+                case DamageResult.BuffCycle:
+                case DamageResult.BuffNotCycle_DamageToSourceOnHit:
+                case DamageResult.BuffNotCycle_DamageToTargetOnHit:
+                case DamageResult.BuffNotCycle_DamageToTargetOnStackRemove:
+                case DamageResult.DirectOrBuffAbsorb:
+                case DamageResult.DirectOrBuffInvert:
+                    hpDamage.Add(new NonDirectHealthDamageEvent(damageEvent, agentData, skillData, result));
                     break;
                 default:
-                    hpDamage.Add(new DirectHealthDamageEvent(damageEvent, agentData, skillData, result));
                     break;
             }
         }
-
-        public static void AddIndirectDamageEvent(CombatItem damageEvent, List<AbstractHealthDamageEvent> hpDamage, AgentData agentData, SkillData skillData)
+        else
         {
-            ArcDPSEnums.ConditionResult result = GetConditionResult(damageEvent.Result);
+            ConditionResult result = GetConditionResult(damageEvent.Result);
             switch (result)
             {
                 case ConditionResult.Unknown:
@@ -502,6 +881,6 @@ namespace GW2EIEvtcParser.ParsedData
                     break;
             }
         }
-
     }
+
 }
