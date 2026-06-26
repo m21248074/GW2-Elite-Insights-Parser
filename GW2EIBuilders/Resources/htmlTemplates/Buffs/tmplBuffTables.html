@@ -38,11 +38,11 @@
         <div :key="'activeduration'" class="d-flex flex-row justify-content-center mt-1 mb-1" v-if="showActiveDuration">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 0" data-original-title="Buffs upkeep based on currently selected phase."
+                    <a class="nav-link" @click="activeduration = 0" data-original-title="增益覆蓋率依目前所選的階段計算。"
                        :class="{active: activeduration === 0}">階段持續時間</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="activeduration = 1" data-original-title="Buffs upkeep based on currently selected phase. Removed dead and disconnected times."
+                    <a class="nav-link" @click="activeduration = 1" data-original-title="增益覆蓋率依目前所選的階段計算，且已扣除死亡與斷線的時間。"
                        :class="{active: activeduration === 1 }">階段存活持續時間</a>
                 </li>
             </ul>

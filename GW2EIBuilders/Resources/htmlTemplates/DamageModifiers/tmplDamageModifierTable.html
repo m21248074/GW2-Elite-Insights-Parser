@@ -106,7 +106,7 @@
                 const sums = [];
                 const groups = [];
                 const total = {
-                    name: "全團",
+                    name: "總計",
                     data: []
                 };
                 let j;
@@ -165,7 +165,7 @@
                 const sums = [];
                 const groups = [];
                 const total = {
-                    name: "全團",
+                    name: "總計",
                     data: []
                 };
                 let j;
@@ -230,8 +230,8 @@
             },
             tooltipExpl: function () {
                 return `<ul style='text-align:left;margin-block-end: 0.3em;'>
-                        <li>&#8776; means the modifier value is approximated as it is based on less accurate events, like health percents or distance to target</li>
-                        <li># means that the modifier's damage contribution can't be computed, instead we show its hit uptime</li>
+                        <li>&#8776; 表示該修正數值為估算值。因為它是基於精確度較低的事件來計算(例如：血量百分比或與目標的距離)</li>
+                        <li># 表示該修正所帶來的傷害貢獻無法被計算，因此我們改為顯示它的命中覆蓋率</li>
                         </ul>`
             }
         },
@@ -301,7 +301,7 @@
                     }
                     res += "<br>" + gain;
                 } else if (item[2] > 0) {
-                    res += "<br> Damage During: " + item[2];
+                    res += "<br> 期間內傷害: " + item[2];
                 }
                 return res;
             },

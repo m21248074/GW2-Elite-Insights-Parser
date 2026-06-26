@@ -1,26 +1,26 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
                     <a class="nav-link" @click="buffMode = 0" :class="{active: buffMode === 0}"
-                       data-original-title="Incoming buffs applications.">Incoming</a>
+                       data-original-title="接收到的增益總量。">接收總量</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="buffMode = 1" :class="{active: buffMode === 1 }"
-                       data-original-title="Outgoing buffs applications to yourself.">Outgoing Self</a>
+                       data-original-title="施加在自己身上的增益總量。">自身給予</a>
                 </li>
                 <li v-if="!singlePlayer" class="nav-item">
                     <a class="nav-link" @click="buffMode = 2" :class="{active: buffMode === 2 }"
-                        data-original-title="Outgoing buffs applications to your group members. Self excluded.">Outgoing Group</a>
+                       data-original-title="施加給自己小隊(同小隊)成員的增益總量，不含自身。">小隊給予</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 3" :class="{active: buffMode === 3 }"
-                        data-original-title="Outgoing buffs applications to your non-group members. Self excluded.">Outgoing Off-Group</a>
+                       data-original-title="施加給其他小隊(非同小隊)成員的增益總量，不含自身。">小隊外給予</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 4" :class="{active: buffMode === 4 }"
-                        data-original-title="Outgoing buffs applications to your squad. Self excluded.">Outgoing Squad</a>
+                       data-original-title="施加給整個團隊的增益總量，不含自身。">團隊給予</a>
                 </li>
             </ul>
         </div>
@@ -133,7 +133,7 @@
                             groupAvg[i][k] = Math.round(1000 * groupAvg[i][k] / groupCount[i]) / 1000;
                         }
                         avg.push({
-                            name: "Group " + i,
+                            name: "小隊 " + i,
                             data: groupAvg[i],
                         });
                     }
@@ -142,7 +142,7 @@
                     totalAvg[k] = Math.round(1000 * totalAvg[k] / totalCount) / 1000;
                 }
                 avg.push({
-                    name: "Total",
+                    name: "總計",
                     data: totalAvg,
                 });
                 return [incoming, outSelf, outGroup, outOffGroup, outSquad, avg];

@@ -1,11 +1,11 @@
-<template>
+﻿<template>
     <div>
         <ul class="nav nav-tabs">
             <li>
-                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">Uptimes</a>
+                <a class="nav-link" :class="{active: tab === 0}" @click="tab = 0">覆蓋率</a>
             </li>
             <li v-if="hasOffBuffs">
-                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">Volumes</a>
+                <a class="nav-link" :class="{active: tab === 1}" @click="tab = 1">總量</a>
             </li>
         </ul>
         <keep-alive>

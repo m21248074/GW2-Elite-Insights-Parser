@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="d-flex flex-column align-items-center" style="width: 750px;">
         <div v-if="showNormalPhases && isTouchDevice" class="mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center max-wd-700px">
@@ -179,33 +179,33 @@
                 </div>
                 <div class="d-flex align-items-center justify-content-center mb-1">
                     <img class="icon mr-2" :src="UIIcons.QuestionMark"
-                         data-original-title="You can click on the canvas to select agents" />
+                         data-original-title="您可以點擊畫面上的任何目標來進行選取" />
                     <div @click="toggleAnimate();" class="btn btn-small"
                          :class="{'btn-dark': !light, 'btn-light': light}" style="width: 50px;"
-                         data-original-title="Play / pause animation">
-                        {{ animated ? "Pause" : "Play "}}
+                         data-original-title="播放 / 暫停 動畫">
+                        {{ animated ? "暫停" : "播放"}}
                     </div>
                     <div @click="restartAnimate();" class="btn btn-small"
                          :class="{'btn-dark': !light, 'btn-light': light}"
-                         data-original-title="Reset back to start">
-                        Restart
+                         data-original-title="重設回開頭">
+                        重新開始
                     </div>
                     <div @click="toggleBackwards();" class="btn btn-small"
                          :class="{'active': backwards, 'btn-dark': !light, 'btn-light': light}"
-                         data-original-title="Play animation backwards">
-                        Backwards
+                         data-original-title="反向播放動畫">
+                        倒帶
                     </div>
                     <div @click="resetViewpoint();" class="btn btn-small"
                          :class="{'btn-dark': !light, 'btn-light': light}"
-                         data-original-title="Reset canvas position">
-                        Reset Viewpoint
+                         data-original-title="重設畫布中心位置">
+                        重設視角
                     </div>
                     <div v-if="!isTouchDevice && isMechanicSelected"
                          id="mechReset"
                          @click="resetMechanic();" class="btn btn-small"
                          :class="{'btn-dark': !light, 'btn-light': light}"
-                         data-original-title="Remove mechanic ticks from timeline">
-                        Reset Mechanic
+                         data-original-title="清除時間軸上的機制標記">
+                        重設機制
                     </div>
                     <input v-if="!isTouchDevice" style="width: 100px; text-align: right;" class="ml-3 mr-1" type="number" step="0.001"
                            :id="htmlElementIDs.timeRangeDisplayID" value="0"
@@ -525,7 +525,7 @@
             },
             getFormattedPhaseText: function (phase) {              
                 const offset = (this.range.min / 1000);
-                var res = this.getPhaseName(phase) + ' (' + this.round3(phase.start - offset) + 's - ' + this.round3(phase.end - offset) + 's)';
+                var res = this.getPhaseName(phase) + ' (' + this.round3(phase.start - offset) + '秒 - ' + this.round3(phase.end - offset) + '秒)';
                 if (this.animationData.selectedMechanic.name != null) {
                     res += ' | ' + this.animationData.selectedMechanic.name + ' (' + this.animationData.selectedMechanic.actorName + ')';
                 }

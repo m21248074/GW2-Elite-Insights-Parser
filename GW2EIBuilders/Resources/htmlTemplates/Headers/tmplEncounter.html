@@ -195,17 +195,17 @@
                 let res = "";
                 let linebreak = "";
                 if (showTotalHP) {
-                    res = "Total Health: " + target.health;
+                    res = "總生命值: " + target.health;
                     linebreak = "<br>";
                 }
                 if (hpLeft > 0 && barrierLeft > 0) {
-                    res += linebreak + 'Remaining:<br>Health: ' + hpLeft + '<br>Barrier: ' + barrierLeft;
+                    res += linebreak + '剩餘:<br>生命值: ' + hpLeft + '<br>屏障: ' + barrierLeft;
                 }
                 else if (hpLeft > 0 && barrierLeft == 0) {
-                    res += linebreak + 'Remaining Health: ' + hpLeft;
+                    res += linebreak + '剩餘生命值: ' + hpLeft;
                 }
                 else if (barrierLeft > 0) {
-                    res += linebreak + 'Remaining Barrier: ' + barrierLeft;
+                    res += linebreak + '剩餘屏障: ' + barrierLeft;
                 }
                 return res.length > 0 ? res : null;
             },
@@ -223,34 +223,34 @@
                 }
                 const barrierLeft = hpBar && hpBarIsActive(hpBar) ? target.barrierLeftPercent : 0;
                 if ((hpLeft > minPercent && barrierLeft > 0) || (hpLeft == minPercent && barrierLeft > 0)) { // If only barrier is left, show 0 + x.y barrier
-                    return health + " HP (" + hpLeft + "% + " + barrierLeft + "%)";
+                    return health + " 生命值 (" + hpLeft + "% + " + barrierLeft + "%)";
                 }
                 else if (hpLeft > minPercent && barrierLeft == 0) {
-                    return health + " HP (" + hpLeft + "%)";
+                    return health + " 生命值 (" + hpLeft + "%)";
                 }
-                return health + " HP";
+                return health + " 生命值";
             },
             fightModeColorClass: function (mode) {
                 switch (mode) {
-                    case "Unknown":
+                    case "未知":
                         return { 'fm-unknown': true };
                         break;
-                    case "Story Mode":
+                    case "故事模式":
                         return { 'fm-story': true };
                         break;
-                    case "Quickplay Normal Mode":
+                    case "快速遊玩普通模式":
                         return { 'fm-quickplay': true };
                         break;
-                    case "Emboldened Normal Mode":
+                    case "膽量普通模式":
                         return { 'fm-emboldened': true };
                         break;
-                    case "Normal Mode":
+                    case "普通模式":
                         return { 'fm-normal': true };
                         break;
-                    case "Challenge Mode":
+                    case "挑戰模式":
                         return { 'fm-challenge': true };
                         break;
-                    case "Legendary Challenge Mode":
+                    case "傳奇挑戰模式":
                         return { 'fm-legendary': true };
                         break;
                     default:
@@ -358,7 +358,7 @@
                 return logData.instancePrivacy;
             },
             resultStatus: function () {
-                return this.encounterData.success ? { text: 'Success', class: ["text-success"] } : { text: 'Failure', class: ["text-danger"] };
+                return this.encounterData.success ? { text: '成功', class: ["text-success"] } : { text: '失敗', class: ["text-danger"] };
             },
         }
     });

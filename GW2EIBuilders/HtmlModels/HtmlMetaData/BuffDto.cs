@@ -21,7 +21,7 @@ internal class BuffDto : IDItemDto
         {
             var descriptions = new List<string>() {
                 "ID: " + buff.ID,
-                "Max Stack(s) " + buffInfoEvent.MaxStacks
+                "最大疊層數: " + buffInfoEvent.MaxStacks
             };
             if (buffInfoEvent.DurationCap > 0)
             {

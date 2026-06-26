@@ -41,7 +41,7 @@
                             class="icon icon-hover">
                     </th>
                     <th class="stat-cell" :class="getHeaderClass('Data', 19)" @click="sortBy('Data', 19)"
-                        data-original-title="Stun Break">
+                        data-original-title="解除昏迷">
                         <img :src="UIIcons.StunBreak" alt="Stun Break"
                             class="icon icon-hover">
                     </th>
@@ -123,10 +123,10 @@
                     <td :class="getBodyClass('Data', 3)">
                         {{row.def[3]}}
                     </td>
-                    <td :class="getBodyClass('Data', 17)" :data-original-title="round3(row.def[18]/1000) + ' seconds'">
+                    <td :class="getBodyClass('Data', 17)" :data-original-title="round3(row.def[18]/1000) + ' 秒'">
                         {{row.def[17]}}
                     </td>
-                    <td :class="getBodyClass('Data', 19)" :data-original-title="round3(row.def[20]) + ' seconds'">
+                    <td :class="getBodyClass('Data', 19)" :data-original-title="round3(row.def[20]) + ' 秒'">
                         {{row.def[19]}}
                     </td>
                     <td :class="getBodyClass('Data', 4)">
@@ -168,14 +168,14 @@
                     <td>{{sum.def[1]}}</td>
                     <td>{{sum.def[2]}}</td>
                     <td>{{sum.def[3]}}</td>
-                    <td :data-original-title="round3(sum.def[18]/1000) + ' seconds'">{{sum.def[17]}}</td>
-                    <td :data-original-title="round3(sum.def[20]) + ' seconds'">{{sum.def[19]}}</td>
+                    <td :data-original-title="round3(sum.def[18]/1000) + ' 秒'">{{sum.def[17]}}</td>
+                    <td :data-original-title="round3(sum.def[20]) + ' 秒'">{{sum.def[19]}}</td>
                     <td>{{sum.def[4]}}</td>
                     <td>{{sum.def[5]}}</td>
                     <td>{{sum.def[6]}}</td>
                     <td>{{sum.def[7]}}</td>
-                    <td :data-original-title="sum.def[9] + ' seconds'">{{sum.def[8]}}</td>
-                    <td :data-original-title="sum.def[11] + ' seconds'">{{sum.def[10]}}</td>
+                    <td :data-original-title="sum.def[9] + ' 秒'">{{sum.def[8]}}</td>
+                    <td :data-original-title="sum.def[11] + ' 秒'">{{sum.def[10]}}</td>
                     <td>{{sum.def[12]}}</td>
                     <td>{{sum.def[16]}}</td>
                     <td>{{sum.def[14]}}</td>
@@ -285,7 +285,7 @@
                     }
                 }
                 sums.push({
-                    name: "全團",
+                    name: "總計",
                     def: total
                 });
                 var res = {

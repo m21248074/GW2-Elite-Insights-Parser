@@ -89,16 +89,16 @@
             },
             getPhaseTooltip: function(id) {
                 var phase = this.getPhaseData(id);
-                return phase.durationS + ' seconds <br /> Start: ' + phase.start + '<br /> End: ' + phase.end;
+                return phase.durationS + ' 秒 <br /> 開始時間: ' + phase.start + '<br /> 結束時間: ' + phase.end;
             },
             getBreakbarPhaseTooltip: function(id) {
                 var phase = this.getPhaseData(id);
                 var target = this.getTargetData(phase.targets[0]);
                 var breakbarTaken = target.details.dmgDistributionsTaken[id].contributedBreakbarDamage;
                 return this.getPhaseTooltip(id) +
-                    '<br /> Breakbar Active at: ' + phase.breakbarStart +
-                    '<br /> Breakbar Damage: ' + breakbarTaken +
-                    '<br /> Breakbar Recovered (Regeneration + Soft CC): ' + phase.breakbarRecovered;
+                    '<br /> 蔑視條開啟時間: ' + phase.breakbarStart +
+                    '<br /> 蔑視傷害: ' + breakbarTaken +
+                    '<br /> 蔑視條回復量(再生 + 軟CC): ' + phase.breakbarRecovered;
             }
         }
     });

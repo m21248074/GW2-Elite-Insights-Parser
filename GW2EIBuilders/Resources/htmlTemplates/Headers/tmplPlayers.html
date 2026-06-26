@@ -92,13 +92,13 @@
                 if (this.scoreV2) {
                     return `
                         <span style='text-align:left;display: block;'>
-                        A player has a stat score if they are above 60% of the maximum stat present in the squad. For example if the maximum healing power stat inside the squad is 1000, anybody with a healing power stat above 600 will be flagged as with healing power. 
+                        當玩家的屬性數值高於小隊中該屬性最大值的 60% 時，即判定其具備該屬性分數。例如：若小隊中最高的治療量數值為 1000，則任何治療量高於 600 的玩家都會被標記為擁有治療量屬性。
                         </span>
                     `;
                 }
                 return `
                 <span style='text-align:left;display: block;'>
-                Scores are relative to the squad. 10 means that that player had the highest stat in the squad. 8 means that that player had between 80% and 89% of the highest scored player's stat.
+                分數是相對於小隊內評比的。10 分代表該玩家擁有全小隊最高的屬性數值。8 分則代表該玩家的屬性數值落在最高者的 80% 至 89% 之間。
                 </span>
                 `
             },
@@ -106,17 +106,17 @@
                 if (IsMultiEncounterLog) {
                     return `
                     <span style='text-align:left;display: block;'>
-                    Weapons are estimated based on skills that were cast by the player. 
+                    武器是根據玩家所施放的技能推估而來。
                     <br>
-                    If the player has changed weapons during the instance, only the weapons used during the selected encounter will be displayed. 
+                    如果玩家在整個副本期間更換過武器，則只會顯示在所選遭遇戰中所使用的武器。
                     <br>
-                    If the whole instance is selected, the first encountered weapon set will be shown instead.
+                    如果選擇的是整個副本流程，則會改為顯示最先偵測到的那一套武器組。
                     </span>
                     `;
                 }
                 return `
                 <span style='text-align:left;display: block;'>
-                Weapons are estimated based on skills that were cast by the player.
+                武器是根據玩家所施放的技能推估而來。
                 </span>
                 `;
             },

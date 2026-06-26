@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div class="d-flex flex-row justify-content-center flex-wrap" :style="{'width': totalWidth}">
         <div class="d-flex flex-row justify-content-center align-items-center flex-wrap" style="max-width: 408px;">
             <div v-for="target in mainTargets">
@@ -27,12 +27,12 @@
                 <ul class="scale85 nav nav-pills">
                     <li class="nav-item">
                         <a class="nav-link" @click="selectAllSecondaries(true)">
-                            Select All
+                            全選
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" @click="selectAllSecondaries(false)">
-                            Deselect All
+                            取消全選
                         </a>
                     </li>
                 </ul>

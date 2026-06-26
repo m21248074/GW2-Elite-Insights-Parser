@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div v-if="buffs.length > 0">
         <img v-if="outgoing" class="mb-1 icon" :src="UIIcons.QuestionMark" style="position: absolute; transform: translate(0px, -20px);"
             :data-original-title="tooltipExplOut" />
@@ -10,9 +10,9 @@
         <table class="table table-sm table-striped table-hover" cellspacing="0" width="100%" :id="tableid">
             <thead>
                 <tr>
-                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">Sub</th>
+                    <th class="sub-cell" :class="getHeaderClass('Sub')" @click="sortBy('Sub')">小隊</th>
                     <th class="prof-cell" :class="getHeaderClass('Prof')" @click="sortBy('Prof')"></th>
-                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">Name</th>
+                    <th class="text-left" :class="getHeaderClass('Name')" @click="sortBy('Name')">角色名</th>
                     <th class="stat-cell" v-for="(buff, index) in buffs" :class="getHeaderClass('Data', index)" @click="sortBy('Data', index)"
                         v-show="isInColPage(index)"
                         :data-original-title="buff.name + (buff.description ? '<br> ' + buff.description : '')">
@@ -119,18 +119,18 @@
                             var res = ''; 
                             if (val[1] > 0) {
                             res += res.length > 0 ? "<br>" : '';
-                                res += val[1] + (buff.stacking ? "" : "%") + " by extension";
+                                res += "延長 " + val[1] + (buff.stacking ? "" : "%");
                             }
                             return res.length > 0 ? res : false;
                         } else if (!this.outgoing && (val[1] > 0 || val[2] > 0)) {                     
                             var res = ''; 
                             if (val[1] > 0) {
                                 res += res.length > 0 ? "<br>" : '';
-                                res += val[1] + (buff.stacking ? "" : "%") + " by extension";
+                                res += "延長 " + val[1] + (buff.stacking ? "" : "%");
                             }
                             if (val[2] > 0) {
                                 res += res.length > 0 ? "<br>" : '';
-                                res += val[2] + (buff.stacking ? "" : "%") + " by unknown extension";
+                                res += "未知來源延長 " + val[2] + (buff.stacking ? "" : "%");
                             }
                             return res.length > 0 ? res : false;
                         }
@@ -166,17 +166,17 @@
             },
             tooltipExplInc: function () {
                 return `<ul style='text-align:left;margin-block-end: 0.3em;'>
-                        <li>Buffs applied for an infinite duration are ignored</li>
-                        <li>The value shown in the row is "incoming + incoming by extensions"</li>
-                        <li>By extension is "incoming by extensions". This includes unknown extensions.</li>               
-                        <li>By unknown extension is "incoming by unknown extensions"</li>
+                        <li>無限持續時間(永久常駐型)的增益將會被忽略</li>
+                        <li>此欄位顯示的數值為"接收到的基本量 + 透過延長接收到的量"</li>
+                        <li>延長，是指"透過延長接收到的量"，此數值已包含未知來源的延長</li>
+                        <li>未知來源延長，是指"透過未知來源延長所接收到的量"</li>
                         </ul>`
             },
             tooltipExplOut: function () {
                 return `<ul style='text-align:left;margin-block-end: 0.3em;'>
-                        <li>Buffs applied for an infinite duration are ignored</li>
-                        <li>The value shown in the row is "outgoing + extensions you are the source"</li>
-                        <li>By extension is "extensions you are the source"</li>
+                        <li>無限持續時間(永久常駐型)的增益將會被忽略</li>
+                        <li>此欄位顯示的數值為"自身基本給予 + 由你延長的量"</li>
+                        <li>延長，是指"純粹由你延長的量"</li>
                         </ul>`
             }
         }

@@ -83,7 +83,7 @@
                         {{row.player.acc}}
                         <img v-if="playerIsRunningHealingExtension(row.player)"
                             :src="UIIcons.GreenFlag" alt="Complete"
-                            class="icon" data-original-title="Complete Healing Data">
+                            class="icon" data-original-title="完整治療資料">
                     </td>
                     <td v-if="!showHealing" v-for="(value, index) in row.hps" :class="getBodyClass('Data', index)"
                         :data-original-title="getPlayerTooltip(value, index, row, tableData.sums, index < 5, index === 6 || index === 1, index === 7 || index === 2)">
@@ -168,7 +168,7 @@
                 return rows;
             },
             computeTotalContribution: function (index, row, sums) {
-                return '占全團的' + this.round2(row[index] * 100 / sums[sums.length - 1].hps[index]) + '%';
+                return '占總計的' + this.round2(row[index] * 100 / sums[sums.length - 1].hps[index]) + '%';
             },
             computeGroupContribution: function (groupIndex, index, row, sums) {
                 let sumId = 0;
@@ -182,11 +182,11 @@
             computeSelfContribution: function (index, totalIndex, row, target) {
                 const playerTotal = row.hps[totalIndex] || 1; // If total == 0 divide by 1, 0/1 = 0%;
 
-                var selfContrib = this.round2(row.hps[index] * 100 / playerTotal) + '% of self';
-                return selfContrib + (target ? " target" : " all");
+                var selfContrib = this.round2(row.hps[index] * 100 / playerTotal) + '% 自身';
+                return selfContrib + (target ? "目標" : "全體");
             },
             getPlayerTooltip: function (value, index, row, sums, target, showHealingPowerContribution = false, showConversionContribution = false) {
-                var base = this.showHealing ? this.round(value / this.phase.durationS) + ' per second' : value + ' total';
+                var base = this.showHealing ? this.round(value / this.phase.durationS) + ' / 秒' : value + ' 治療';
                 var total = this.computeTotalContribution(index, row.hps, sums);
                 var group = this.computeGroupContribution(row.player.group, index, row.hps, sums);
 
@@ -282,7 +282,7 @@
                     }
                 }
                 sums.push({
-                    name: "全團",
+                    name: "總計",
                     hps: total
                 });
                 let res = {

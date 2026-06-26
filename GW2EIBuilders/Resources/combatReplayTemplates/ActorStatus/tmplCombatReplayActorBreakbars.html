@@ -22,10 +22,10 @@
                 var target = logData.targets[this.actorIndex];
                 var phaseId = logData.phases.indexOf(phase);
                 var breakbarTaken = target.details.dmgDistributionsTaken[phaseId].contributedBreakbarDamage;
-                return phase.durationS + ' seconds <br /> Start: ' + phase.start + '<br /> End: ' + phase.end +
-                    '<br /> Breakbar Active at: ' + phase.breakbarStart +
-                    '<br /> Breakbar Damage: ' + breakbarTaken +
-                    '<br /> Breakbar Recovered (Regeneration + Soft CC): ' + phase.breakbarRecovered;
+                return phase.durationS + ' 秒 <br /> 開始時間: ' + phase.start + '<br /> 結束時間: ' + phase.end +
+                    '<br /> 蔑視條開啟時間: ' + phase.breakbarStart +
+                    '<br /> 蔑視傷害: ' + breakbarTaken +
+                    '<br /> 蔑視條回復量 (再生 + 軟 CC): ' + phase.breakbarRecovered;
             },
         },
         computed: {

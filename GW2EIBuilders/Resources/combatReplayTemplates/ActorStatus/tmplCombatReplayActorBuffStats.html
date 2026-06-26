@@ -1,6 +1,6 @@
-<template>
+﻿<template>
     <div v-if="buffstoshow.length > 0" class="d-flex flex-column justify-content-end" :style="{'height': height}">
-        <div v-if="isPresent('戰鬥特定')">
+        <div v-if="isPresent('遭遇戰特定')">
             <combat-replay-buff-display :buffarray="data.encounterSpecifics"></combat-replay-buff-display>
         </div>
         <div v-if="isPresent('其他')">
@@ -68,7 +68,7 @@
                     if (buff.consumable) {
                         res.add("消耗品");
                     } else if (buff.encounterSpecific) {
-                        res.add("戰鬥特定");
+                        res.add("遭遇戰特定");
                     } else if (this.boons.has(id)) {
                         res.add("恩賜");
                     } else if (this.offs.has(id)) {
@@ -147,7 +147,7 @@
                         }
                     } else if (buff.encounterSpecific) {
                         arrayToFill = res.encounterSpecifics;
-                        if (!this.buffsToShowSet.has("戰鬥特定")) {
+                        if (!this.buffsToShowSet.has("遭遇戰特定")) {
                             continue;
                         }
                     } else if (this.boons.has(id)) {

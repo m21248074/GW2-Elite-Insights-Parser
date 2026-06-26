@@ -42,23 +42,23 @@
                         <img :src="UIIcons.Barrier"
                             alt="Barrier Damage" class="icon icon-hover">
                     </th>
-                    <th class="damage-dist-cell" 
-                        :class="getHeaderClass('Data', 3)" @click="sortBy('Data', 3, x => getMinDamage(x))"    
+                    <th class="damage-dist-cell"
+                        :class="getHeaderClass('Data', 3)" @click="sortBy('Data', 3, x => getMinDamage(x))"
                         data-original-title="最小傷害">
-                        Min <img :src="UIIcons.Damage" alt="Damage"
-                        class="icon">
+                        最小 <img :src="UIIcons.Damage" alt="Damage"
+                                class="icon">
                     </th>
-                    <th class="damage-dist-cell" 
-                        :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4, x => round(getDamage(x)/getConnectedHits(x)))" 
+                    <th class="damage-dist-cell"
+                        :class="getHeaderClass('Data', 4)" @click="sortBy('Data', 4, x => round(getDamage(x)/getConnectedHits(x)))"
                         data-original-title="平均傷害">
-                        Avg <img :src="UIIcons.Damage" alt="Damage"
-                        class="icon">
+                        平均 <img :src="UIIcons.Damage" alt="Damage"
+                                class="icon">
                     </th>
-                    <th class="damage-dist-cell" 
-                        :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5, x => getMaxDamage(x))"    
+                    <th class="damage-dist-cell"
+                        :class="getHeaderClass('Data', 5)" @click="sortBy('Data', 5, x => getMaxDamage(x))"
                         data-original-title="最大傷害">
-                        Max <img :src="UIIcons.Damage" alt="Damage"
-                        class="icon">
+                        最大 <img :src="UIIcons.Damage" alt="Damage"
+                                class="icon">
                     </th>
                     <th class="damage-dist-cell" v-if="wvw && actor !== null" :class="getHeaderClass('Data', 22)" @click="sortBy('Data', 22, x => getDownContribution(x))"
                         data-original-title="Down Contribution">
@@ -83,14 +83,14 @@
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 8)" @click="sortBy('Data', 8, x => getCast(x))"
                         v-if="actor !== null"
-                        data-original-title="Cast">          
+                        data-original-title="施法數">          
                         #
                         <img :src="UIIcons.Activation" alt="Cast"
                             class="icon">
                     </th>
                     <th class="damage-dist-cell"
                         :class="getHeaderClass('Data', 9)" @click="sortBy('Data', 9, x => getConnectedHits(x))"
-                        data-original-title="Hits">         
+                        data-original-title="命中數">         
                         <img :src="UIIcons.NumberOfTargets"
                             alt="Hits" class="icon icon-hover">
                     </th>
@@ -116,7 +116,7 @@
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 19)" @click="sortBy('Data', 19, x => round3(0.001 * getCastDurationNoInterrupt(x) / getCastNoInterrupt(x) ))" 
                         data-original-title="平均施法時間 (沒有被打斷的技能) <br>懸停時顯示最大與最小值">
-                        Avg <img :src="UIIcons.Activation" alt="Activation Time"
+                        平均 <img :src="UIIcons.Activation" alt="Activation Time"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" 
@@ -139,7 +139,7 @@
                     </th>
                     <th class="damage-dist-cell" 
                         :class="getHeaderClass('Data', 15)" @click="sortBy('Data', 15, x => round2(100 * getAgainstMovingHits(x)/getConnectedHits(x)))"
-                        data-original-title=角色不能移動的傷害">
+                        data-original-title="角色不能移動的傷害">
                         <img :src="UIIcons.AgainstMoving"
                             alt="Against Moving" class="icon icon-hover">
                     </th>
@@ -211,8 +211,8 @@
                     <td :class="getBodyClass('Data', 19)" v-if="actor !== null"
                         :data-original-title=" getCastDurationNoInterrupt(row) ? 
                             (
-                                'Min: ' + round3(0.001 * getMinCastingTimeNoInterrupt(row)) + '秒' + 
-                                '<br> Max: '+ round3(0.001 * getMaxCastingTimeNoInterrupt(row)) + '秒'
+                                '最小: ' + round3(0.001 * getMinCastingTimeNoInterrupt(row)) + '秒' + 
+                                '<br> 最大: '+ round3(0.001 * getMaxCastingTimeNoInterrupt(row)) + '秒'
                             ) 
                             : 
                             null" >
@@ -267,7 +267,7 @@
                         {{dmgdist.contributedBreakbarDamage}}
                     </td>
                     <td v-if="actor !== null"></td>           
-                    <td :data-original-title="totalHits.notConnected + ' hit(s) not connected'">
+                    <td :data-original-title="totalHits.notConnected + ' 次未成功命中'">
                         {{ totalHits.connected }}
                     </td>
                     <td v-if="actor !== null"></td>

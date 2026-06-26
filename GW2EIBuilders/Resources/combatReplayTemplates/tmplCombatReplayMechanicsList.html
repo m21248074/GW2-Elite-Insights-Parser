@@ -2,11 +2,11 @@
     <div class="d-flex flex-row flex-wrap justify-content-center align-items-center">
         <div class="d-flex align-items-center mb-2 scale85">
             <input id="followTimeline" type="checkbox" v-model="followTimeline" class="mr-1" />
-            <label for="followTimeline" class="mb-0 ml-1">Scroll with timeline</label>
+            <label for="followTimeline" class="mb-0 ml-1">隨時間軸捲動</label>
             <div v-if="!isTouchDevice"
                  @click="resetMechanic()" class="ml-3 btn btn-small"
                  :class="{'btn-dark': !light, 'btn-light': light}">
-                 Reset Mechanic Selection
+                 重設已選機制
             </div>
         </div>
         <div id="combat-replay-mechanics-list" class="combat-replay-mechanics-list-container d-flex d-flex-row justify-content-center w-100 scrollable-y"

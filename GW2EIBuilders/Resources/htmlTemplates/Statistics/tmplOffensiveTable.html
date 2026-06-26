@@ -3,11 +3,11 @@
         <div v-if="!targetless" class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills scale85">
                 <li class="nav-item">
-                    <a class="nav-link" @click="mode = 1" data-original-title="Against selected target(s)."
+                    <a class="nav-link" @click="mode = 1" data-original-title="針對所選目標。"
                        :class="{active: mode}">目標</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" @click="mode = 0" data-original-title="Against all enemies."
+                    <a class="nav-link" @click="mode = 0" data-original-title="針對所有敵人。"
                        :class="{active: !mode }">全部</a>
                 </li>
             </ul>
@@ -169,7 +169,7 @@
                     <td :class="getBodyClass('Data', 7)">
                         {{row.data[7]}}
                     </td>
-                    <td :class="getBodyClass('Data', 27)" :data-original-title="round3(row.data[28]/1000) + ' seconds'">
+                    <td :class="getBodyClass('Data', 27)" :data-original-title="round3(row.data[28]/1000) + ' 秒'">
                         {{row.data[27]}}
                     </td>
                     <td :class="getBodyClass('Data', 8)"
@@ -345,7 +345,7 @@
                 var sums = [];
                 var groups = [];
                 var total = {
-                    name: "全團",
+                    name: "總計",
                     data: new Array(dataLength).fill(0),
                     count: 0
                 };
@@ -400,7 +400,7 @@
                 var sums = [];
                 var groups = [];
                 var total = {
-                    name: "全團",
+                    name: "總計",
                     data: new Array(dataLength).fill(0),
                     count: 0
                 };        

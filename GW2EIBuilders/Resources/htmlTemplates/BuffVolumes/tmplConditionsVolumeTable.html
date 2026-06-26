@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <buff-volume-table-component :key="'conditions-volume-stats-table'" :outgoing="false"
             :id="'conditions-volume-stats-table'" :buffs="conditions" :playerdata="buffData[0]" :sums="buffData[1]" :playerindex="playerindex" :hidecustom="false">
@@ -67,7 +67,7 @@
                                 groupeAvg[i][k] = Math.round(1000 * groupeAvg[i][k] / groupCount[i]) / 1000;
                             }
                             avg.push({
-                                name: "Group " + i,
+                                name: "小隊 " + i,
                                 data: groupeAvg[i],
                             });
                         }
@@ -76,7 +76,7 @@
                         totalAvg[k] = Math.round(1000 * totalAvg[k] / totalCount) / 1000;
                     }
                     avg.push({
-                        name: "Total",
+                        name: "總計",
                         data: totalAvg,
                     });
                     return [uptimes, avg];

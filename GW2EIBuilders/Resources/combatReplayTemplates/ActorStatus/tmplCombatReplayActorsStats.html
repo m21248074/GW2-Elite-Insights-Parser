@@ -1,14 +1,14 @@
-<template>
+﻿<template>
     <div class="d-flex flex-row flex-wrap justify-content-center align-items-start mb-2">
         <div class="d-flex flex-row justify-content-center mb-1">
             <ul class="nav nav-pills d-flex flex-row scale85">
                 <li class="nav-item">
                     <a class="nav-link" :class="{active: buffs}" @click="buffs = !buffs">
-                        Buffs
+                        增益
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" :class="{active: rotation}" @click="rotation = !rotation">Rotation</a>
+                    <a class="nav-link" :class="{active: rotation}" @click="rotation = !rotation">循環</a>
                 </li>
             </ul>                    
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale65" style="width: 250px;">
@@ -51,7 +51,7 @@
             return {
                 buffs: false,
                 rotation: true,
-                buffsToShow: ["Boons", "Encounter Specifics", "Conditions"]
+                buffsToShow: ["恩賜", "遭遇戰特定", "症狀"]
             };
         },
         methods: {
@@ -87,7 +87,7 @@
                 return logData.singleGroup;
             },
             possibleBuffs: function() {
-                return [ "Boons", "Conditions", "Encounter Specifics","Shared", "Consumables", "Others"];
+                return [ "恩賜", "症狀", "遭遇戰特定", "共享", "消耗品", "其他"];
             },
             targets: function () {
                 if (logData.targetless) {

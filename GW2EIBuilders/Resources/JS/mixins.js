@@ -72,11 +72,11 @@ const playerHeaderComponent = {
             if (!player.isCommander) {
                 return false;
             }
-            let res = 'Commander';
+            let res = '指揮官';
             for (let i = 0; i < player.commanderStates.length; i++) {
                 res = `
                         ${res}<br>
-                        From ${player.commanderStates[i][0]} to ${player.commanderStates[i][1]}
+                        從 ${player.commanderStates[i][0]} 到 ${player.commanderStates[i][1]}
                     `;
             }
             return res;

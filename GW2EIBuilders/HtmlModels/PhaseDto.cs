@@ -173,25 +173,25 @@ internal class PhaseDto
             switch (phaseWithMetaData.Mode)
             {
                 case LogData.Mode.Unknown:
-                    Mode = "Unknown";
+                    Mode = "未知";
                     break;
                 case LogData.Mode.Story:
-                    Mode = "Story Mode";
+                    Mode = "故事模式";
                     break;
                 case LogData.Mode.Normal:
-                    Mode = log.LogData.Logic.GetInstanceBuffs(log).Any(x => x.Buff.ID == SkillIDs.Emboldened && x.AttachedPhase == phase) ? 
-                        "Emboldened Normal Mode" : 
-                        log.LogData.Logic.GetInstanceBuffs(log).Any(x => x.Buff.ID == SkillIDs.QuickplayBoost || x.Buff.ID == SkillIDs.QuickplayMorale) ? 
-                            "Quickplay Normal Mode" 
-                            : 
-                            "Normal Mode";
+                    Mode = log.LogData.Logic.GetInstanceBuffs(log).Any(x => x.Buff.ID == SkillIDs.Emboldened && x.AttachedPhase == phase) ?
+                        "膽量普通模式" : 
+                        log.LogData.Logic.GetInstanceBuffs(log).Any(x => x.Buff.ID == SkillIDs.QuickplayBoost || x.Buff.ID == SkillIDs.QuickplayMorale) ?
+                            "快速遊玩普通模式"
+                            :
+                            "普通模式";
                     break;
                 case LogData.Mode.CM:
                 case LogData.Mode.CMNoName:
-                    Mode = "Challenge Mode";
+                    Mode = "挑戰模式";
                     break;
                 case LogData.Mode.LegendaryCM:
-                    Mode = "Legendary Challenge Mode";
+                    Mode = "傳奇挑戰模式";
                     break;
                 default:
                     break;
@@ -398,20 +398,20 @@ internal class PhaseDto
     private static DefensiveStatDataItem GetDefenseStatData(DefenseAllStatistics defenses, PhaseData phase)
     {
         int downCount = 0;
-        string downTooltip = "0% Downed";
+        string downTooltip = "0% 倒地";
         if (defenses.DownCount > 0)
         {
             var downDuration = TimeSpan.FromMilliseconds(defenses.DownDuration);
             downCount = (defenses.DownCount);
-            downTooltip = (downDuration.TotalSeconds + " seconds downed, " + Math.Round(downDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% Downed");
+            downTooltip = (downDuration.TotalSeconds + " 秒處於倒地狀態，佔整場 " + Math.Round(downDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% 倒地時間");
         }
         int deadCount = 0;
-        string deadTooltip = "100% Alive";
+        string deadTooltip = "100% 存活";
         if (defenses.DeadCount > 0)
         {
             var deathDuration = TimeSpan.FromMilliseconds(defenses.DeadDuration);
             deadCount = (defenses.DeadCount);
-            deadTooltip = (deathDuration.TotalSeconds + " seconds dead, " + Math.Round(100.0 - deathDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% Alive");
+            deadTooltip = (deathDuration.TotalSeconds + " 秒處於死亡狀態，佔整場 " + Math.Round(100.0 - deathDuration.TotalMilliseconds / phase.DurationInMS * 100, 1) + "% 存活時間");
         }
         return [
                 defenses.DamageTaken, 

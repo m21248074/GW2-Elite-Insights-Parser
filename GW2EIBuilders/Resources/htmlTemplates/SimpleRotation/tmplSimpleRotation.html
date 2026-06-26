@@ -1,50 +1,50 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="d-flex flex-row justify-content-center nav nav-pills mr-1 scale85">
                 <li class="nav-item">
                     <a class="nav-link" @click="autoattack = !autoattack"
-                       :class="{active: autoattack}">Show auto attacks</a>
+                       :class="{active: autoattack}">顯示自動攻擊</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideInterruptedAA = !hideInterruptedAA"
-                       :class="{active: hideInterruptedAA}">Hide interrupted auto attacks</a>
+                       :class="{active: hideInterruptedAA}">隱藏被打斷的自動攻擊</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideSmallTime = !hideSmallTime"
-                       :class="{active: hideSmallTime}">Hide < 10ms</a>
+                       :class="{active: hideSmallTime}">隱藏小於10毫秒</a>
                 </li>
             </ul>
             <ul class="d-flex flex-row justify-content-center nav nav-pills ml-1 mr-1 scale85">
                 <li class="nav-item">
                     <a class="nav-link" @click="hideInstantCast = !hideInstantCast"
-                       :class="{active: hideInstantCast}">Hide all instant cast</a>
+                       :class="{active: hideInstantCast}">隱藏所有即時施法</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideInstantCastSkill = !hideInstantCastSkill"
-                       :class="{active: hideInstantCastSkill, disabled: hideInstantCast}">Hide instant cast skills</a>
+                       :class="{active: hideInstantCastSkill, disabled: hideInstantCast}">隱藏即時施法技能</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideGearProc = !hideGearProc"
-                       :class="{active: hideGearProc, disabled: hideInstantCast}">Hide gear procs</a>
+                       :class="{active: hideGearProc, disabled: hideInstantCast}">隱藏裝備施法</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="hideTraitProc = !hideTraitProc"
-                       :class="{active: hideTraitProc, disabled: hideInstantCast}">Hide trait procs</a>
+                       :class="{active: hideTraitProc, disabled: hideInstantCast}">隱藏特性施法</a>
                 </li>
                 <li class="nav-item" v-if="hasInstantCastUnconditional">
                     <a class="nav-link" @click="hideUnconditionalProc = !hideUnconditionalProc"
-                       :class="{active: hideUnconditionalProc, disabled: hideInstantCast}">Hide unconditional procs</a>
+                       :class="{active: hideUnconditionalProc, disabled: hideInstantCast}">隱藏無條件施法</a>
                 </li>
             </ul>
             <ul class="d-flex flex-row justify-content-center nav nav-pills ml-1 scale85">
                 <li class="nav-item">
                     <a class="nav-link" @click="small = !small"
-                       :class="{active: small}">Small icons</a>
+                       :class="{active: small}">小圖示</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="smallAA = !smallAA"
-                       :class="{active: smallAA}">Small auto attack icons</a>
+                       :class="{active: smallAA}">自動攻擊小圖示</a>
                 </li>
             </ul>
         </div>
@@ -52,39 +52,39 @@
             <ul class="nav nav-pills mr-1 ml-1 scale85">
                 <li class="nav-item rot-animfull">
                     <a class="nav-link" @click="aftercastBorder = !aftercastBorder"
-                       :class="{active: aftercastBorder}" data-original-title="Toggle full after cast border">Full After Cast</a>
+                       :class="{active: aftercastBorder}" data-original-title="切換施法後硬直外框">施法後硬直</a>
                 </li>
                 <li class="nav-item rot-cancelled">
                     <a class="nav-link" @click="interruptedBorder = !interruptedBorder"
-                       :class="{active: interruptedBorder}" data-original-title="Toggle interrupted cast border">Interrupted</a>
+                       :class="{active: interruptedBorder}" data-original-title="切換中斷施法外框">中斷</a>
                 </li>
                 <li class="nav-item rot-instant">
                     <a class="nav-link" @click="instantBorder = !instantBorder"
-                       :class="{active: instantBorder}" data-original-title="Toggle instant cast border">Instant</a>
+                       :class="{active: instantBorder}" data-original-title="切換瞬發外框">瞬發</a>
                 </li>
                 <li class="nav-item rot-unknown">
                     <a class="nav-link" @click="unknownBorder = !unknownBorder"
-                       :class="{active: unknownBorder}" data-original-title="Toggle unknown cast border">Unknown</a>
+                       :class="{active: unknownBorder}" data-original-title="切換未知施放外框">未知</a>
                 </li>
             </ul>
         </div>
         <div style="z-index: 1;" class="mb-4 mt-2">
             <a href="#" class="dropdown-toggle rot-font-dropdown" data-toggle="dropdown" title="Filter Skills">
-                Skills <span class="caret"></span>           
+                技能 <span class="caret"></span>           
             </a>
             <img class="icon ml-2" :src="UIIcons.QuestionMark"
-                data-original-title="Use Skills dropdown to hide unwanted skills or click on a specific skill below to make all other skills transparent" />
+                data-original-title="使用技能下拉選單來隱藏不需要的技能，或點擊下方特定技能使其他技能變透明" />
             <ul class="dropdown-menu p-2 font-weight-normal scrollabledropdown min-wd-165px">
                 <li class="d-flex flex-column justify-content-center align-items-center mb-1">
                     <button type="button" class="btn btn-primary btn-sm rot-button"
                             @click="setAllSelectedSkills(true)" @click.stop="stopClickEvent">
-                        Select all
+                        全選
                     </button>
                 </li>
                 <li class="d-flex flex-column justify-content-center align-items-center mb-1 separator-border-bottom">
                     <button type="button" class="btn btn-primary btn-sm rot-button"
                             @click="setAllSelectedSkills(false)" @click.stop="stopClickEvent">
-                        Deselect all
+                        取消全選
                     </button>
                 </li>
                 <li v-for="(skill, index) in skillList" :key="index">               
@@ -268,12 +268,12 @@
                 };
             },
             getTooltip(cast) {
-                var tooltip = `${cast.skill.name} at ${cast.time}s`;
+                var tooltip = `${cast.skill.name} 於 ${cast.time}秒`;
                 if (cast.type !== RotationStatus.INSTANT) {
-                    tooltip += ` for ${cast.duration}ms`;
+                    tooltip += ` 施法耗時 ${cast.duration}毫秒`;
                 }
-                tooltip += `<br>${cast.skill.name} cast ${cast.individualCast} of ${this.castCounts[cast.skill.id]}`;
-                tooltip += `<br>Skill cast ${cast.globalCast} of ${this.rotation.length}`;
+                tooltip += `<br>${cast.skill.name} 施法 第${cast.individualCast}次 共${this.castCounts[cast.skill.id]}次`;
+                tooltip += `<br>技能施法 第${cast.globalCast}個 共${this.rotation.length}個`;
                 return tooltip;
             },
             setAllSelectedSkills(selected) {

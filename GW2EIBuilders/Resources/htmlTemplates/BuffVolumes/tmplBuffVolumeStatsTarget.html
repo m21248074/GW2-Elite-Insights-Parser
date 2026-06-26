@@ -1,12 +1,12 @@
-<template>
+﻿<template>
     <div>
         <div>
-            <h3 class="text-center">Conditions</h3>
+            <h3 class="text-center">症狀</h3>
             <buff-volume-table-component :outgoing="true" :id="'condition-volume-stats-target-table-' + target.id" :buffs="conditions"
                 :playerdata="condiData" :sums="condiSums" :playerindex="playerindex" :hidecustom="false"></buff-volume-table-component>
         </div>
         <div v-show="hasBoons" class="mt-2">
-            <h3 class="text-center">Boons</h3>
+            <h3 class="text-center">增益</h3>
             <buff-volume-table-component  :outgoing="false" :id="'boon-volume-stats-target-table-' + target.id" :buffs="boons"
                 :playerdata="boonData" :sums="[]" :hidecustom="false"></buff-volume-table-component>
         </div>

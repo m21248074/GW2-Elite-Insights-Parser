@@ -56,14 +56,14 @@
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null"
                         :class="getHeaderClass('Data', 6)" @click="sortBy('Data', 6, x => getCast(x))" 
-                        data-original-title="Cast">          
+                        data-original-title="施法數">          
                         #
                         <img :src="UIIcons.Activation" alt="Cast"
                             class="icon">
                     </th>
                     <th class="damage-dist-cell"
                         :class="getHeaderClass('Data', 7)" @click="sortBy('Data', 7, x => getConnectedHits(x))"
-                        data-original-title="Hits">         
+                        data-original-title="命中數">         
                         <img :src="UIIcons.NumberOfTargets"
                             alt="Hits" class="icon icon-hover">
                     </th>
@@ -89,7 +89,7 @@
                     <th class="damage-dist-cell" v-if="actor !== null" 
                         :class="getHeaderClass('Data', 13)" @click="sortBy('Data', 13, x => round3(0.001 * getCastDurationNoInterrupt(x) / getCastNoInterrupt(x) ))" 
                         data-original-title="平均施法時間 (沒有被打斷的技能) <br>懸停時顯示最大與最小值">
-                        Avg <img :src="UIIcons.Activation" alt="Activation Time"
+                        平均 <img :src="UIIcons.Activation" alt="Activation Time"
                         class="icon">
                     </th>
                     <th class="damage-dist-cell" v-if="actor !== null" 
@@ -145,8 +145,8 @@
                     <td :class="getBodyClass('Data', 13)" v-if="actor !== null" 
                         :data-original-title=" getCastDurationNoInterrupt(row) ? 
                             (
-                                'Min: ' + round3(0.001 * getMinCastingTimeNoInterrupt(row)) + '秒' + 
-                                '<br> Max: '+ round3(0.001 * getMaxCastingTimeNoInterrupt(row)) + '秒'
+                                '最小: ' + round3(0.001 * getMinCastingTimeNoInterrupt(row)) + '秒' + 
+                                '<br> 最大: '+ round3(0.001 * getMaxCastingTimeNoInterrupt(row)) + '秒'
                             ) 
                             : 
                             null">

@@ -1,48 +1,48 @@
-<template>
+﻿<template>
     <div class="d-flex flex-column justify-content-center align-items-center max-wd-500px scale85">           
         <h4>一般設定</h4>
         <div class="d-flex flex-row justify-content-center flex-wrap">
-            <div class="form-check mb-2 mr-2" :data-original-title="'Viewpoint will follow selected actor, as long as selected actor is drawn'">
+            <div class="form-check mb-2 mr-2" :data-original-title="'只要所選角色顯示在畫面上，視角便會自動跟隨該角色'">
                 <input type="checkbox" class="form-check-input" id="followCheck" 
                     :checked="getAnimator().displaySettings.followSelected" v-on:change="getAnimator().toggleFollowSelected()">
-                <label class="form-check-label" for="followCheck">Follow Selected</label>
+                <label class="form-check-label" for="followCheck">跟隨所選目標</label>
             </div>
-            <div class="form-check mb-2 mr-2" :data-original-title="'Selected player in green, group in blue'">
+            <div class="form-check mb-2 mr-2" :data-original-title="'所選玩家顯示為綠色，隊伍顯示為藍色'">
                 <input type="checkbox" class="form-check-input" id="subgroupCheck" 
                     :checked="getAnimator().displaySettings.highlightSelectedGroup" v-on:change="getAnimator().toggleHighlightSelectedGroup()">
                 <label class="form-check-label" for="subgroupCheck">突顯所選小隊</label>
             </div>
-            <div v-if="showSecondaryNPCs" class="form-check mb-2 mr-2" :data-original-title="'Display not important NPCs in the arena'">
+            <div v-if="showSecondaryNPCs" class="form-check mb-2 mr-2" :data-original-title="'顯示場地中的次要 NPC'">
                 <input type="checkbox" class="form-check-input" id="trashCheck" 
                     :checked="getAnimator().displaySettings.displayTrashMobs" v-on:change="getAnimator().toggleTrashMobs()">
                 <label class="form-check-label" for="trashCheck">次要 NPC</label>
             </div> 
-            <div v-if="showMechanics" class="form-check mb-2 mr-2" :data-original-title="'Encounter mechanics'">
+            <div v-if="showMechanics" class="form-check mb-2 mr-2" :data-original-title="'遭遇戰機制'">
                 <input type="checkbox" class="form-check-input" id="mechanicsCheck" 
                     :checked="getAnimator().displaySettings.displayMechanics" v-on:change="getAnimator().toggleMechanics()">
                 <label class="form-check-label" for="mechanicsCheck">機制</label>
             </div>
-            <div v-if="showSquadMarkers" class="form-check mb-2 mr-2" :data-original-title="'Squad markers, on the ground and on players'">
+            <div v-if="showSquadMarkers" class="form-check mb-2 mr-2" :data-original-title="'團隊標記(包含地面標記與玩家頭頂標記)'">
                 <input type="checkbox" class="form-check-input" id="markersCheck" 
                     :checked="getAnimator().displaySettings.displaySquadMarkers" v-on:change="getAnimator().toggleSquadMarkers()">
-                <label class="form-check-label" for="markersCheck">Markers</label>
+                <label class="form-check-label" for="markersCheck">標記</label>
             </div>
-            <div v-if="showSkills" class="form-check mb-2 mr-2" :data-original-title="'Player skills'">
+            <div v-if="showSkills" class="form-check mb-2 mr-2" :data-original-title="'玩家技能'">
                 <input type="checkbox" class="form-check-input" id="skillsCheck" 
                     :checked="getAnimator().displaySettings.displaySkillMechanics" v-on:change="getAnimator().toggleSkills()">
                 <label class="form-check-label" for="skillsCheck">技能</label>
             </div>
-            <div class="form-check mb-2 mr-2" :data-original-title="'Use the in game hitbox size'">
+            <div class="form-check mb-2 mr-2" :data-original-title="'使用遊戲內碰撞箱大小'">
                 <input type="checkbox" class="form-check-input" id="actorHitboxCheck" 
                     :checked="getAnimator().displaySettings.useActorHitboxWidth" v-on:change="getAnimator().toggleUseActorHitboxWidth()">
                 <label class="form-check-label" for="actorHitboxCheck">使用碰撞箱大小</label>
             </div> 
-            <div class="form-check mb-2 mr-2" :data-original-title="'Display all minions'">
+            <div class="form-check mb-2 mr-2" :data-original-title="'顯示所有小怪'">
                 <input type="checkbox" class="form-check-input" id="allMinionsCheck" 
                     :checked="getAnimator().displaySettings.displayAllMinions" v-on:change="getAnimator().toggleDisplayAllMinions()">
                 <label class="form-check-label" for="allMinionsCheck">所有小怪</label>
             </div>     
-            <div class="form-check mb-2 mr-2" :data-original-title="'Display current selection minions'">
+            <div class="form-check mb-2 mr-2" :data-original-title="'顯示目前所選目標的召喚小怪'">
                 <input type="checkbox" class="form-check-input" id="selectedMinionsCheck" 
                     :checked="getAnimator().displaySettings.displaySelectedMinions" v-on:change="getAnimator().toggleDisplaySelectedMinions()">
                 <label class="form-check-label" for="selectedMinionsCheck">選定小怪</label>
@@ -67,7 +67,7 @@
                     <label class="form-check-label" for="circle1Check">圓圈 1</label>
                 </div>
                 <div class="d-flex flex-row justify-content-between align-items-center">
-                    <span>Radius: </span>
+                    <span>半徑: </span>
                     <custom-numberform-component class="wd-100px" :minValue="1" :id="'circle1Text'"
                                                         :placeholderValue="180"></custom-numberform-component>
                 </div>
@@ -77,7 +77,7 @@
                     <label class="form-check-label" for="circle2Check">圓圈 2</label>
                 </div>
                 <div class="d-flex flex-row justify-content-between align-items-center">
-                    <span>Radius: </span>
+                    <span>半徑: </span>
                     <custom-numberform-component class="wd-100px" :minValue="1" :id="'circle2Text'"
                                                         :placeholderValue="360"></custom-numberform-component>
                 </div>
@@ -87,7 +87,7 @@
                     <label class="form-check-label" for="circle3Check">圓圈 3</label>
                 </div>
                 <div class="d-flex flex-row justify-content-between align-items-center">
-                    <span>Radius: </span>
+                    <span>半徑: </span>
                     <custom-numberform-component class="wd-100px" :minValue="1" :id="'circle3Text'"
                                                         :placeholderValue="720"></custom-numberform-component>
                 </div>
@@ -100,12 +100,12 @@
                     <label class="form-check-label" for="coneCheck">顯示錐形</label>
                 </div>
                 <div class="d-flex flex-row justify-content-between align-items-center mb-1">
-                    <span>Radius: </span>
+                    <span>半徑: </span>
                     <custom-numberform-component class="wd-100px" :minValue="1" :id="'coneRadiusText'"
                                                         :placeholderValue="360"></custom-numberform-component>
                 </div>
                 <div class="d-flex flex-row justify-content-between align-items-center mt-1">
-                    <span>Opening: </span>
+                    <span>開口: </span>
                     <custom-numberform-component class="wd-100px" :minValue="1" :maxValue="360" :id="'coneAngleText'"
                                                         :placeholderValue="90"></custom-numberform-component>
                 </div>

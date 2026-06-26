@@ -65,7 +65,7 @@
     <div class="d-flex justify-content-center align-item-center mt-2" id="loading">
         <div class="card" style="width: 75%;">
             <div class="card-body text-center" style="margin: 100px;">
-                Loading data...
+                資料載入中...
             </div>
         </div>
     </div>
@@ -117,60 +117,60 @@
             <div class="footer_grid">
                 <div class="footer_section">
                     <div class="footer_item">
-                        <span class="label">Log Start</span>
+                        <span class="label">日誌開始時間</span>
                         <span>{{ getLogData().logStart }}</span>
                     </div>
                     <div class="footer_item">
-                        <span class="label">Log End</span>
+                        <span class="label">日誌結束時間</span>
                         <span>{{ getLogData().logEnd }}</span>
                     </div>
                     <div class="footer_item">
-                        <span class="label">Evtc Recording Duration</span>
+                        <span class="label">Evtc 記錄持續時間</span>
                         <span>{{ getLogData().evtcRecordingDuration }}</span>
                     </div>
                     <div class="footer_item" v-if="getLogData().instanceStart">
-                        <span class="label">Instance Start</span>
+                        <span class="label">地圖開啟時間</span>
                         <span>{{ getLogData().instanceStart }}</span>
                     </div>
                     <div class="footer_item" v-if="getLogData().instanceIP">
-                        <span class="label">Instance IP</span>
+                        <span class="label">地圖 IP</span>
                         <span>{{ getLogData().instanceIP }}</span>
                     </div>
                     <div class="footer_item" v-if="getLogData().region">
-                        <span class="label">Region</span>
+                        <span class="label">區域</span>
                         <span>{{ getLogData().region }}</span>
                     </div>
                 </div>
                 <div class="footer_section">
                     <div class="footer_item">
-                        <span class="label">Arcdps Version</span>
+                        <span class="label">Arcdps 版本</span>
                         <span>{{ getLogData().arcVersion }}</span>
                     </div>
                     <div class="footer_item">
-                        <span class="label">Parser Version</span>
+                        <span class="label">解析器版本</span>
                         <span>{{ getLogData().parser }}</span>
                     </div>
                     <div class="footer_item">
-                        <span class="label">GW2 Build</span>
+                        <span class="label">激戰2 版本</span>
                         <span>{{ getLogData().gw2Build }}</span>
                     </div>
                     <div class="footer_item">
-                        <span class="label">Trigger ID</span>
+                        <span class="label">觸發目標 ID</span>
                         <span>{{ getLogData().triggerID }}</span>
                     </div>
                     <div class="footer_item">
-                        <span class="label">Log ID</span>
+                        <span class="label">日誌 ID</span>
                         <span>{{ getLogData().logID }}</span>
                     </div>
                     <div class="footer_item">
-                        <span class="label">Map ID</span>
+                        <span class="label">地圖 ID</span>
                         <span>{{ getLogData().mapID }}</span>
                     </div>
                 </div>
                 <div class="footer_section"
                      v-if="(usedExtensions && usedExtensions.length) || (uploadLinks && uploadLinks.length)">
                     <div v-if="usedExtensions && usedExtensions.length">
-                        <span class="label_center">Extensions</span>
+                        <span class="label_center">擴展插件</span>
                         <div class="footer_tags">
                             <span v-for="(usedExtension, id) in usedExtensions" :key="'ext-' + id" class="tag">{{ usedExtension }}</span>
                         </div>
@@ -185,7 +185,7 @@
                 </div>
             </div>
             <div class="footer_bottom">
-                Recorded by: {{ getLogData().recordedBy }} - {{ getLogData().recordedAccountBy }}
+                記錄者: {{ getLogData().recordedBy }} - {{ getLogData().recordedAccountBy }}
             </div>
         </div>
     </div>

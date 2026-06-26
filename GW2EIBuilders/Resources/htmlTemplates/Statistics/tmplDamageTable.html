@@ -164,7 +164,7 @@
                 return rows;
             },
             computeTotalContribution: function (index, row, sums) {
-                return '佔全團的' + this.round2(row[index] * 100 / sums[sums.length - 1].dps[index]) + '%';
+                return '佔總計的' + this.round2(row[index] * 100 / sums[sums.length - 1].dps[index]) + '%';
             },
             computeGroupContribution: function (groupIndex, index, row, sums) {
                 var sumId = 0;
@@ -178,8 +178,8 @@
             computeSelfContribution: function (index, totalIndex, row, target) {
                 const playerTotal = row.dps[totalIndex] || 1; // If total == 0 divide by 1, 0/1 = 0%;
 
-                var selfContrib = this.round2(row.dps[index] * 100 / playerTotal) + '% of self';
-                return selfContrib + (target ? " target" : " all");
+                var selfContrib = this.round2(row.dps[index] * 100 / playerTotal) + '% 自身';
+                return selfContrib + (target ? "目標" : "全體");
             },
             getPlayerTooltip: function (index, row, sums, target, showConditionContribution = false, showPowerContribution = false) {
                 var damage = (!this.showDamage ? row.dps[index] : this.round(row.dps[index] / this.phase.durationS));
@@ -187,12 +187,12 @@
                 var group = this.computeGroupContribution(row.player.group, index, row.dps, sums);
 
                 if (showConditionContribution || showPowerContribution) {
-                    return damage + ' damage' +
+                    return damage + ' 傷害' +
                         '<br>' + this.computeSelfContribution(index, showConditionContribution ? index - 2 : index - 1, row, target) +
                         '<br>' + total +
                         '<br>' + group;
                 } else {
-                    return damage + ' damage' +
+                    return damage + ' 傷害' +
                         '<br>' + total +
                         '<br>' + group;
                 }
@@ -201,7 +201,7 @@
                 return this.showDamage ? row.dps[index] : this.round(row.dps[index] / this.phase.durationS)
             },
             getSumTooltip: function (index, row) {
-                return (!this.showDamage ? row.dps[index] : this.round(row.dps[index] / this.phase.durationS)) + ' damage';
+                return (!this.showDamage ? row.dps[index] : this.round(row.dps[index] / this.phase.durationS)) + ' 傷害';
             },
             getSumCell: function (index, row) {
                 return this.showDamage ? row.dps[index] : this.round(row.dps[index] / this.phase.durationS)
@@ -264,7 +264,7 @@
                     }
                 }
                 sums.push({
-                    name: "全團",
+                    name: "總計",
                     dps: total
                 });
                 var res = {

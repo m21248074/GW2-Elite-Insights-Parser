@@ -1,26 +1,26 @@
-<template>
+﻿<template>
     <div>
         <div class="d-flex flex-row justify-content-center mt-1 mb-1">
             <ul class="nav nav-pills d-flex flex-row justify-content-center scale85">
                 <li class="nav-item">
                     <a class="nav-link" @click="buffMode = 0" :class="{active: buffMode === 0}"
-                       data-original-title="Buffs upkeep.">Uptime</a>
+                       data-original-title="增益覆蓋率。">覆蓋率</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" @click="buffMode = 1" :class="{active: buffMode === 1 }"
-                       data-original-title="Buffs applied to yourself.">Generation Self</a>
+                       data-original-title="施加在自己身上的增益。">自身產出</a>
                 </li>
                 <li v-if="!singlePlayer" class="nav-item">
                     <a class="nav-link" @click="buffMode = 2" :class="{active: buffMode === 2 }"
-                        data-original-title="Buffs applied to your group members. Self excluded.">Generation Group</a>
+                       data-original-title="施加給自己小隊(同小隊)成員的增益，不含自身。">小隊產出</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 3" :class="{active: buffMode === 3 }"
-                        data-original-title="Buffs applied to your non-group members. Self excluded.">Generation Off-Group</a>
+                        data-original-title="施加給其他小隊(非同小隊)成員的增益，不含自身。">小隊外產出</a>
                 </li>
                 <li v-if="!singleGroup" class="nav-item">
                     <a class="nav-link" @click="buffMode = 4" :class="{active: buffMode === 4 }"
-                        data-original-title="Buffs applied to the squad. Self excluded.">Generation Squad</a>
+                       data-original-title="施加給整個團隊的增益，不含自身。">團隊產出</a>
                 </li>
             </ul>
         </div>
@@ -147,7 +147,7 @@
                             }
                         }
                         avg.push({
-                            name: "Group " + i,
+                            name: "小隊 " + i,
                             data: groupAvg[i],
                             avg: this.round3(groupBoonAvg[i] / groupCount[i])
                         });
@@ -159,7 +159,7 @@
                     }
                 }
                 avg.push({
-                    name: "Total",
+                    name: "總計",
                     data: totalAvg,
                     avg: this.round3(totalBoonAvg / totalCount)
                 });
